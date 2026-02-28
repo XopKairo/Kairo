@@ -8,6 +8,7 @@ const authAdmin = async (req, res) => {
 
   if (admin && (await admin.matchPassword(password))) {
     res.json({
+      success: true,
       _id: admin._id,
       email: admin.email,
       token: generateToken(admin._id),

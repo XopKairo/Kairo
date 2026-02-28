@@ -55,8 +55,9 @@ app.use((req, res, next) => {
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Main Auth Route (Direct)
+// Main Auth Routes (Direct)
 app.post('/api/auth/login', authAdmin);
+app.post('/api/admin/login', authAdmin);
 
 // Authentication Routes
 app.use('/api/auth', authRoutes);
