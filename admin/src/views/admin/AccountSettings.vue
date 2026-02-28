@@ -20,7 +20,7 @@ const accountDetails = ref({
 
 const fetchAdminDetails = async () => {
   try {
-    const res = await axios.get('https://kairo-novh.onrender.com/api/admin/profile');
+    const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/profile');
     accountDetails.value.name = res.data.name;
     accountDetails.value.email = res.data.email;
   } catch (error) {
@@ -39,7 +39,7 @@ const updateAccount = async () => {
       return;
     }
     
-    await axios.post('https://kairo-novh.onrender.com/api/admin/account/update', payload);
+    await axios.post('https://kairo-b1i9.onrender.com/api/admin/account/update', payload);
     alert("Account updated successfully!");
     // Clear password fields
     accountDetails.value.currentPassword = '';

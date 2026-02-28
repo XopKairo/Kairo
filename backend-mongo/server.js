@@ -8,7 +8,9 @@ require('dotenv').config();
 const { authAdmin } = require('./controllers/authController');
 const setupSockets = require('./sockets/socket');
 
+// Route Imports
 const authRoutes = require('./routes/auth');
+const userAuthRoutes = require('./routes/userAuth');
 const dashboardRoutes = require('./routes/dashboard');
 const settingsRoutes = require('./routes/settings');
 const userRoutes = require('./routes/users');
@@ -29,7 +31,14 @@ const app = express();
 const server = http.createServer(app);
 const io = setupSockets(server); // initialize socket.io
 
-app.use(cors());
+// CORS configuration for Vercel and local development
+app.use(cors({
+  origin: '*', // Allow all for now, or specify: ['https://kairo-admin.vercel.app', 'http://localhost:5173']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Root Route
@@ -46,11 +55,21 @@ app.use((req, res, next) => {
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Main Auth Route
+// Main Auth Route (Direct)
 app.post('/api/auth/login', authAdmin);
 
-// Other Routes
+// Authentication Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/user/auth', userAuthRoutes);
+
+// Admin Routes Alias (to match frontend expectations)
+app.use('/api/admin/auth', authRoutes);
+app.use('/api/admin/dashboard', dashboardRoutes);
+app.use('/api/admin/settings', settingsRoutes);
+app.use('/api/admin/users', userRoutes);
+app.use('/api/admin/notifications', notificationRoutes);
+
+// Standard Routes
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/users', userRoutes);

@@ -8,18 +8,18 @@ const page = ref({ title: 'Host Verification' });
 const pendingHosts = ref<any[]>([]);
 
 const fetchPendingHosts = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/hosts');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/hosts');
   pendingHosts.value = res.data.filter((h: any) => !h.is_verified);
 };
 
 const approveHost = async (id: number) => {
-  await axios.put(`https://kairo-novh.onrender.com/api/hosts/${id}/verify`, { is_verified: 1 });
+  await axios.put(`https://kairo-b1i9.onrender.com/api/hosts/${id}/verify`, { is_verified: 1 });
   fetchPendingHosts();
 };
 
 const rejectHost = async (id: number) => {
   // In a real scenario, you might have a reason for rejection or delete the host
-  await axios.delete(`https://kairo-novh.onrender.com/api/hosts/${id}`);
+  await axios.delete(`https://kairo-b1i9.onrender.com/api/hosts/${id}`);
   fetchPendingHosts();
 };
 

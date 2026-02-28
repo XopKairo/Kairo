@@ -11,7 +11,7 @@ const editedGift = ref<any>({ name: '', coinCost: 0, category: 'Basic', isActive
 const selectedFile = ref<File | null>(null);
 
 const fetchGifts = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/economy/gifts');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/economy/gifts');
   gifts.value = res.data;
 };
 
@@ -31,9 +31,9 @@ const saveGift = async () => {
   }
 
   if (editedGift.value._id) {
-    await axios.put(`https://kairo-novh.onrender.com/api/economy/gifts/${editedGift.value._id}`, formData);
+    await axios.put(`https://kairo-b1i9.onrender.com/api/economy/gifts/${editedGift.value._id}`, formData);
   } else {
-    await axios.post('https://kairo-novh.onrender.com/api/economy/gifts', formData);
+    await axios.post('https://kairo-b1i9.onrender.com/api/economy/gifts', formData);
   }
   dialog.value = false;
   selectedFile.value = null;
@@ -42,7 +42,7 @@ const saveGift = async () => {
 
 const deleteGift = async (id: string) => {
   if (confirm("Delete this gift?")) {
-    await axios.delete(`https://kairo-novh.onrender.com/api/economy/gifts/${id}`);
+    await axios.delete(`https://kairo-b1i9.onrender.com/api/economy/gifts/${id}`);
     fetchGifts();
   }
 };
@@ -71,7 +71,7 @@ onMounted(fetchGifts);
           <tbody>
             <tr v-for="gift in gifts" :key="gift._id">
               <td>
-                <img v-if="gift.iconUrl" :src="'https://kairo-novh.onrender.com' + gift.iconUrl" alt="icon" style="width: 40px; height: 40px; object-fit: contain;" />
+                <img v-if="gift.iconUrl" :src="'https://kairo-b1i9.onrender.com' + gift.iconUrl" alt="icon" style="width: 40px; height: 40px; object-fit: contain;" />
               </td>
               <td>{{ gift.name }}</td>
               <td>{{ gift.coinCost }}</td>

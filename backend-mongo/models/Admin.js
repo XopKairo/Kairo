@@ -3,7 +3,9 @@ const bcrypt = require('bcryptjs');
 
 const AdminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  resetPasswordOTP: { type: String },
+  resetPasswordExpires: { type: Date }
 });
 
 // Async function aayathu kond 'next' vilikkenda aavashyamilla

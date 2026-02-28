@@ -8,7 +8,7 @@ const page = ref({ title: 'Host Management' });
 const hosts = ref<any[]>([]);
 
 const fetchHosts = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/hosts');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/hosts');
   hosts.value = res.data;
 };
 

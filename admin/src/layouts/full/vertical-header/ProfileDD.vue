@@ -10,14 +10,14 @@ const search = ref('');
 
 const fetchProfile = async () => {
   try {
-    const res = await axios.get('https://kairo-novh.onrender.com/api/admin/profile');
+    const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/profile');
     profile.value = res.data;
   } catch (e) { console.error("Error loading profile"); }
 };
 
 const updateSettings = async () => {
   try {
-    await axios.post('https://kairo-novh.onrender.com/api/admin/profile/settings', {
+    await axios.post('https://kairo-b1i9.onrender.com/api/admin/profile/settings', {
       dndMode: profile.value.dndMode,
       allowNotifications: profile.value.allowNotifications
     });

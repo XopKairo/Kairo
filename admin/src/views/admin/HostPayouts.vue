@@ -8,12 +8,12 @@ const page = ref({ title: 'Host Payout Management' });
 const payouts = ref<any[]>([]);
 
 const fetchPayouts = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/payouts');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/payouts');
   payouts.value = res.data;
 };
 
 const updateStatus = async (id: number, status: string) => {
-  await axios.put(`https://kairo-novh.onrender.com/api/payouts/${id}`, { status });
+  await axios.put(`https://kairo-b1i9.onrender.com/api/payouts/${id}`, { status });
   fetchPayouts();
 };
 

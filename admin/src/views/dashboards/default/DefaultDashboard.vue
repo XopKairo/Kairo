@@ -14,10 +14,10 @@ const chartData = ref<any[]>([]);
 
 const fetchAnalytics = async () => {
   try {
-    const res = await axios.get('https://kairo-novh.onrender.com/api/admin/analytics');
+    const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/analytics');
     stats.value = res.data;
     
-    const dbRes = await axios.get('https://kairo-novh.onrender.com/api/revenueStats');
+    const dbRes = await axios.get('https://kairo-b1i9.onrender.com/api/revenueStats');
     chartData.value = dbRes.data;
   } catch (error) {
     console.error("Error fetching dashboard data");

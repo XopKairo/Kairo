@@ -4,28 +4,29 @@ import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 
-const checkbox = ref(true);
 const valid = ref(false);
 const show1 = ref(false);
-const email = ref(''); // Default to empty for user input
-const password = ref(''); // Default to empty for user input
+const email = ref('');
+const password = ref('');
 const router = useRouter();
 const authStore = useAuthStore();
 const errorMsg = ref('');
 
-// Forgot Password Refs
+// Forgot Password Workflow Refs
 const forgotDialog = ref(false);
-const resetEmail = ref(''); // Default to empty
+const resetEmail = ref('');
+const otp = ref('');
 const newPassword = ref('');
 const resetMsg = ref('');
+const step = ref(1); // 1: Send OTP, 2: Reset
 
 const login = async () => {
   try {
-    const response = await axios.post('https://kairo-novh.onrender.com/api/auth/login', {
+    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/login', {
       email: email.value,
       password: password.value
     });
-    if (response.data.token) {
+    if (response.data.success) {
       authStore.user = response.data;
       localStorage.setItem('user', JSON.stringify(response.data));
       router.push('/dashboard/default');
@@ -35,31 +36,50 @@ const login = async () => {
   }
 };
 
-const handleReset = async () => {
+const sendOTP = async () => {
   try {
-    const response = await axios.post('https://kairo-novh.onrender.com/api/admin/reset-password', {
-      email: resetEmail.value,
-      newPassword: newPassword.value
+    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/forgot-password', {
+      email: resetEmail.value
     });
     if (response.data.success) {
-      alert("Password updated! Now you can login.");
-      forgotDialog.value = false;
-      resetEmail.value = '';
-      newPassword.value = '';
-      resetMsg.value = '';
+      step.value = 2;
+      resetMsg.value = "";
+      alert("OTP Sent! Check your email (Simulated for now).");
+      // For development, we might show OTP in alert if backend sends it
+      if(response.data.otp) console.log("OTP for test:", response.data.otp);
     }
   } catch (error: any) {
-    resetMsg.value = error.response?.data?.message || "Reset Failed: Network Error or Invalid Email";
+    resetMsg.value = error.response?.data?.message || "Failed to send OTP";
   }
 };
 
-const passwordRules = ref([
-  (v: string) => !!v || 'Required',
-  (v: string) => (v && v.length >= 6) || 'Min 6 characters'
-]);
+const handleReset = async () => {
+  try {
+    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/reset-password', {
+      email: resetEmail.value,
+      otp: otp.value,
+      newPassword: newPassword.value
+    });
+    if (response.data.success) {
+      alert("Password updated successfully!");
+      forgotDialog.value = false;
+      resetEmail.value = '';
+      otp.value = '';
+      newPassword.value = '';
+      step.value = 1;
+    }
+  } catch (error: any) {
+    resetMsg.value = error.response?.data?.message || "Reset Failed: Invalid or expired OTP";
+  }
+};
+
 const emailRules = ref([
   (v: string) => !!v || 'Required',
   (v: string) => /.+@.+\..+/.test(v) || 'Invalid Email'
+]);
+const passwordRules = ref([
+  (v: string) => !!v || 'Required',
+  (v: string) => v.length >= 6 || 'Min 6 characters'
 ]);
 </script>
 
@@ -94,7 +114,6 @@ const emailRules = ref([
     ></v-text-field>
 
     <div class="d-flex flex-wrap align-center justify-space-between ml-n2">
-      <v-checkbox v-model="checkbox" label="Remember me" color="primary" hide-details></v-checkbox>
       <div class="ml-sm-auto">
         <a href="javascript:void(0)" @click="forgotDialog = true" class="text-primary text-decoration-none text-subtitle-1 font-weight-medium">Forgot Password?</a>
       </div>
@@ -102,15 +121,27 @@ const emailRules = ref([
     <v-btn color="secondary" :disabled="!valid" block class="mt-5" variant="flat" size="large" type="submit">Sign In</v-btn>
   </v-form>
 
-  <v-dialog v-model="forgotDialog" max-width="400">
+  <!-- Forgot Password Dialog -->
+  <v-dialog v-model="forgotDialog" max-width="450">
     <v-card class="pa-6">
       <v-card-title class="text-h5 pb-4">Reset Password</v-card-title>
       <v-alert v-if="resetMsg" type="error" density="compact" class="mb-4">{{ resetMsg }}</v-alert>
-      <v-text-field v-model="resetEmail" label="Registered Email" variant="outlined" class="mb-2"></v-text-field>
-      <v-text-field v-model="newPassword" label="New Password" type="password" variant="outlined"></v-text-field>
-      <v-card-actions class="px-0 pt-4">
-        <v-btn color="primary" block variant="flat" @click="handleReset">Update Password</v-btn>
-      </v-card-actions>
+      
+      <div v-if="step === 1">
+        <v-text-field v-model="resetEmail" label="Registered Email" variant="outlined" class="mb-2"></v-text-field>
+        <v-card-actions class="px-0 pt-4">
+          <v-btn color="primary" block variant="flat" @click="sendOTP">Send OTP</v-btn>
+        </v-card-actions>
+      </div>
+
+      <div v-else>
+        <v-text-field v-model="otp" label="Enter OTP" variant="outlined" class="mb-2"></v-text-field>
+        <v-text-field v-model="newPassword" label="New Password" type="password" variant="outlined" class="mb-2"></v-text-field>
+        <v-card-actions class="px-0 pt-4">
+          <v-btn color="primary" block variant="flat" @click="handleReset">Update Password</v-btn>
+          <v-btn variant="text" block class="mt-2" @click="step = 1">Back</v-btn>
+        </v-card-actions>
+      </div>
     </v-card>
   </v-dialog>
 </template>

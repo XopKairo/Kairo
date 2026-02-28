@@ -10,15 +10,15 @@ const dialog = ref(false);
 const editedItem = ref<any>({ name: '', coins: 0, price: 0, bonus: 0 });
 
 const fetchPackages = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/economy/coins');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/economy/coins');
   packages.value = res.data;
 };
 
 const savePackage = async () => {
   if (editedItem.value._id) {
-    await axios.put(`https://kairo-novh.onrender.com/api/economy/coins/${editedItem.value._id}`, editedItem.value);
+    await axios.put(`https://kairo-b1i9.onrender.com/api/economy/coins/${editedItem.value._id}`, editedItem.value);
   } else {
-    await axios.post('https://kairo-novh.onrender.com/api/economy/coins', editedItem.value);
+    await axios.post('https://kairo-b1i9.onrender.com/api/economy/coins', editedItem.value);
   }
   dialog.value = false;
   fetchPackages();
@@ -26,7 +26,7 @@ const savePackage = async () => {
 
 const deletePackage = async (id: string) => {
   if(confirm("Delete this package?")) {
-    await axios.delete(`https://kairo-novh.onrender.com/api/economy/coins/${id}`);
+    await axios.delete(`https://kairo-b1i9.onrender.com/api/economy/coins/${id}`);
     fetchPackages();
   }
 };
