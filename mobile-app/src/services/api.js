@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://kairo-novh.onrender.com/api';
+const API_URL = 'https://kairo-b1i9.onrender.com/api';
 
 // Create an axios instance
 const api = axios.create({
