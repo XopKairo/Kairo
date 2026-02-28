@@ -8,11 +8,11 @@ const nodemailer = require('nodemailer');
 // Helper to generate a 6-digit OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// Nodemailer Transporter Configuration (Using Gmail)
+// Nodemailer Transporter Configuration (Using Project Specific Gmail)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'omalloorajil@gmail.com',
+    user: process.env.EMAIL_USER || 'noobjocker8@gmail.com',
     pass: process.env.EMAIL_PASS
   }
 });
@@ -49,7 +49,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // Sending real email
     const mailOptions = {
-      from: `"Kairo Admin" <${process.env.EMAIL_USER || 'omalloorajil@gmail.com'}>`,
+      from: `"Kairo Admin" <${process.env.EMAIL_USER || 'noobjocker8@gmail.com'}>`,
       to: email,
       subject: 'Password Reset OTP',
       html: `
