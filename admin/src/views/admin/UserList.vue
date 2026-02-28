@@ -59,25 +59,25 @@ const breadcrumbs = shallowRef([
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users" :key="user.id">
-              <td>{{ user.id }}</td>
+            <tr v-for="user in users" :key="user._id">
+              <td>{{ user._id }}</td>
               <td>
                 <div class="font-weight-bold">{{ user.name }}</div>
                 <div class="text-caption">{{ user.email }}</div>
               </td>
               <td>
-                <v-chip color="amber-darken-3" size="small" @click="updateCoins(user.id, user.coins)">
+                <v-chip color="amber-darken-3" size="small" @click="updateCoins(user._id, user.coins)">
                   <v-icon size="small" class="mr-1">mdi-database-outline</v-icon>
                   {{ user.coins }}
                 </v-chip>
               </td>
               <td>
-                <v-chip :color="user.status === 'Active' ? 'success' : 'error'" size="small">
-                  {{ user.status }}
+                <v-chip :color="user.isBanned ? 'error' : 'success'" size="small">
+                  {{ user.isBanned ? 'Banned' : 'Active' }}
                 </v-chip>
               </td>
               <td>
-                <v-btn icon color="error" variant="text" size="small" @click="banUser(user.id)" v-if="user.status !== 'Banned'">
+                <v-btn icon color="error" variant="text" size="small" @click="banUser(user._id)" v-if="!user.isBanned">
                   <v-icon>mdi-account-cancel</v-icon>
                 </v-btn>
               </td>

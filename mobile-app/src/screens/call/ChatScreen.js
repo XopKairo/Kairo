@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import io from 'socket.io-client';
 
-const SOCKET_URL = 'https://kairo-novh.onrender.com';
+const SOCKET_URL = 'https://kairo-b1i9.onrender.com';
 
 const ChatScreen = ({ route, navigation }) => {
   const { contactId, contactName } = route.params;
