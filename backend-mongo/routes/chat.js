@@ -4,17 +4,23 @@ const Message = require('../models/Message');
 const ReportedMessage = require('../models/ReportedMessage');
 const User = require('../models/User');
 
-// GET chat history between two users
-router.get('/:userId/:contactId', async (req, res) => {
+// GET chat history between two users with pagination
+router.get('/:user1Id/:user2Id', async (req, res) => {
   try {
-    const { userId, contactId } = req.params;
+    const { user1Id, user2Id } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+
     const messages = await Message.find({
       $or: [
-        { senderId: userId, receiverId: contactId },
-        { senderId: contactId, receiverId: userId }
+        { senderId: user1Id, receiverId: user2Id },
+        { senderId: user2Id, receiverId: user1Id }
       ]
-    }).sort('createdAt');
-    res.json(messages);
+    })
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
+
+    res.json(messages.reverse());
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
