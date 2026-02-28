@@ -6,9 +6,18 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 
 // Initialize Firebase Admin
-const serviceAccount = require(path.join(__dirname, '../serviceAccountKey.json'));
+let serviceAccount;
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    serviceAccount = require(path.join(__dirname, '../serviceAccountKey.json'));
+  }
+} catch (error) {
+  console.error('Firebase service account error:', error.message);
+}
 
-if (!admin.apps.length) {
+if (serviceAccount && !admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
