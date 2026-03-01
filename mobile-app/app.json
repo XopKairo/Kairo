@@ -8,15 +8,16 @@
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#050505"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zora.live"
     },
     "android": {
-      "package": "com.ajilomalloor.zora",
+      "package": "com.zora.live",
       "enableProguardInReleaseBuilds": true,
       "permissions": [
         "CAMERA",
