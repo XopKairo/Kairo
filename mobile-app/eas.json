@@ -16,11 +16,7 @@
     "premium-apk": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease"
-      },
-      "env": {
-        "NODE_ENV": "production"
+        "buildType": "apk"
       },
       "channel": "production"
     },
