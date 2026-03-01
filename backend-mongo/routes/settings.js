@@ -15,8 +15,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Alias for /app to satisfy Admin Panel
+router.get('/app', async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) settings = await Settings.create({});
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Update All Settings
 router.put('/', async (req, res) => {
+  try {
+    const settings = await Settings.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Alias POST for /app
+router.post('/app', async (req, res) => {
   try {
     const settings = await Settings.findOneAndUpdate({}, req.body, { new: true, upsert: true });
     res.json(settings);

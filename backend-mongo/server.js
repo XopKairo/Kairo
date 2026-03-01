@@ -26,6 +26,9 @@ const interestRoutes = require('./routes/interests');
 const chatRoutes = require('./routes/chat');
 const postRoutes = require('./routes/posts');
 const notificationRoutes = require('./routes/notifications');
+const agencyRoutes = require('./routes/agencies');
+const ticketRoutes = require('./routes/tickets');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 const server = http.createServer(app);
@@ -87,6 +90,9 @@ app.use('/api/interests', interestRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/agencies', agencyRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/reports', reportRoutes);
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
