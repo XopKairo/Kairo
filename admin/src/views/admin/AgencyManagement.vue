@@ -10,12 +10,12 @@ const dialog = ref(false);
 const newAgency = ref({ name: '', owner: '', commission: 10 });
 
 const fetchAgencies = async () => {
-  const res = await axios.get('https://kairo-b1i9.onrender.com/api/agencies');
+  const res = await axios.get('https://kairo-novh.onrender.com/api/agencies');
   agencies.value = res.data;
 };
 
 const saveAgency = async () => {
-  await axios.post('https://kairo-b1i9.onrender.com/api/agencies', newAgency.value);
+  await axios.post('https://kairo-novh.onrender.com/api/agencies', newAgency.value);
   dialog.value = false;
   newAgency.value = { name: '', owner: '', commission: 10 };
   fetchAgencies();
@@ -23,7 +23,7 @@ const saveAgency = async () => {
 
 const deleteAgency = async (id: number) => {
   if (confirm("Delete this agency?")) {
-    await axios.delete(`https://kairo-b1i9.onrender.com/api/agencies/${id}`);
+    await axios.delete(`https://kairo-novh.onrender.com/api/agencies/${id}`);
     fetchAgencies();
   }
 };

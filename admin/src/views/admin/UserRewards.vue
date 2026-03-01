@@ -112,7 +112,7 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 
-const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
+const API_BASE_URL = 'https://kairo-novh.onrender.com';
 
 const users = ref<any[]>([]);
 const loading = ref(true);

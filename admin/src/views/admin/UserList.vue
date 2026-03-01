@@ -9,7 +9,7 @@ const users = ref<any[]>([]);
 
 const fetchUsers = async () => {
   try {
-    const response = await axios.get('https://kairo-b1i9.onrender.com/api/users');
+    const response = await axios.get('https://kairo-novh.onrender.com/api/users');
     users.value = response.data;
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -19,7 +19,7 @@ const fetchUsers = async () => {
 const banUser = async (id: string | number) => {
   if(confirm("Are you sure you want to ban this user?")) {
     try {
-      await axios.post(`https://kairo-b1i9.onrender.com/api/users/${id}/ban`, { isBanned: true });
+      await axios.post(`https://kairo-novh.onrender.com/api/users/${id}/ban`, { isBanned: true });
       fetchUsers();
     } catch (error) {
       console.error("Error banning user:", error);
@@ -30,7 +30,7 @@ const banUser = async (id: string | number) => {
 const updateCoins = async (id: number, currentCoins: number) => {
   const newCoins = prompt("Enter new coin balance:", currentCoins.toString());
   if (newCoins !== null) {
-    await axios.put(`https://kairo-b1i9.onrender.com/api/users/${id}`, { coins: parseInt(newCoins) });
+    await axios.put(`https://kairo-novh.onrender.com/api/users/${id}`, { coins: parseInt(newCoins) });
     fetchUsers();
   }
 };

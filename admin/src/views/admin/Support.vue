@@ -8,12 +8,12 @@ const page = ref({ title: 'Support Tickets' });
 const tickets = ref<any[]>([]);
 
 const fetchTickets = async () => {
-  const res = await axios.get('https://kairo-b1i9.onrender.com/api/tickets');
+  const res = await axios.get('https://kairo-novh.onrender.com/api/tickets');
   tickets.value = res.data;
 };
 
 const resolveTicket = async (id: number) => {
-  await axios.put(`https://kairo-b1i9.onrender.com/api/tickets/${id}`, { status: 'Resolved' });
+  await axios.put(`https://kairo-novh.onrender.com/api/tickets/${id}`, { status: 'Resolved' });
   fetchTickets();
 };
 

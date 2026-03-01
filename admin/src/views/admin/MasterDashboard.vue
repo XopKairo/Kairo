@@ -147,7 +147,7 @@ ChartJS.register(
   Legend
 );
 
-const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
+const API_BASE_URL = 'https://kairo-novh.onrender.com';
 
 // State
 const users = ref<any[]>([]);

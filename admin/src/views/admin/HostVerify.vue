@@ -9,7 +9,7 @@ const pendingHosts = ref<any[]>([]);
 
 const fetchPendingHosts = async () => {
   try {
-    const res = await axios.get('https://kairo-b1i9.onrender.com/api/hosts');
+    const res = await axios.get('https://kairo-novh.onrender.com/api/hosts');
     // Filter by isVerified field from MongoDB Host model
     pendingHosts.value = res.data.filter((h: any) => h.isVerified === false);
   } catch (error) {
@@ -20,7 +20,7 @@ const fetchPendingHosts = async () => {
 const approveHost = async (id: string) => {
   try {
     // Matching backend route: POST /api/hosts/:id/verify
-    await axios.post(`https://kairo-b1i9.onrender.com/api/hosts/${id}/verify`, { isVerified: true });
+    await axios.post(`https://kairo-novh.onrender.com/api/hosts/${id}/verify`, { isVerified: true });
     fetchPendingHosts();
   } catch (error) {
     console.error("Error approving host:", error);
@@ -30,7 +30,7 @@ const approveHost = async (id: string) => {
 const rejectHost = async (id: string) => {
   if(confirm("Are you sure you want to delete/reject this host registration?")) {
     try {
-      await axios.delete(`https://kairo-b1i9.onrender.com/api/hosts/${id}`);
+      await axios.delete(`https://kairo-novh.onrender.com/api/hosts/${id}`);
       fetchPendingHosts();
     } catch (error) {
       console.error("Error rejecting host:", error);

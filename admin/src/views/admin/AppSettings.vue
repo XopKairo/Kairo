@@ -9,7 +9,7 @@ const settings = ref<any>({ callRate: 0, commission: 0, maintenance: false });
 
 const fetchSettings = async () => {
   try {
-    const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/settings/app');
+    const res = await axios.get('https://kairo-novh.onrender.com/api/admin/settings/app');
     if (res.data) {
       settings.value = res.data;
     }
@@ -20,7 +20,7 @@ const fetchSettings = async () => {
 
 const saveSettings = async () => {
   try {
-    await axios.post('https://kairo-b1i9.onrender.com/api/admin/settings/app', settings.value);
+    await axios.post('https://kairo-novh.onrender.com/api/admin/settings/app', settings.value);
     alert("App Settings Saved!");
   } catch (error) {
     console.error("Error saving app settings:", error);

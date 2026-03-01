@@ -14,12 +14,12 @@ const adConfig = ref({
 });
 
 const fetchSettings = async () => {
-  const response = await axios.get('https://kairo-b1i9.onrender.com/api/settings/ads');
+  const response = await axios.get('https://kairo-novh.onrender.com/api/settings/ads');
   if (response.data.rewardPerAd) adConfig.value = response.data;
 };
 
 const saveSettings = async () => {
-  await axios.post('https://kairo-b1i9.onrender.com/api/settings/ads', adConfig.value);
+  await axios.post('https://kairo-novh.onrender.com/api/settings/ads', adConfig.value);
   alert("Ad Settings Saved to Database!");
 };
 

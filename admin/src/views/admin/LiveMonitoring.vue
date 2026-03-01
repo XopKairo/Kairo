@@ -15,7 +15,7 @@ let socket: any = null;
 
 const fetchActiveCalls = async () => {
   try {
-    const res = await axios.get('https://kairo-b1i9.onrender.com/api/monitoring/active');
+    const res = await axios.get('https://kairo-novh.onrender.com/api/monitoring/active');
     activeCalls.value = res.data;
   } catch (err) {
     console.error("Failed to fetch active calls", err);
@@ -25,7 +25,7 @@ const fetchActiveCalls = async () => {
 const terminateCall = async (callId: string) => {
   if (confirm("Are you sure you want to terminate this call?")) {
     try {
-      await axios.post(`https://kairo-b1i9.onrender.com/api/monitoring/force-end/${callId}`);
+      await axios.post(`https://kairo-novh.onrender.com/api/monitoring/force-end/${callId}`);
       fetchActiveCalls(); // Refresh list
     } catch (err) {
       console.error("Failed to terminate call", err);
@@ -37,7 +37,7 @@ onMounted(() => {
   fetchActiveCalls();
   
   // Setup Socket connection
-  socket = io('https://kairo-b1i9.onrender.com');
+  socket = io('https://kairo-novh.onrender.com');
   
   socket.on('connect', () => {
     socket.emit('joinAdminRoom'); // Optional, if you have specific room logic
