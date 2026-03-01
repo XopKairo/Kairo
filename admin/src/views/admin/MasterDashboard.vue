@@ -1,8 +1,11 @@
 <template>
   <v-container fluid>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="12" class="d-flex align-center justify-space-between">
         <h2 class="text-h4 mb-4">Master Dashboard</h2>
+        <v-btn color="secondary" prepend-icon="mdi-bank-transfer" @click="adminWithdrawDialog = true" variant="flat">
+          Withdraw My Revenue: ₹{{ adminRevenue }}
+        </v-btn>
       </v-col>
     </v-row>
 
@@ -60,7 +63,7 @@
             <thead>
               <tr>
                 <th class="text-left">Name</th>
-                <th class="text-left">Email</th>
+                <th class="text-left">Gender</th>
                 <th class="text-left">Coins</th>
                 <th class="text-left">Status</th>
                 <th class="text-left">Verification</th>
@@ -70,7 +73,11 @@
             <tbody>
               <tr v-for="user in filteredUsers" :key="user._id">
                 <td>{{ user.name || 'N/A' }}</td>
-                <td>{{ user.email || user.phone || 'N/A' }}</td>
+                <td>
+                  <v-chip :color="user.gender === 'Female' ? 'pink' : 'blue'" size="x-small" variant="tonal">
+                    {{ user.gender }}
+                  </v-chip>
+                </td>
                 <td>{{ user.coins || 0 }}</td>
                 <td>
                   <v-chip :color="user.isBanned ? 'error' : 'success'" size="small">
@@ -99,6 +106,23 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Admin Withdrawal Dialog -->
+    <v-dialog v-model="adminWithdrawDialog" max-width="500px">
+      <v-card class="pa-4">
+        <v-card-title class="text-h5 font-weight-bold">Withdraw Admin Revenue</v-card-title>
+        <v-card-text>
+          <div class="mb-4 text-subtitle-1">Available for Withdrawal: <span class="text-success font-weight-bold">₹{{ adminRevenue }}</span></div>
+          <v-text-field v-model="withdrawAmount" label="Amount to Withdraw (INR)" type="number" variant="outlined"></v-text-field>
+          <v-textarea v-model="paymentDetails" label="Your UPI ID or Bank Details" variant="outlined" placeholder="Enter where you want the cash to be sent"></v-textarea>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="adminWithdrawDialog = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" @click="requestAdminWithdraw" :loading="withdrawing">Withdraw Now</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
       {{ snackbarText }}
@@ -133,6 +157,12 @@ const search = ref('');
 const totalUsers = ref(0);
 const activeSessions = ref(0);
 const totalCoinsCirculating = ref(0);
+const adminRevenue = ref(0);
+
+const adminWithdrawDialog = ref(false);
+const withdrawAmount = ref('');
+const paymentDetails = ref('');
+const withdrawing = ref(false);
 
 const snackbar = ref(false);
 const snackbarText = ref('');
@@ -184,9 +214,31 @@ const fetchData = async () => {
     users.value = usersRes.data || [];
     totalUsers.value = statsRes.data.totalUsers || 0;
     totalCoinsCirculating.value = statsRes.data.totalCoins || 0;
+    adminRevenue.value = statsRes.data.totalRevenue || 0;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     showSnackbar('Failed to load real-time data from server.', 'error');
+  }
+};
+
+const requestAdminWithdraw = async () => {
+  if (!withdrawAmount.value || Number(withdrawAmount.value) <= 0) return;
+  withdrawing.value = true;
+  try {
+    const adminData = JSON.parse(localStorage.getItem('user') || '{}');
+    await axios.post(`${API_BASE_URL}/api/wallet/withdraw`, {
+      userId: adminData._id,
+      amountCoins: Number(withdrawAmount.value) * 10, // Admin uses INR directly, conversion back to coins for the shared API
+      paymentDetails: paymentDetails.value,
+      isAdminWithdrawal: true
+    });
+    showSnackbar('Withdrawal request submitted successfully!');
+    adminWithdrawDialog.value = false;
+    fetchData();
+  } catch (err: any) {
+    showSnackbar(err.response?.data?.error || 'Withdrawal failed', 'error');
+  } finally {
+    withdrawing.value = false;
   }
 };
 

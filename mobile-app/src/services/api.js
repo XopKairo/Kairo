@@ -35,9 +35,9 @@ export const loginUser = async (contact, password) => {
   }
 };
 
-export const registerUser = async (name, contact, password, isPhone) => {
+export const registerUser = async (name, contact, password, isPhone, gender) => {
   try {
-    const payload = { name, password };
+    const payload = { name, password, gender };
     if (isPhone) payload.phone = contact;
     else payload.email = contact;
 

@@ -16,6 +16,16 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   profilePicture: { type: String, default: '' },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Male' },
+  paymentMethods: {
+    upiId: { type: String },
+    bankDetails: {
+      accountHolder: { type: String },
+      accountNumber: { type: String },
+      ifscCode: { type: String },
+      bankName: { type: String }
+    }
+  },
   status: { type: String, default: 'offline' },
   pushToken: { type: String, default: '' }
 }, { timestamps: true });

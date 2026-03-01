@@ -15,16 +15,18 @@ router.get('/stats', async (req, res) => {
     const users = await User.find({}).select('coins');
     const totalCoins = users.reduce((sum, user) => sum + (user.coins || 0), 0);
     
-    // Revenue placeholder logic (sum of successful payout values for example)
-    const paidPayouts = await Payout.find({ status: 'Paid' });
-    const revenueValue = paidPayouts.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // Real Admin Revenue from Admin model
+    const Admin = require('../models/Admin');
+    const admin = await Admin.findOne({});
+    const totalRevenue = admin ? admin.totalRevenue : 0;
 
     res.json({
       totalUsers,
       totalCoins,
       verifiedHosts,
       pendingPayouts,
-      revenue: `₹${revenueValue.toLocaleString('en-IN')}`
+      revenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
+      totalRevenue
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
