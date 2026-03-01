@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated, Alert } from 'react-native';
+import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotificationsAsync } from '../../services/pushService';
@@ -15,10 +16,21 @@ const ZoraSplashScreen = ({ navigation }) => {
     }).start();
 
     const checkTokenAndNavigate = async () => {
-      // Force 2.5 seconds delay to show the splash screen as requested
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
       try {
+        // 1. Check Maintenance Mode first
+        const settingsRes = await axios.get('https://kairo-b1i9.onrender.com/api/settings');
+        if (settingsRes.data && settingsRes.data.maintenance) {
+          Alert.alert(
+            "System Maintenance",
+            "Zora is currently undergoing scheduled maintenance. Please try again later.",
+            [{ text: "OK", onPress: () => { /* Stay on splash or exit */ } }]
+          );
+          return;
+        }
+
+        // Force 2.5 seconds delay to show the splash screen as requested
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
         const token = await AsyncStorage.getItem('userToken');
         const userDataStr = await AsyncStorage.getItem('userData');
         if (token && userDataStr) {

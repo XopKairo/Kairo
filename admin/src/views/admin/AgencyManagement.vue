@@ -7,7 +7,7 @@ import UiParentCard from '@/components/shared/UiParentCard.vue';
 const page = ref({ title: 'Agency Management' });
 const agencies = ref<any[]>([]);
 const dialog = ref(false);
-const newAgency = ref({ name: '', owner: '', commission: 10 });
+const newAgency = ref({ name: '', ownerName: '', commissionRate: 10, email: '' });
 
 const fetchAgencies = async () => {
   const res = await axios.get('https://kairo-b1i9.onrender.com/api/agencies');
@@ -17,11 +17,11 @@ const fetchAgencies = async () => {
 const saveAgency = async () => {
   await axios.post('https://kairo-b1i9.onrender.com/api/agencies', newAgency.value);
   dialog.value = false;
-  newAgency.value = { name: '', owner: '', commission: 10 };
+  newAgency.value = { name: '', ownerName: '', commissionRate: 10, email: '' };
   fetchAgencies();
 };
 
-const deleteAgency = async (id: number) => {
+const deleteAgency = async (id: string) => {
   if (confirm("Delete this agency?")) {
     await axios.delete(`https://kairo-b1i9.onrender.com/api/agencies/${id}`);
     fetchAgencies();
@@ -49,12 +49,12 @@ onMounted(fetchAgencies);
             </tr>
           </thead>
           <tbody>
-            <tr v-for="agency in agencies" :key="agency.id">
+            <tr v-for="agency in agencies" :key="agency._id">
               <td>{{ agency.name }}</td>
-              <td>{{ agency.owner }}</td>
-              <td>{{ agency.commission }}%</td>
+              <td>{{ agency.ownerName }}</td>
+              <td>{{ agency.commissionRate }}%</td>
               <td>
-                <v-btn icon color="error" variant="text" @click="deleteAgency(agency.id)"><v-icon>mdi-delete</v-icon></v-btn>
+                <v-btn icon color="error" variant="text" @click="deleteAgency(agency._id)"><v-icon>mdi-delete</v-icon></v-btn>
               </td>
             </tr>
           </tbody>
@@ -67,8 +67,9 @@ onMounted(fetchAgencies);
     <v-card class="pa-4">
       <v-card-title>Add New Agency</v-card-title>
       <v-text-field v-model="newAgency.name" label="Agency Name" variant="outlined" class="mt-4"></v-text-field>
-      <v-text-field v-model="newAgency.owner" label="Owner Name" variant="outlined"></v-text-field>
-      <v-text-field v-model="newAgency.commission" label="Commission (%)" type="number" variant="outlined"></v-text-field>
+      <v-text-field v-model="newAgency.email" label="Agency Email" variant="outlined"></v-text-field>
+      <v-text-field v-model="newAgency.ownerName" label="Owner Name" variant="outlined"></v-text-field>
+      <v-text-field v-model="newAgency.commissionRate" label="Commission (%)" type="number" variant="outlined"></v-text-field>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn color="primary" @click="saveAgency">Save</v-btn>

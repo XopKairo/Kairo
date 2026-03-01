@@ -28,6 +28,11 @@ router.put('/coins/:id', async (req, res) => {
   res.json(pkg);
 });
 
+router.delete('/coins/:id', async (req, res) => {
+  await CoinPackage.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Package deleted' });
+});
+
 // --- Gifts ---
 router.get('/gifts', async (req, res) => {
   res.json(await Gift.find({}));

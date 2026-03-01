@@ -1,13 +1,19 @@
 const mongoose = require('mongoose');
 
 const settingsSchema = new mongoose.Schema({
-  revenueControl: { type: Number, default: 0 },
-  commissionPercent: { type: Number, default: 10 },
-  maintenanceMode: { type: Boolean, default: false },
-  admobConfig: {
-    appId: { type: String, default: '' },
-    rewardRules: { type: String, default: '' }
-  }
+  // Revenue Control
+  callRate: { type: Number, default: 30 },
+  commission: { type: Number, default: 30 },
+  
+  // System Control
+  maintenance: { type: Boolean, default: false },
+  
+  // Ad Settings
+  enableAds: { type: Boolean, default: true },
+  rewardPerAd: { type: Number, default: 5 },
+  dailyLimit: { type: Number, default: 10 },
+  adMobId: { type: String, default: '' },
+  interstitialId: { type: String, default: '' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', settingsSchema);

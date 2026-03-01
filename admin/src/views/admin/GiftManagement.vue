@@ -56,7 +56,7 @@ onMounted(fetchGifts);
     <v-col cols="12">
       <UiParentCard title="App Gifts">
         <template v-slot:action>
-          <v-btn color="primary" @click="editedGift = {name:'', price:0, category:'Basic', status:'Active'}; dialog = true;">Add New Gift</v-btn>
+          <v-btn color="primary" @click="editedGift = {name:'', coinCost:0, category:'Basic', isActive:true}; dialog = true;">Add New Gift</v-btn>
         </template>
         <v-table>
           <thead>

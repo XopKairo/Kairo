@@ -40,7 +40,7 @@ onMounted(fetchPackages);
     <v-col cols="12">
       <UiParentCard title="Active Coin Packages">
         <template v-slot:action>
-          <v-btn color="primary" @click="editedItem = {name:'', coins:0, price:0, bonus:0}; dialog = true;">Add New Package</v-btn>
+          <v-btn color="primary" @click="editedItem = {name:'', coins:0, priceINR:0, bonus:0}; dialog = true;">Add New Package</v-btn>
         </template>
         <v-table>
           <thead>

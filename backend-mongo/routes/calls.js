@@ -57,12 +57,18 @@ router.post('/end', async (req, res) => {
     const host = await Host.findById(call.hostId).session(session);
     if (!host) throw new Error('Host not found');
 
-    const callRatePerMinute = host.callRatePerMinute || 30;
+    // Fetch Global Settings
+    const Settings = require('../models/Settings');
+    let settings = await Settings.findOne().session(session);
+    if (!settings) settings = { callRate: 30, commission: 30 }; // Fallback
+
+    const callRatePerMinute = settings.callRate; // Using global setting instead of host-specific for consistency if required
 
     // Calculate Coins
     const totalCoinsDeducted = durationInMinutes * callRatePerMinute;
-    const hostShare = totalCoinsDeducted * 0.70; // 70% to Host
-    const adminShare = totalCoinsDeducted * 0.30; // 30% to Admin
+    const hostCommissionPercent = settings.commission;
+    const hostShare = totalCoinsDeducted * ((100 - hostCommissionPercent) / 100);
+    const adminShare = totalCoinsDeducted * (hostCommissionPercent / 100);
 
     // Verify & Deduct User Coins
     const user = await User.findById(call.userId).session(session);
