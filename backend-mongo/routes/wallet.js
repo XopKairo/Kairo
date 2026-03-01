@@ -109,6 +109,11 @@ router.post('/withdraw', async (req, res) => {
     const user = await User.findById(userId).session(session);
     if (!user) throw new Error('User not found');
 
+    // BLOCK MALE WITHDRAWALS
+    if (user.gender === 'Male') {
+      throw new Error('Withdrawal is only available for Female Hosts');
+    }
+
     if (user.coins < amountNum) {
       throw new Error('Insufficient coins in wallet');
     }

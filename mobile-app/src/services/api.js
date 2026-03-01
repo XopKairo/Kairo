@@ -35,9 +35,15 @@ export const loginUser = async (contact, password) => {
   }
 };
 
-export const registerUser = async (name, contact, password, isPhone, gender) => {
+export const registerUser = async (name, contact, password, isPhone, gender, selfie, otpToken) => {
   try {
-    const payload = { name, password, gender };
+    const payload = { 
+      name, 
+      password, 
+      gender, 
+      verificationSelfie: selfie,
+      otp_verified_token: otpToken
+    };
     if (isPhone) payload.phone = contact;
     else payload.email = contact;
 

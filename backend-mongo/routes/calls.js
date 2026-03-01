@@ -72,19 +72,23 @@ router.post('/end', async (req, res) => {
     user.coins -= totalCoinsDeducted;
     await user.save({ session });
 
-    // Update Host Earnings (Only if Female)
-    if (host && host.gender === 'Female') {
+    // Update Host Earnings (Only if Female and Gender Verified)
+    if (host && host.gender === 'Female' && host.isGenderVerified) {
       host.earnings += hostShare;
       host.status = 'Online';
       await host.save({ session });
+      
+      // Admin gets 30%
+      const Admin = require('../models/Admin');
+      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShare } }).session(session);
     } else if (host) {
-      host.status = 'Online'; // Male hosts don't get earnings as per rule
+      host.status = 'Online';
       await host.save({ session });
+      
+      // 100% flows to Admin if host is Male or not verified
+      const Admin = require('../models/Admin');
+      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: totalCoinsDeducted * 0.1 } }).session(session); // Converting 100% coins to INR
     }
-
-    // Update Admin Revenue (ACID Update to Admin Model)
-    const Admin = require('../models/Admin');
-    await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShare } }).session(session);
 
     // Save Call Record
     call.status = 'Completed';

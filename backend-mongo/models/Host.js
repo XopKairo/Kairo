@@ -6,6 +6,8 @@ const hostSchema = new mongoose.Schema({
   status: { type: String, enum: ['Online', 'Busy', 'Offline'], default: 'Offline' },
   earnings: { type: Number, default: 0 }, // Host's earnings from calls
   gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Female' },
+  verificationSelfie: { type: String, default: '' },
+  isGenderVerified: { type: Boolean, default: false },
   paymentMethods: {
     upiId: { type: String },
     bankDetails: {

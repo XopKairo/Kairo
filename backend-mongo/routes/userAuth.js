@@ -73,11 +73,30 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
     
-    const userData = { name, password, lastLoginDate: new Date(), zoraPoints: 5 };
+    const userData = { 
+      name, 
+      password, 
+      gender: req.body.gender || 'Male',
+      verificationSelfie: req.body.verificationSelfie || '',
+      lastLoginDate: new Date(), 
+      zoraPoints: 5 
+    };
     if (email) userData.email = email;
     if (phone) userData.phone = phone;
 
     const user = await User.create(userData);
+
+    // If Female, create a Verification Request for Admin
+    if (userData.gender === 'Female' && userData.verificationSelfie) {
+      const VerificationRequest = require('../models/VerificationRequest');
+      await VerificationRequest.create({
+        userId: user._id,
+        photoUrl: userData.verificationSelfie,
+        idUrl: 'Selfie Verification', // Placeholder
+        status: 'pending'
+      });
+    }
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
     const badge = getUserBadge(user.zoraPoints);
     

@@ -21,6 +21,7 @@
     "expo-dev-client": "~5.0.20",
     "expo-device": "~7.0.3",
     "expo-font": "~13.0.4",
+    "expo-image-picker": "^55.0.10",
     "expo-keep-awake": "~14.0.3",
     "expo-linear-gradient": "~14.0.2",
     "expo-modules-core": "~2.2.3",

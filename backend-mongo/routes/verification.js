@@ -51,9 +51,16 @@ router.post('/:id/status', async (req, res) => {
     
     // If approved, update user model
     if (status === 'approved') {
-      await User.findByIdAndUpdate(request.userId, { isVerified: true });
+      await User.findByIdAndUpdate(request.userId, { 
+        isVerified: true,
+        isGenderVerified: true // Assuming gender verification also sets isVerified or we handle it separately
+      });
+      
+      // Also update Host if exists
+      const Host = require('../models/Host');
+      await Host.findOneAndUpdate({ email: (await User.findById(request.userId)).email }, { isGenderVerified: true, isVerified: true });
     } else {
-      await User.findByIdAndUpdate(request.userId, { isVerified: false });
+      await User.findByIdAndUpdate(request.userId, { isGenderVerified: false });
     }
 
     res.json({ message: `Request ${status} successfully`, request });

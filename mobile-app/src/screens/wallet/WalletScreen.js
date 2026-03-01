@@ -133,8 +133,8 @@ const WalletScreen = () => {
             </View>
           )}
 
-          <Button mode="contained" onPress={handleWithdraw} loading={loading} style={styles.withdrawBtn}>
-            Withdraw Now
+          <Button mode="contained" onPress={handleWithdraw} loading={loading} style={styles.withdrawBtn} disabled={user?.gender === 'Male'}>
+            {user?.gender === 'Male' ? 'Withdrawal Disabled for Male Users' : 'Withdraw Now'}
           </Button>
         </Card.Content>
       </Card>
@@ -142,9 +142,8 @@ const WalletScreen = () => {
       <View style={styles.limitInfo}>
         <Title style={{fontSize: 16}}>Withdrawal Rules & Limits</Title>
         <List.Item title="Minimum Payout" description="₹500 (5000 Coins)" left={p => <List.Icon {...p} icon="minus-circle-outline" />} />
-        <List.Item title="Daily Limit" description="Max ₹2,000 per day" left={p => <List.Icon {...p} icon="calendar-today" />} />
-        <List.Item title="Monthly Limit (Male)" description="Max ₹10,000 per month" left={p => <List.Icon {...p} icon="calendar-month" />} />
-        <List.Item title="Monthly Limit (Female)" description="No Monthly Limit" left={p => <List.Icon {...p} icon="star-face" color="#e91e63" />} />
+        <List.Item title="Male Users" description="Withdrawal is DISABLED for Male users." titleStyle={{color: 'red'}} left={p => <List.Icon {...p} icon="block-helper" color="red" />} />
+        <List.Item title="Female Hosts" description="No monthly limit. Verified hosts only." left={p => <List.Icon {...p} icon="star-face" color="#e91e63" />} />
       </View>
     </ScrollView>
   );

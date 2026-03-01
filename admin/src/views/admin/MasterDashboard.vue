@@ -39,6 +39,48 @@
       </v-col>
     </v-row>
 
+    <!-- Gender Verification Requests Section -->
+    <v-row class="mt-6">
+      <v-col cols="12">
+        <v-card elevation="2">
+          <v-card-title class="pa-4 orange lighten-5">
+            <v-icon color="orange" start>mdi-face-recognition</v-icon>
+            <span class="text-h6">Pending Gender Verifications</span>
+          </v-card-title>
+          <v-table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Selected Gender</th>
+                <th>Selfie Photo</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="req in verificationRequests" :key="req._id">
+                <td>{{ req.userId?.name }}<br><small>{{ req.userId?.email }}</small></td>
+                <td>
+                   <v-chip :color="req.userId?.gender === 'Female' ? 'pink' : 'blue'" size="small">
+                    {{ req.userId?.gender }}
+                   </v-chip>
+                </td>
+                <td>
+                  <v-img :src="req.photoUrl" width="100" height="100" class="rounded grey lighten-2" @click="viewImage(req.photoUrl)"></v-img>
+                </td>
+                <td>
+                  <v-btn color="success" size="small" class="mr-2" @click="updateVerificationStatus(req._id, 'approved')">Approve</v-btn>
+                  <v-btn color="error" size="small" @click="updateVerificationStatus(req._id, 'rejected')">Reject</v-btn>
+                </td>
+              </tr>
+              <tr v-if="verificationRequests.length === 0">
+                <td colspan="4" class="text-center py-4">No pending verification requests.</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <!-- User Management Section -->
     <v-row class="mt-6">
       <v-col cols="12">
@@ -66,7 +108,7 @@
                 <th class="text-left">Gender</th>
                 <th class="text-left">Coins</th>
                 <th class="text-left">Status</th>
-                <th class="text-left">Verification</th>
+                <th class="text-left">Gender Verified</th>
                 <th class="text-left">Actions</th>
               </tr>
             </thead>
@@ -85,14 +127,11 @@
                   </v-chip>
                 </td>
                 <td>
-                  <v-chip :color="user.isVerified ? 'primary' : 'warning'" size="small">
-                    {{ user.isVerified ? 'Verified' : 'Pending' }}
+                  <v-chip :color="user.isGenderVerified ? 'success' : 'warning'" size="small">
+                    {{ user.isGenderVerified ? 'Verified' : 'Unverified' }}
                   </v-chip>
                 </td>
                 <td>
-                  <v-btn size="small" :color="user.isVerified ? 'grey' : 'primary'" class="mr-2" @click="verifyUser(user._id)" :disabled="user.isVerified">
-                    Verify
-                  </v-btn>
                   <v-btn size="small" :color="user.isBanned ? 'success' : 'error'" @click="toggleBanUser(user)">
                     {{ user.isBanned ? 'Unban' : 'Ban' }}
                   </v-btn>
@@ -120,6 +159,17 @@
           <v-spacer></v-spacer>
           <v-btn color="grey" variant="text" @click="adminWithdrawDialog = false">Cancel</v-btn>
           <v-btn color="primary" variant="flat" @click="requestAdminWithdraw" :loading="withdrawing">Withdraw Now</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Image Viewer Dialog -->
+    <v-dialog v-model="imageDialog" max-width="800px">
+      <v-card>
+        <v-img :src="dialogImage" width="100%"></v-img>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="imageDialog = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -153,6 +203,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const users = ref<any[]>([]);
+const verificationRequests = ref<any[]>([]);
 const search = ref('');
 const totalUsers = ref(0);
 const activeSessions = ref(0);
@@ -163,6 +214,9 @@ const adminWithdrawDialog = ref(false);
 const withdrawAmount = ref('');
 const paymentDetails = ref('');
 const withdrawing = ref(false);
+
+const imageDialog = ref(false);
+const dialogImage = ref('');
 
 const snackbar = ref(false);
 const snackbarText = ref('');
@@ -205,19 +259,36 @@ const showSnackbar = (text: string, color: string = 'success') => {
   snackbar.value = true;
 };
 
+const viewImage = (url: string) => {
+  dialogImage.value = url;
+  imageDialog.value = true;
+};
+
 const fetchData = async () => {
   try {
-    const [usersRes, statsRes] = await Promise.all([
+    const [usersRes, statsRes, verRes] = await Promise.all([
       axios.get(`${API_BASE_URL}/api/admin/users`),
-      axios.get(`${API_BASE_URL}/api/admin/dashboard/stats`)
+      axios.get(`${API_BASE_URL}/api/admin/dashboard/stats`),
+      axios.get(`${API_BASE_URL}/api/verification`)
     ]);
     users.value = usersRes.data || [];
     totalUsers.value = statsRes.data.totalUsers || 0;
     totalCoinsCirculating.value = statsRes.data.totalCoins || 0;
     adminRevenue.value = statsRes.data.totalRevenue || 0;
+    verificationRequests.value = verRes.data.filter((r: any) => r.status === 'pending');
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     showSnackbar('Failed to load real-time data from server.', 'error');
+  }
+};
+
+const updateVerificationStatus = async (id: string, status: string) => {
+  try {
+    await axios.post(`${API_BASE_URL}/api/verification/${id}/status`, { status });
+    showSnackbar(`Verification ${status} successfully.`);
+    fetchData();
+  } catch (err) {
+    showSnackbar('Failed to update verification status.', 'error');
   }
 };
 
@@ -228,7 +299,7 @@ const requestAdminWithdraw = async () => {
     const adminData = JSON.parse(localStorage.getItem('user') || '{}');
     await axios.post(`${API_BASE_URL}/api/wallet/withdraw`, {
       userId: adminData._id,
-      amountCoins: Number(withdrawAmount.value) * 10, // Admin uses INR directly, conversion back to coins for the shared API
+      amountCoins: Number(withdrawAmount.value) * 10,
       paymentDetails: paymentDetails.value,
       isAdminWithdrawal: true
     });
@@ -239,17 +310,6 @@ const requestAdminWithdraw = async () => {
     showSnackbar(err.response?.data?.error || 'Withdrawal failed', 'error');
   } finally {
     withdrawing.value = false;
-  }
-};
-
-const verifyUser = async (userId: string) => {
-  try {
-    await axios.post(`${API_BASE_URL}/api/admin/users/${userId}/verify`, { isVerified: true });
-    const user = users.value.find(u => u._id === userId);
-    if (user) user.isVerified = true;
-    showSnackbar('User verified successfully.');
-  } catch (error) {
-    showSnackbar('Failed to verify user.', 'error');
   }
 };
 
