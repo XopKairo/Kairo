@@ -133,8 +133,16 @@ const WalletScreen = () => {
             </View>
           )}
 
-          <Button mode="contained" onPress={handleWithdraw} loading={loading} style={styles.withdrawBtn} disabled={user?.gender === 'Male'}>
-            {user?.gender === 'Male' ? 'Withdrawal Disabled for Male Users' : 'Withdraw Now'}
+          <Button 
+            mode="contained" 
+            onPress={handleWithdraw} 
+            loading={loading} 
+            style={styles.withdrawBtn} 
+            disabled={user?.gender === 'Male' || !user?.isGenderVerified}
+          >
+            {user?.gender === 'Male' 
+              ? 'Withdrawal Disabled' 
+              : (!user?.isGenderVerified ? 'Verification Pending' : 'Withdraw Now')}
           </Button>
         </Card.Content>
       </Card>

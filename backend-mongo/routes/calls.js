@@ -81,15 +81,15 @@ router.post('/end', async (req, res) => {
       host.status = 'Online';
       await host.save({ session });
       
-      // System gets 30% commission
+      // System gets 30% commission (Converted to INR)
+      const adminShareINR = Number((adminShare * 0.1).toFixed(2));
       const Admin = require('../models/Admin');
-      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShare } }).session(session);
+      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } }).session(session);
     } else if (host) {
       host.status = 'Online';
       await host.save({ session });
       
-      // 100% OF TRANSACTION FLOWS TO SYSTEM REVENUE
-      // This applies to Male hosts or Unverified Female hosts.
+      // 100% OF TRANSACTION FLOWS TO SYSTEM REVENUE (Converted to INR)
       const totalAmountINR = Number((totalCoinsDeducted * 0.1).toFixed(2));
       const Admin = require('../models/Admin');
       await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: totalAmountINR } }).session(session);
