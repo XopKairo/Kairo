@@ -12,8 +12,8 @@ const VideoCallScreen = ({ route, navigation }) => {
   };
   const [startTime, setStartTime] = useState(null);
 
-  const appID = 1106955329;
-  const appSign = 'f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2';
+  const appID = Number(process.env.EXPO_PUBLIC_ZEGO_APP_ID) || 1106955329;
+  const appSign = process.env.EXPO_PUBLIC_ZEGO_APP_SIGN || 'f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2';
 
   useEffect(() => {
     socketService.connect();

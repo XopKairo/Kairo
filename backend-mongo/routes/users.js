@@ -113,6 +113,19 @@ router.post('/:id/push-token', async (req, res) => {
   }
 });
 
+// POST to verify/unverify users
+router.post('/:id/verify', async (req, res) => {
+  try {
+    const { isVerified } = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, { isVerified }, { new: true });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    res.json({ message: `User ${isVerified ? 'verified' : 'unverified'} successfully`, user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // POST to ban/unban users
 router.post('/:id/ban', async (req, res) => {
   try {
@@ -120,6 +133,13 @@ router.post('/:id/ban', async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, { isBanned }, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found' });
     
+    // Real-time Ban Enforcement via Socket
+    if (isBanned && req.io) {
+      req.io.to(req.params.id).emit('userBanned', {
+        message: 'Your account has been banned by the administrator.'
+      });
+    }
+
     res.json({ message: `User ${isBanned ? 'banned' : 'unbanned'} successfully`, user });
   } catch (error) {
     res.status(500).json({ message: error.message });

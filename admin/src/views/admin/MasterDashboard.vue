@@ -241,8 +241,8 @@ const fetchUsers = async () => {
 
 const verifyUser = async (userId: string) => {
   try {
-    // Example endpoint for verifying user
-    await axios.post(`${API_BASE_URL}/api/admin/users/${userId}/verify`);
+    // Correct endpoint for verifying user
+    await axios.post(`${API_BASE_URL}/api/admin/users/${userId}/verify`, { isVerified: true });
     
     // Update local state
     const user = users.value.find(u => u._id === userId);
@@ -251,53 +251,52 @@ const verifyUser = async (userId: string) => {
     showSnackbar('User profile verified successfully.');
   } catch (error) {
     console.error('Verify error:', error);
-    // Fallback for UI if API fails
-    const user = users.value.find(u => u._id === userId);
-    if (user) user.isVerified = true;
-    showSnackbar('User profile verified (Simulated).', 'warning');
+    showSnackbar('Failed to verify user profile.', 'error');
   }
 };
 
 const toggleBanUser = async (user: any) => {
   try {
-    const action = user.isBanned ? 'unban' : 'ban';
-    await axios.post(`${API_BASE_URL}/api/admin/users/${user._id}/${action}`);
+    const newBanStatus = !user.isBanned;
+    await axios.post(`${API_BASE_URL}/api/admin/users/${user._id}/ban`, { isBanned: newBanStatus });
     
-    user.isBanned = !user.isBanned;
+    user.isBanned = newBanStatus;
     showSnackbar(`User has been ${user.isBanned ? 'banned' : 'unbanned'}.`);
   } catch (error) {
     console.error('Ban error:', error);
-    user.isBanned = !user.isBanned;
-    showSnackbar(`User ${user.isBanned ? 'banned' : 'unbanned'} (Simulated).`, 'warning');
+    showSnackbar(`Failed to ${user.isBanned ? 'unban' : 'ban'} user.`, 'error');
   }
 };
 
-const updateAnalytics = () => {
-  // Simulate real-time data fetching for the chart
-  const now = new Date();
-  const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-  
-  // Simulated active sessions count (replace with real WebSocket/Polling data from Render backend)
-  const newActiveCount = Math.floor(Math.random() * 50) + 100; 
-  activeSessions.value = newActiveCount;
+const updateAnalytics = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/calls/active`);
+    const activeCalls = Array.isArray(response.data) ? response.data : [];
+    const activeCount = activeCalls.length;
+    
+    activeSessions.value = activeCount;
 
-  const newLabels = [...chartData.value.labels, timeString];
-  const newData = [...chartData.value.datasets[0].data, newActiveCount];
+    const now = new Date();
+    const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    
+    const newLabels = [...chartData.value.labels, timeString];
+    const newData = [...chartData.value.datasets[0].data, activeCount];
 
-  // Keep last 10 data points
-  if (newLabels.length > 10) {
-    newLabels.shift();
-    newData.shift();
+    if (newLabels.length > 10) {
+      newLabels.shift();
+      newData.shift();
+    }
+
+    chartData.value = {
+      labels: newLabels,
+      datasets: [{
+        ...chartData.value.datasets[0],
+        data: newData
+      }]
+    };
+  } catch (error) {
+    console.error('Analytics fetch error:', error);
   }
-
-  // Reactive update for Vue Chart.js
-  chartData.value = {
-    labels: newLabels,
-    datasets: [{
-      ...chartData.value.datasets[0],
-      data: newData
-    }]
-  };
 };
 
 onMounted(() => {

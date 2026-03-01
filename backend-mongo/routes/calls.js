@@ -9,8 +9,8 @@ const Host = require('../models/Host');
 // 1. Generate ZegoCloud Token (Optional if AppSign is directly used in App)
 router.post('/generate-token', (req, res) => {
   const { userId, roomId } = req.body;
-  const appId = 1106955329;
-  const serverSecret = "f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2";
+  const appId = parseInt(process.env.ZEGO_APP_ID) || 1106955329;
+  const serverSecret = process.env.ZEGO_SERVER_SECRET || "f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2";
   
   res.json({
     appId,
@@ -49,10 +49,15 @@ router.post('/end', async (req, res) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-    const { callId, durationInMinutes, callRatePerMinute } = req.body;
+    const { callId, durationInMinutes } = req.body;
     
     const call = await Call.findOne({ callId, status: 'Active' }).session(session);
     if (!call) throw new Error('Active call not found');
+
+    const host = await Host.findById(call.hostId).session(session);
+    if (!host) throw new Error('Host not found');
+
+    const callRatePerMinute = host.callRatePerMinute || 30;
 
     // Calculate Coins
     const totalCoinsDeducted = durationInMinutes * callRatePerMinute;
@@ -68,7 +73,6 @@ router.post('/end', async (req, res) => {
     await user.save({ session });
 
     // Update Host Earnings
-    const host = await Host.findById(call.hostId).session(session);
     if (host) {
       host.earnings += hostShare;
       host.status = 'Online';

@@ -6,6 +6,7 @@ const hostSchema = new mongoose.Schema({
   status: { type: String, enum: ['Online', 'Busy', 'Offline'], default: 'Offline' },
   earnings: { type: Number, default: 0 }, // Host's earnings from calls
   rating: { type: Number, default: 0 },
+  callRatePerMinute: { type: Number, default: 30 },
   isVerified: { type: Boolean, default: false },
   isBanned: { type: Boolean, default: false }
 }, { timestamps: true });

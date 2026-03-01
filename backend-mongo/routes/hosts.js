@@ -36,4 +36,15 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
+// DELETE to remove host
+router.delete('/:id', async (req, res) => {
+  try {
+    const host = await Host.findByIdAndDelete(req.params.id);
+    if (!host) return res.status(404).json({ message: 'Host not found' });
+    res.json({ message: 'Host rejected and removed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

@@ -19,12 +19,19 @@ router.post('/recharge', async (req, res) => {
       throw new Error('User not found');
     }
 
+    const transactionCollection = mongoose.connection.db.collection('transactions');
+    
+    // Uniqueness Check for transactionId
+    const existingTx = await transactionCollection.findOne({ transactionId }, { session });
+    if (existingTx) {
+      throw new Error('Transaction ID already processed');
+    }
+
     // Add coins to user wallet
     user.coins += Number(amount);
     await user.save({ session });
 
     // Update Admin's Master Transactions Table
-    const transactionCollection = mongoose.connection.db.collection('transactions');
     await transactionCollection.insertOne({
       userId: user._id,
       type: 'RECHARGE',

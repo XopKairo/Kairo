@@ -4,6 +4,7 @@ const SOCKET_URL = 'https://kairo-b1i9.onrender.com';
 
 class SocketService {
   socket = null;
+  onBanHandler = null;
 
   connect(userId = null) {
     if (!this.socket) {
@@ -14,7 +15,18 @@ class SocketService {
           this.socket.emit('joinUserRoom', userId);
         }
       });
+
+      this.socket.on('userBanned', (data) => {
+        console.warn('BAN DETECTED:', data.message);
+        if (this.onBanHandler) {
+          this.onBanHandler(data);
+        }
+      });
     }
+  }
+
+  setBanHandler(handler) {
+    this.onBanHandler = handler;
   }
 
   disconnect() {
