@@ -9,7 +9,7 @@ const payouts = ref<any[]>([]);
 
 const fetchPayouts = async () => {
   try {
-    const res = await axios.get('https://kairo-novh.onrender.com/api/payouts');
+    const res = await axios.get('https://kairo-b1i9.onrender.com/api/payouts');
     payouts.value = res.data;
   } catch (error) {
     console.error("Error fetching payouts:", error);
@@ -19,7 +19,7 @@ const fetchPayouts = async () => {
 const updateStatus = async (id: string, status: string) => {
   try {
     // Backend model status: ['Pending', 'Approved', 'Rejected']
-    await axios.put(`https://kairo-novh.onrender.com/api/payouts/${id}`, { status });
+    await axios.put(`https://kairo-b1i9.onrender.com/api/payouts/${id}`, { status });
     fetchPayouts();
   } catch (error) {
     console.error("Error updating payout status:", error);

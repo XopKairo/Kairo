@@ -8,18 +8,18 @@ const page = ref({ title: 'Reports & Bans' });
 const reports = ref<any[]>([]);
 
 const fetchReports = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/reports');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/reports');
   reports.value = res.data;
 };
 
 const resolveReport = async (id: number) => {
-  await axios.put(`https://kairo-novh.onrender.com/api/reports/${id}`, { status: 'Resolved' });
+  await axios.put(`https://kairo-b1i9.onrender.com/api/reports/${id}`, { status: 'Resolved' });
   fetchReports();
 };
 
 const banUserFromReport = async (userId: number) => {
   if (confirm("Are you sure you want to ban this user based on this report?")) {
-    await axios.put(`https://kairo-novh.onrender.com/api/users/${userId}`, { status: 'Banned' });
+    await axios.put(`https://kairo-b1i9.onrender.com/api/users/${userId}`, { status: 'Banned' });
     fetchReports(); // Refresh reports
     alert("User has been banned.");
   }

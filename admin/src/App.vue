@@ -8,7 +8,7 @@ import { onMounted } from 'vue';
 import { io } from 'socket.io-client';
 
 onMounted(() => {
-  const socket = io('https://kairo-novh.onrender.com');
+  const socket = io('https://kairo-b1i9.onrender.com');
   
   socket.on('connect', () => {
     console.log('Connected to WebSocket server:', socket.id);

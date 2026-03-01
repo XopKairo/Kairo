@@ -8,7 +8,7 @@ const page = ref({ title: 'Video Call Logs' });
 const calls = ref<any[]>([]);
 
 const fetchCalls = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/calls');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/calls');
   calls.value = res.data;
 };
 

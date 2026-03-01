@@ -22,7 +22,7 @@ const step = ref(1); // 1: Send OTP, 2: Reset
 
 const login = async () => {
   try {
-    const response = await axios.post('https://kairo-novh.onrender.com/api/auth/login', {
+    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/login', {
       email: email.value,
       password: password.value
     });
@@ -38,7 +38,7 @@ const login = async () => {
 
 const sendOTP = async () => {
   try {
-    const response = await axios.post('https://kairo-novh.onrender.com/api/auth/forgot-password', {
+    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/forgot-password', {
       email: resetEmail.value
     });
     if (response.data.success) {
@@ -55,7 +55,7 @@ const sendOTP = async () => {
 
 const handleReset = async () => {
   try {
-    const response = await axios.post('https://kairo-novh.onrender.com/api/auth/reset-password', {
+    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/reset-password', {
       email: resetEmail.value,
       otp: otp.value,
       newPassword: newPassword.value

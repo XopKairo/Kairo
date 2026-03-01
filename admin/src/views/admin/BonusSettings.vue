@@ -8,14 +8,14 @@ const page = ref({ title: 'Bonus Settings' });
 const bonusSettings = ref<any>({ newUser: 0, referral: 0, firstRecharge: 0, festiveBonus: false });
 
 const fetchBonusSettings = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/admin/settings/bonus');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/settings/bonus');
   if (res.data) {
     bonusSettings.value = res.data;
   }
 };
 
 const saveBonusSettings = async () => {
-  await axios.post('https://kairo-novh.onrender.com/api/admin/settings/bonus', bonusSettings.value);
+  await axios.post('https://kairo-b1i9.onrender.com/api/admin/settings/bonus', bonusSettings.value);
   alert("Bonus Settings Saved!");
 };
 

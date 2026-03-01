@@ -19,7 +19,7 @@ const socialLinks = ref({
 
 const fetchSocialLinks = async () => {
   try {
-    const res = await axios.get('https://kairo-novh.onrender.com/api/admin/social-profile');
+    const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/social-profile');
     socialLinks.value = { ...socialLinks.value, ...res.data };
   } catch (error) {
     console.error("Error fetching social links:", error);
@@ -28,7 +28,7 @@ const fetchSocialLinks = async () => {
 
 const updateSocialLinks = async () => {
   try {
-    await axios.post('https://kairo-novh.onrender.com/api/admin/social-profile', socialLinks.value);
+    await axios.post('https://kairo-b1i9.onrender.com/api/admin/social-profile', socialLinks.value);
     alert("Social links updated successfully!");
   } catch (error) {
     console.error("Error updating social links:", error);

@@ -9,24 +9,24 @@ const banners = ref<any[]>([]);
 const newTitle = ref('');
 
 const fetchBanners = async () => {
-  const res = await axios.get('https://kairo-novh.onrender.com/api/banners');
+  const res = await axios.get('https://kairo-b1i9.onrender.com/api/banners');
   banners.value = res.data;
 };
 
 const addBanner = async () => {
   if(!newTitle.value) return;
-  await axios.post('https://kairo-novh.onrender.com/api/banners', { title: newTitle.value, status: 'Active' });
+  await axios.post('https://kairo-b1i9.onrender.com/api/banners', { title: newTitle.value, status: 'Active' });
   newTitle.value = '';
   fetchBanners();
 };
 
 const toggleBanner = async (banner: any) => {
-  await axios.put(`https://kairo-novh.onrender.com/api/banners/${banner.id}`, { status: banner.status === 'Active' ? 'Inactive' : 'Active' });
+  await axios.put(`https://kairo-b1i9.onrender.com/api/banners/${banner.id}`, { status: banner.status === 'Active' ? 'Inactive' : 'Active' });
   fetchBanners();
 };
 
 const deleteBanner = async (id: number) => {
-  await axios.delete(`https://kairo-novh.onrender.com/api/banners/${id}`);
+  await axios.delete(`https://kairo-b1i9.onrender.com/api/banners/${id}`);
   fetchBanners();
 };
 
