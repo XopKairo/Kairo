@@ -15,6 +15,7 @@ import DiscoveryScreen from './src/screens/home/DiscoveryScreen';
 import UserProfileScreen from './src/screens/profile/UserProfileScreen';
 import VerificationScreen from './src/screens/profile/VerificationScreen';
 import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
+import WalletScreen from './src/screens/wallet/WalletScreen';
 import ChatScreen from './src/screens/call/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
@@ -72,6 +73,7 @@ export default function App() {
             )}
           </Stack.Screen>
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
           <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
           <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
           <Stack.Screen name="Chat" component={ChatScreen} />
