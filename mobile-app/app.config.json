@@ -1,0 +1,53 @@
+{
+  "name": "Zora",
+  "slug": "zora",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "icon": "./assets/icon.png",
+  "userInterfaceStyle": "light",
+  "jsEngine": "hermes",
+  "splash": {
+    "image": "./assets/splash-icon.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#ffffff"
+  },
+  "ios": {
+    "supportsTablet": true
+  },
+  "android": {
+    "package": "com.ajilomalloor.zora",
+    "enableProguardInReleaseBuilds": true,
+    "permissions": [
+      "CAMERA",
+      "RECORD_AUDIO",
+      "MODIFY_AUDIO_SETTINGS",
+      "ACCESS_NETWORK_STATE",
+      "ACCESS_WIFI_STATE",
+      "INTERNET"
+    ],
+    "adaptiveIcon": {
+      "backgroundColor": "#E6F4FE",
+      "foregroundImage": "./assets/android-icon-foreground.png",
+      "backgroundImage": "./assets/android-icon-background.png",
+      "monochromeImage": "./assets/android-icon-monochrome.png"
+    }
+  },
+  "plugins": [
+    "expo-notifications",
+    "expo-device"
+  ],
+  "web": {
+    "favicon": "./assets/favicon.png"
+  },
+  "extra": {
+    "eas": {
+      "projectId": "a8fb9a25-d6c1-4100-b2d5-5e350206295a"
+    }
+  },
+  "runtimeVersion": {
+    "policy": "appVersion"
+  },
+  "updates": {
+    "url": "https://u.expo.dev/a8fb9a25-d6c1-4100-b2d5-5e350206295a"
+  }
+}
