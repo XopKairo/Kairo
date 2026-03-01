@@ -3,7 +3,8 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, unique: true, sparse: true },
+  phone: { type: String, unique: true, sparse: true },
   password: { type: String, required: true },
   nickname: { type: String, default: '' },
   location: { type: String, default: '' },
@@ -18,6 +19,14 @@ const userSchema = new mongoose.Schema({
   status: { type: String, default: 'offline' },
   pushToken: { type: String, default: '' }
 }, { timestamps: true });
+
+// Ensure either email or phone is provided
+userSchema.pre('validate', function(next) {
+  if (!this.email && !this.phone) {
+    return next(new Error('Either email or phone must be provided.'));
+  }
+  next();
+});
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
