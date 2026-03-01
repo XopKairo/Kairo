@@ -34,14 +34,6 @@
       }
     },
     "plugins": [
-      [
-        "@zegocloud/zego-uikit-prebuilt-call-rn",
-        {
-          "android": {
-            "showNotification": true
-          }
-        }
-      ],
       "expo-notifications",
       "expo-device"
     ],
