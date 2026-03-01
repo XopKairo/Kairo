@@ -18,6 +18,14 @@
     "android": {
       "package": "com.ajilomalloor.zora",
       "enableProguardInReleaseBuilds": true,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE",
+        "INTERNET"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,6 +33,18 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
+    "plugins": [
+      [
+        "@zegocloud/zego-uikit-prebuilt-call-rn",
+        {
+          "android": {
+            "showNotification": true
+          }
+        }
+      ],
+      "expo-notifications",
+      "expo-device"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -32,6 +52,12 @@
       "eas": {
         "projectId": "a8fb9a25-d6c1-4100-b2d5-5e350206295a"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a8fb9a25-d6c1-4100-b2d5-5e350206295a"
     }
   }
 }
