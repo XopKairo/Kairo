@@ -3,24 +3,20 @@ const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { getUserBadge } = require('../utils/badgeSystem');
-const bcrypt = require('bcryptjs');
 
-// In-memory store for OTPs (For dev/demo purposes)
+// In-memory store for OTPs
 const otpStore = new Map();
 
 // Send OTP
 router.post('/send-otp', async (req, res) => {
-  const { contact } = req.body; // contact can be email or phone
+  const { contact } = req.body; 
   if (!contact) return res.status(400).json({ success: false, message: 'Contact info required' });
   
-  // Generate a 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(contact, { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 minutes expiry
+  otpStore.set(contact, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
   
-  // In a real app, send this OTP via SMS (Twilio) or Email (Nodemailer)
   console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
-  
-  res.json({ success: true, message: 'OTP sent successfully (Check server logs for now)', otp }); // Sending OTP in response just for easy testing on mobile without real SMS
+  res.json({ success: true, message: 'OTP sent successfully (Check server logs)', otp });
 });
 
 // Verify OTP
@@ -36,40 +32,64 @@ router.post('/verify-otp', async (req, res) => {
   if (storedOtpData.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
   
   otpStore.delete(contact);
-  res.json({ success: true, message: 'OTP verified' });
+
+  // Generate a temporary OTP Verification Token (valid for 15 minutes)
+  const otpVerifiedToken = jwt.sign(
+    { contact, verified: true }, 
+    process.env.JWT_SECRET || 'secret_key', 
+    { expiresIn: '15m' }
+  );
+
+  res.json({ success: true, message: 'OTP verified', otp_verified_token: otpVerifiedToken });
 });
 
-// User Registration
+// User Registration (Protected by OTP Token)
 router.post('/register', async (req, res) => {
-  const { name, email, phone, password } = req.body;
+  const { name, email, phone, password, otp_verified_token } = req.body;
+  
+  if (!otp_verified_token) {
+     return res.status(403).json({ success: false, message: 'Unauthorized: OTP verification token missing' });
+  }
+
   try {
+    // Verify the temporary token to prevent backdoor registration
+    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET || 'secret_key');
+    const registeredContact = email || phone;
+    
+    if (decoded.contact !== registeredContact || !decoded.verified) {
+        return res.status(403).json({ success: false, message: 'Unauthorized: OTP verification mismatch' });
+    }
+
     if (!email && !phone) {
       return res.status(400).json({ success: false, message: 'Email or phone required' });
     }
     
-    // Check if user exists
     const query = [];
     if (email) query.push({ email });
     if (phone) query.push({ phone });
     const userExists = await User.findOne({ $or: query });
     
     if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists with this email or phone' });
+      return res.status(400).json({ success: false, message: 'User already exists' });
     }
     
     const userData = { name, password, lastLoginDate: new Date(), zoraPoints: 5 };
     if (email) userData.email = email;
     if (phone) userData.phone = phone;
 
-    const user = await User.create(userData); // 5 points for sign up
+    const user = await User.create(userData);
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
     const badge = getUserBadge(user.zoraPoints);
+    
     res.status(201).json({ 
       success: true, 
       token, 
       user: { id: user._id, name: user.name, email: user.email, phone: user.phone, coins: user.coins, zoraPoints: user.zoraPoints, badge } 
     });
   } catch (error) {
+    if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+       return res.status(403).json({ success: false, message: 'OTP token invalid or expired. Please verify OTP again.' });
+    }
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -87,13 +107,12 @@ router.post('/login', async (req, res) => {
          return res.status(403).json({ success: false, message: 'Account is banned by admin' });
       }
 
-      // Check daily login points
       const today = new Date().setHours(0, 0, 0, 0);
       const lastLogin = user.lastLoginDate ? new Date(user.lastLoginDate).setHours(0, 0, 0, 0) : 0;
       
       let pointsAwarded = false;
       if (today > lastLogin || !user.lastLoginDate) {
-        user.zoraPoints += 5; // 5 points for daily login
+        user.zoraPoints += 5; 
         user.lastLoginDate = new Date();
         await user.save();
         pointsAwarded = true;
@@ -116,7 +135,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Forgot Password -> Reset Password directly for now (via OTP verified previously)
+// Forgot Password
 router.post('/reset-password', async (req, res) => {
   const { contact, newPassword } = req.body;
   try {

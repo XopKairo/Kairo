@@ -35,7 +35,8 @@
     },
     "plugins": [
       "expo-notifications",
-      "expo-device"
+      "expo-asset",
+      "expo-font"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

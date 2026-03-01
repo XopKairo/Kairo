@@ -22,9 +22,9 @@ api.interceptors.request.use(
   }
 );
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (contact, password) => {
   try {
-    const response = await api.post('/users/auth/login', { email, password });
+    const response = await api.post('/user/auth/login', { contact, password });
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -35,13 +35,44 @@ export const loginUser = async (email, password) => {
   }
 };
 
-export const registerUser = async (name, email, password) => {
+export const registerUser = async (name, contact, password, isPhone) => {
   try {
-    const response = await api.post('/users/auth/register', { name, email, password });
+    const payload = { name, password };
+    if (isPhone) payload.phone = contact;
+    else payload.email = contact;
+
+    const response = await api.post('/user/auth/register', payload);
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
+export const sendOtp = async (contact) => {
+  try {
+    const response = await api.post('/user/auth/send-otp', { contact });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
+export const verifyOtp = async (contact, otp) => {
+  try {
+    const response = await api.post('/user/auth/verify-otp', { contact, otp });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
+export const resetPassword = async (contact, newPassword) => {
+  try {
+    const response = await api.post('/user/auth/reset-password', { contact, newPassword });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

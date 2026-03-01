@@ -1,0 +1,6 @@
+#!/bin/bash
+if [[ "$*" == *"expo config --json"* ]]; then
+  node ~/Kairo/mobile-app/mock-config.js
+else
+  command npx "$@"
+fi

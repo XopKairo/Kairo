@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const Call = require('../models/Call');
 const User = require('../models/User');
 const Host = require('../models/Host');
@@ -11,9 +12,6 @@ router.post('/generate-token', (req, res) => {
   const appId = 1106955329;
   const serverSecret = "f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2";
   
-  // Note: For ZegoCloud Prebuilt UIKit in React Native, AppID and AppSign are usually 
-  // passed directly. If a true backend token is needed (for Web/Advanced security),
-  // Zego provides a specific crypto algorithm. For now, we return the AppSign.
   res.json({
     appId,
     appSign: serverSecret,
@@ -26,7 +24,6 @@ router.post('/start', async (req, res) => {
   try {
     const { userId, hostId, callId } = req.body;
     
-    // Create an active call record
     const call = await Call.create({
       userId,
       hostId,
@@ -34,7 +31,6 @@ router.post('/start', async (req, res) => {
       status: 'Active'
     });
 
-    // Notify Admin Panel Live Wall via Socket.io
     if (req.io) {
       req.io.to('admin-room').emit('callStartedAlert', {
         message: `New call started between User ${userId} and Host ${hostId}`,
@@ -48,45 +44,65 @@ router.post('/start', async (req, res) => {
   }
 });
 
-// 3. End Call & Transaction Logic (70/30 Split)
+// 3. End Call & Transaction Logic (70/30 Split with ACID Transaction)
 router.post('/end', async (req, res) => {
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
     const { callId, durationInMinutes, callRatePerMinute } = req.body;
     
-    const call = await Call.findOne({ callId, status: 'Active' });
-    if (!call) return res.status(404).json({ message: 'Active call not found' });
+    const call = await Call.findOne({ callId, status: 'Active' }).session(session);
+    if (!call) throw new Error('Active call not found');
 
     // Calculate Coins
     const totalCoinsDeducted = durationInMinutes * callRatePerMinute;
     const hostShare = totalCoinsDeducted * 0.70; // 70% to Host
     const adminShare = totalCoinsDeducted * 0.30; // 30% to Admin
 
-    // Update User (Deduct Coins)
-    await User.findByIdAndUpdate(call.userId, {
-      $inc: { coins: -totalCoinsDeducted }
-    });
+    // Verify & Deduct User Coins
+    const user = await User.findById(call.userId).session(session);
+    if (!user || user.coins < totalCoinsDeducted) {
+      throw new Error('Insufficient coins to end call properly');
+    }
+    user.coins -= totalCoinsDeducted;
+    await user.save({ session });
 
-    // Update Host (Add Earnings & Set status back to Online)
-    await Host.findByIdAndUpdate(call.hostId, {
-      $inc: { earnings: hostShare },
-      status: 'Online'
-    });
+    // Update Host Earnings
+    const host = await Host.findById(call.hostId).session(session);
+    if (host) {
+      host.earnings += hostShare;
+      host.status = 'Online';
+      await host.save({ session });
+    }
 
-    // Update Call Record
+    // Save Call Record
     call.status = 'Completed';
     call.durationInMinutes = durationInMinutes;
     call.coinsDeducted = totalCoinsDeducted;
     call.hostEarning = hostShare;
     call.adminEarning = adminShare;
     call.endTime = new Date();
-    await call.save();
+    await call.save({ session });
+
+    // Update Admin Revenue Table (Master Sync)
+    const revenueCollection = mongoose.connection.db.collection('admin_revenues');
+    await revenueCollection.insertOne({
+      callId: call._id,
+      adminEarning: adminShare,
+      createdAt: new Date()
+    }, { session });
+
+    await session.commitTransaction();
 
     res.json({
       message: 'Call ended and transaction processed successfully',
       transaction: { totalCoinsDeducted, hostShare, adminShare }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 

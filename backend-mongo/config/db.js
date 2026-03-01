@@ -3,7 +3,10 @@ require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/kairo_admin', {
+    if (!process.env.MONGO_URI) {
+      throw new Error('CRITICAL: MONGO_URI is missing in the .env file. Database connection aborted to prevent local fallback.');
+    }
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

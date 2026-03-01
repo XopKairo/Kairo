@@ -1,12 +1,12 @@
-import React, { useEffect, useState, Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, ActivityIndicator } from 'react-native';
 
+import ZoraSplashScreen from './src/screens/auth/ZoraSplashScreen';
 import UserLoginScreen from './src/screens/auth/UserLoginScreen';
 import UserRegisterScreen from './src/screens/auth/UserRegisterScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
@@ -18,7 +18,6 @@ import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
 import ChatScreen from './src/screens/call/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
-import { registerForPushNotificationsAsync } from './src/services/pushService';
 
 // Lazy load the heavy VideoCallScreen
 const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'));
@@ -53,36 +52,11 @@ function MainTabs() {
 }
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState('Login');
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkToken = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        const userDataStr = await AsyncStorage.getItem('userData');
-        if (token && userDataStr) {
-          const userData = JSON.parse(userDataStr);
-          setInitialRoute('Main');
-          registerForPushNotificationsAsync(userData.id || userData._id);
-        }
-      } catch (e) {
-        console.error('Error checking token', e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkToken();
-  }, []);
-
-  if (isLoading) {
-    return null; // Or a splash screen component
-  }
-
   return (
     <PaperProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName={initialRoute}>
+        <Stack.Navigator initialRouteName="Splash">
+          <Stack.Screen name="Splash" component={ZoraSplashScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={UserLoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />

@@ -1,43 +1,61 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
-// Route to recharge user wallet
+// Route to recharge user wallet (Protected with Transactions)
 router.post('/recharge', async (req, res) => {
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
     const { userId, amount, transactionId } = req.body;
 
-    if (!userId || !amount) {
-      return res.status(400).json({ message: 'User ID and amount are required' });
+    if (!userId || !amount || !transactionId) {
+      throw new Error('User ID, amount, and transactionId are required');
     }
 
-    const user = await User.findById(userId).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     // Add coins to user wallet
     user.coins += Number(amount);
-    await user.save();
+    await user.save({ session });
 
-    // In a real app, you would also save this transaction to a WalletTransaction model
-    // along with the payment gateway transactionId.
+    // Update Admin's Master Transactions Table
+    const transactionCollection = mongoose.connection.db.collection('transactions');
+    await transactionCollection.insertOne({
+      userId: user._id,
+      type: 'RECHARGE',
+      amount: Number(amount),
+      transactionId,
+      status: 'SUCCESS',
+      createdAt: new Date()
+    }, { session });
+
+    await session.commitTransaction();
 
     // Notify Admin & User via Socket
     if (req.io) {
       req.io.to('admin-room').emit('rechargeAlert', {
-        message: `User ${user.name} recharged ${amount} coins.`,
+        message: `User ${user.name} recharged ${amount} coins. TxId: ${transactionId}`,
         userId,
-        amount
+        amount,
+        transactionId
       });
-      // Assuming user has joined a room with their userId
       req.io.to(userId).emit('walletUpdate', {
         message: 'Coin Recharge Successful',
         newBalance: user.coins
       });
     }
 
-    res.json({ message: 'Recharge successful', newBalance: user.coins, user });
+    res.json({ message: 'Recharge successful', newBalance: user.coins, transactionId });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
