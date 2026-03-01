@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "postinstall": "sed -i 's|\"main\": \"src/index.ts\"|\"main\": \"index.js\"|' node_modules/expo-modules-core/package.json && sed -i 's|\"main\": \"src/Expo.ts\"|\"main\": \"AppEntry.js\"|' node_modules/expo/package.json"
+    "postinstall": "sed -i 's|\"main\": \"src/index.ts\"|\"main\": \"index.js\"|' node_modules/expo-modules-core/package.json && sed -i 's|\"main\": \"src/Expo.ts\"|\"main\": \"AppEntry.js\"|' node_modules/expo/package.json && sed -i \"s|from './Device.types'|from './Device.types.js'|g\" node_modules/expo-device/build/Device.js && sed -i \"s|from './ExpoDevice'|from './ExpoDevice.js'|g\" node_modules/expo-device/build/Device.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
