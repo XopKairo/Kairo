@@ -64,10 +64,14 @@ const UserProfileScreen = ({ navigation }) => {
           onPress={() => navigation.navigate('Settings')}
         />
         <List.Item
-          title="Verification Status"
-          description={user?.isVerified ? 'Verified Account' : 'Pending Verification'}
-          left={props => <List.Icon {...props} icon="check-decagram" color={user?.isVerified ? '#4caf50' : '#ffa000'} />}
-          onPress={() => navigation.navigate('Verification')}
+          title="Account Status"
+          description={user?.isGenderVerified ? 'Gender Verified Host' : (user?.gender === 'Female' ? 'Gender Verification Pending' : 'Standard User')}
+          left={props => <List.Icon {...props} icon={user?.isGenderVerified ? 'shield-check' : 'shield-alert'} color={user?.isGenderVerified ? '#4caf50' : '#ffa000'} />}
+        />
+        <List.Item
+          title="Withdrawal Eligibility"
+          description={user?.gender === 'Male' ? 'Not Eligible (Female Hosts Only)' : (user?.isGenderVerified ? 'Eligible' : 'Verify Gender to Unlock')}
+          left={props => <List.Icon {...props} icon="cash-multiple" color={user?.isGenderVerified ? '#4caf50' : '#ffa000'} />}
         />
         <List.Item
           title="My Interests"

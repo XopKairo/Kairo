@@ -72,23 +72,29 @@ router.post('/end', async (req, res) => {
     user.coins -= totalCoinsDeducted;
     await user.save({ session });
 
-    // Update Host Earnings (Only if Female and Gender Verified)
-    if (host && host.gender === 'Female' && host.isGenderVerified) {
+    // --- SENIOR SECURITY ARCHITECT ENFORCEMENT ---
+    // Update Host Earnings (STRICT: Only if Female AND Gender Verified by Admin)
+    const isEarningEligible = host && host.gender === 'Female' && host.isGenderVerified;
+
+    if (isEarningEligible) {
       host.earnings += hostShare;
       host.status = 'Online';
       await host.save({ session });
       
-      // Admin gets 30%
+      // System gets 30% commission
       const Admin = require('../models/Admin');
       await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShare } }).session(session);
     } else if (host) {
       host.status = 'Online';
       await host.save({ session });
       
-      // 100% flows to Admin if host is Male or not verified
+      // 100% OF TRANSACTION FLOWS TO SYSTEM REVENUE
+      // This applies to Male hosts or Unverified Female hosts.
+      const totalAmountINR = Number((totalCoinsDeducted * 0.1).toFixed(2));
       const Admin = require('../models/Admin');
-      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: totalCoinsDeducted * 0.1 } }).session(session); // Converting 100% coins to INR
+      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: totalAmountINR } }).session(session);
     }
+    // --- END ENFORCEMENT ---
 
     // Save Call Record
     call.status = 'Completed';
