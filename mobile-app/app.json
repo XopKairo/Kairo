@@ -16,7 +16,29 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.ajilomalloor.zora"
+      "package": "com.ajilomalloor.zora",
+      "enableProguardInReleaseBuilds": true,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE",
+        "INTERNET"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-device"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
