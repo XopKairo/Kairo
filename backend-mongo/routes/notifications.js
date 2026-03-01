@@ -9,7 +9,15 @@ const User = require('../models/User');
 let serviceAccount;
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    const rawEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
+    // Check if it looks like a JSON string
+    if (rawEnv.trim().startsWith('{')) {
+      serviceAccount = JSON.parse(rawEnv);
+    } else {
+      // Assume it's base64 encoded to avoid JSON parsing and escaping issues
+      const decoded = Buffer.from(rawEnv, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+    }
   } else {
     serviceAccount = require(path.join(__dirname, '../serviceAccountKey.json'));
   }
