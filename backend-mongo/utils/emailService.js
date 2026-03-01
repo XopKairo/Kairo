@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 const sendOTP = async (email, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"Zora App Official" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Kairo Admin - Your OTP for Login',
     text: `Your OTP for Kairo Admin Login is: ${otp}. This OTP will expire in 10 minutes.`
