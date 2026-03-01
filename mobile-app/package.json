@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "postinstall": "sed -i 's|\"main\": \"src/index.ts\"|\"main\": \"index.js\"|' node_modules/expo-modules-core/package.json && sed -i 's|\"main\": \"src/Expo.ts\"|\"main\": \"AppEntry.js\"|' node_modules/expo/package.json"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
