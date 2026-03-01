@@ -5,7 +5,7 @@ const http = require('http');
 const path = require('path');
 require('dotenv').config();
 
-const { authAdmin } = require('./controllers/authController');
+const { authAdmin, verifyLoginOTP } = require('./controllers/authController');
 const setupSockets = require('./sockets/socket');
 
 // Route Imports
@@ -58,6 +58,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Main Auth Routes (Direct)
 app.post('/api/auth/login', authAdmin);
 app.post('/api/admin/login', authAdmin);
+app.post('/api/admin/verify-otp', verifyLoginOTP);
 
 // Authentication Routes
 app.use('/api/auth', authRoutes);

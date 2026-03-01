@@ -7,27 +7,72 @@ import UiParentCard from '@/components/shared/UiParentCard.vue';
 const page = ref({ title: 'Banner Management' });
 const banners = ref<any[]>([]);
 const newTitle = ref('');
+const newLink = ref('');
+const fileInput = ref<File | null>(null);
+
+const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const fetchBanners = async () => {
-  const res = await axios.get('https://kairo-b1i9.onrender.com/api/banners');
-  banners.value = res.data;
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/marketing`);
+    banners.value = res.data;
+  } catch (err) {
+    console.error("Failed to fetch banners", err);
+  }
+};
+
+const handleFileChange = (e: any) => {
+  fileInput.value = e.target.files[0];
 };
 
 const addBanner = async () => {
-  if(!newTitle.value) return;
-  await axios.post('https://kairo-b1i9.onrender.com/api/banners', { title: newTitle.value, status: 'Active' });
-  newTitle.value = '';
-  fetchBanners();
+  if (!newTitle.value || !fileInput.value) {
+    alert("Title and Image are required.");
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('title', newTitle.value);
+  formData.append('linkUrl', newLink.value);
+  formData.append('banner', fileInput.value);
+
+  try {
+    await axios.post(`${API_BASE_URL}/api/marketing`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    newTitle.value = '';
+    newLink.value = '';
+    fileInput.value = null;
+    fetchBanners();
+  } catch (err) {
+    console.error("Failed to add banner", err);
+  }
 };
 
 const toggleBanner = async (banner: any) => {
-  await axios.put(`https://kairo-b1i9.onrender.com/api/banners/${banner.id}`, { status: banner.status === 'Active' ? 'Inactive' : 'Active' });
-  fetchBanners();
+  try {
+    await axios.put(`${API_BASE_URL}/api/marketing/${banner._id}`, { 
+      status: banner.status === 'Active' ? 'Inactive' : 'Active' 
+    });
+    fetchBanners();
+  } catch (err) {
+    console.error("Failed to toggle banner", err);
+  }
 };
 
-const deleteBanner = async (id: number) => {
-  await axios.delete(`https://kairo-b1i9.onrender.com/api/banners/${id}`);
-  fetchBanners();
+const deleteBanner = async (id: string) => {
+  if (!confirm("Delete this banner?")) return;
+  try {
+    await axios.delete(`${API_BASE_URL}/api/marketing/${id}`);
+    fetchBanners();
+  } catch (err) {
+    console.error("Failed to delete banner", err);
+  }
+};
+
+const getImageUrl = (url: string) => {
+  if (url.startsWith('http')) return url;
+  return `${API_BASE_URL}/${url}`;
 };
 
 onMounted(fetchBanners);
@@ -38,20 +83,44 @@ onMounted(fetchBanners);
   <v-row>
     <v-col cols="12">
       <UiParentCard title="App Home Banners">
-        <div class="d-flex mb-6">
-          <v-text-field v-model="newTitle" label="New Banner Title" variant="outlined" hide-details class="mr-2"></v-text-field>
-          <v-btn color="primary" height="56" @click="addBanner">Add Banner</v-btn>
-        </div>
+        <v-card variant="tonal" class="pa-4 mb-6 bg-grey-lighten-4">
+           <h4 class="text-subtitle-1 mb-4 font-weight-bold">Upload New Banner</h4>
+           <v-row>
+             <v-col cols="12" md="4">
+               <v-text-field v-model="newTitle" label="Banner Title" variant="outlined" hide-details density="compact"></v-text-field>
+             </v-col>
+             <v-col cols="12" md="4">
+               <v-text-field v-model="newLink" label="Target Link (Optional)" variant="outlined" hide-details density="compact"></v-text-field>
+             </v-col>
+             <v-col cols="12" md="4">
+               <input type="file" @change="handleFileChange" class="mt-1" accept="image/*" />
+             </v-col>
+             <v-col cols="12">
+               <v-btn color="primary" @click="addBanner" block prepend-icon="mdi-upload">Add Real Banner</v-btn>
+             </v-col>
+           </v-row>
+        </v-card>
+
         <v-row>
-          <v-col cols="12" md="4" v-for="banner in banners" :key="banner.id">
-            <v-card variant="outlined" class="pa-4">
-              <v-img src="https://via.placeholder.com/400x200" height="120" class="mb-4 rounded"></v-img>
-              <h3 class="text-h6 mb-2">{{ banner.title }}</h3>
-              <div class="d-flex align-center justify-space-between">
-                <v-chip :color="banner.status === 'Active' ? 'success' : 'grey'" size="small" @click="toggleBanner(banner)">{{ banner.status }}</v-chip>
-                <v-btn icon color="error" variant="text" @click="deleteBanner(banner.id)"><v-icon>mdi-delete</v-icon></v-btn>
+          <v-col cols="12" md="4" v-for="banner in banners" :key="banner._id">
+            <v-card variant="outlined" class="pa-0 overflow-hidden">
+              <v-img :src="getImageUrl(banner.imageUrl)" height="160" cover class="bg-black"></v-img>
+              <div class="pa-4">
+                <h3 class="text-subtitle-1 mb-2 font-weight-bold text-truncate">{{ banner.title }}</h3>
+                <div class="d-flex align-center justify-space-between">
+                  <v-chip :color="banner.status === 'Active' ? 'success' : 'grey'" size="small" @click="toggleBanner(banner)" label>
+                    {{ banner.status }}
+                  </v-chip>
+                  <v-btn icon color="error" variant="text" size="small" @click="deleteBanner(banner._id)">
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
+                </div>
               </div>
             </v-card>
+          </v-col>
+          <v-col cols="12" v-if="banners.length === 0" class="text-center py-8">
+             <v-icon size="64" color="grey-lighten-1">mdi-image-off</v-icon>
+             <div class="text-h6 text-grey-lighten-1 mt-2">No active banners found in database.</div>
           </v-col>
         </v-row>
       </UiParentCard>

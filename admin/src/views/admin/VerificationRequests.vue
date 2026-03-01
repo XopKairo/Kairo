@@ -19,45 +19,31 @@
             <tbody>
               <tr v-for="request in requests" :key="request._id">
                 <td>{{ request.userId?.name || request.userId?.nickname || 'Unknown' }}</td>
-                <td>{{ request.userId?.email }}</td>
+                <td>{{ request.userId?.email || 'N/A' }}</td>
                 <td>
-                  <v-img :src="request.idUrl" width="50" height="50" cover class="bg-grey-lighten-2 rounded cursor-pointer" @click="viewImage(request.idUrl)"></v-img>
+                  <v-img :src="getFullUrl(request.idUrl)" width="50" height="50" cover class="bg-grey-lighten-2 rounded cursor-pointer" @click="viewImage(getFullUrl(request.idUrl))"></v-img>
                 </td>
                 <td>
-                  <v-img :src="request.photoUrl" width="50" height="50" cover class="bg-grey-lighten-2 rounded cursor-pointer" @click="viewImage(request.photoUrl)"></v-img>
+                  <v-img :src="getFullUrl(request.photoUrl)" width="50" height="50" cover class="bg-grey-lighten-2 rounded cursor-pointer" @click="viewImage(getFullUrl(request.photoUrl))"></v-img>
                 </td>
                 <td>
-                  <v-chip
-                    :color="getStatusColor(request.status)"
-                    size="small"
-                  >
+                  <v-chip :color="getStatusColor(request.status)" size="small">
                     {{ request.status.toUpperCase() }}
                   </v-chip>
                 </td>
                 <td>{{ new Date(request.submittedAt).toLocaleDateString() }}</td>
                 <td>
-                  <v-btn
-                    v-if="request.status === 'pending'"
-                    size="small"
-                    color="success"
-                    class="mr-2"
-                    @click="updateStatus(request._id, 'approved')"
-                  >
+                  <v-btn v-if="request.status === 'pending'" size="small" color="success" class="mr-2" @click="updateStatus(request._id, 'approved', request.userId?._id)">
                     Approve
                   </v-btn>
-                  <v-btn
-                    v-if="request.status === 'pending'"
-                    size="small"
-                    color="error"
-                    @click="updateStatus(request._id, 'rejected')"
-                  >
+                  <v-btn v-if="request.status === 'pending'" size="small" color="error" @click="updateStatus(request._id, 'rejected')">
                     Reject
                   </v-btn>
                   <span v-if="request.status !== 'pending'" class="text-caption text-grey">Processed</span>
                 </td>
               </tr>
               <tr v-if="requests.length === 0 && !loading">
-                <td colspan="7" class="text-center py-4">No verification requests found.</td>
+                <td colspan="7" class="text-center py-4">No real verification requests found in database.</td>
               </tr>
               <tr v-if="loading">
                 <td colspan="7" class="text-center py-4"><v-progress-circular indeterminate color="primary"></v-progress-circular></td>
@@ -69,14 +55,14 @@
     </v-row>
 
     <!-- Image Dialog -->
-    <v-dialog v-model="dialog" max-width="600">
+    <v-dialog v-model="dialog" max-width="800">
       <v-card>
         <v-card-text class="pa-0">
-          <v-img :src="selectedImage" width="100%" cover></v-img>
+          <v-img :src="selectedImage" width="100%" contain max-height="80vh"></v-img>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" block @click="dialog = false">Close</v-btn>
+          <v-btn color="primary" variant="flat" @click="dialog = false">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -99,10 +85,8 @@ const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const requests = ref<any[]>([]);
 const loading = ref(true);
-
 const dialog = ref(false);
 const selectedImage = ref('');
-
 const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('success');
@@ -111,6 +95,12 @@ const showSnackbar = (text: string, color: string = 'success') => {
   snackbarText.value = text;
   snackbarColor.value = color;
   snackbar.value = true;
+};
+
+const getFullUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${API_BASE_URL}/${url}`;
 };
 
 const viewImage = (url: string) => {
@@ -131,31 +121,28 @@ const fetchRequests = async () => {
     requests.value = response.data || [];
   } catch (error) {
     console.error('Error fetching verification requests:', error);
-    // Mock data fallback if API is not accessible yet
-    requests.value = [
-      { _id: '1', userId: { name: 'Test User', email: 'test@test.com' }, photoUrl: 'https://via.placeholder.com/150', idUrl: 'https://via.placeholder.com/150', status: 'pending', submittedAt: new Date().toISOString() }
-    ];
+    showSnackbar('Failed to fetch real-time verification requests.', 'error');
   } finally {
     loading.value = false;
   }
 };
 
-const updateStatus = async (id: string, status: string) => {
+const updateStatus = async (id: string, status: string, userId?: string) => {
   try {
     await axios.post(`${API_BASE_URL}/api/verification/${id}/status`, { status });
     
-    // Update local state
+    // If approved, also update User/Host verification status in DB
+    if (status === 'approved' && userId) {
+      await axios.post(`${API_BASE_URL}/api/admin/users/${userId}/verify`, { isVerified: true });
+    }
+
     const request = requests.value.find(r => r._id === id);
     if (request) request.status = status;
     
-    showSnackbar(`Request ${status} successfully.`);
+    showSnackbar(`Verification request ${status} successfully.`);
   } catch (error) {
-    console.error(`Error updating status:`, error);
-    
-    // Fallback UI update
-    const request = requests.value.find(r => r._id === id);
-    if (request) request.status = status;
-    showSnackbar(`Request ${status} (Simulated).`, 'warning');
+    console.error(`Error updating verification status:`, error);
+    showSnackbar(`Failed to update verification status.`, 'error');
   }
 };
 

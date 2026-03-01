@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="12" class="d-flex justify-space-between align-center">
         <h2 class="text-h4 mb-4">Interest Tags Management</h2>
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()">Add New Tag</v-btn>
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()" variant="flat">Add New Real Tag</v-btn>
       </v-col>
     </v-row>
 
@@ -21,10 +21,10 @@
             </thead>
             <tbody>
               <tr v-for="tag in tags" :key="tag._id">
-                <td class="text-h6">{{ tag.icon }}</td>
-                <td>{{ tag.name }}</td>
+                <td class="text-h6">{{ tag.icon || '🏷️' }}</td>
+                <td class="font-weight-medium">{{ tag.name }}</td>
                 <td>
-                  <v-chip :color="tag.isActive ? 'success' : 'grey'" size="small">
+                  <v-chip :color="tag.isActive ? 'success' : 'grey'" size="small" variant="flat">
                     {{ tag.isActive ? 'Active' : 'Inactive' }}
                   </v-chip>
                 </td>
@@ -34,7 +34,10 @@
                 </td>
               </tr>
               <tr v-if="tags.length === 0 && !loading">
-                <td colspan="4" class="text-center py-4">No interest tags found.</td>
+                <td colspan="4" class="text-center py-8">
+                  <v-icon size="48" color="grey-lighten-2">mdi-tag-off</v-icon>
+                  <div class="text-grey-lighten-1 mt-2">No real interest tags found in database.</div>
+                </td>
               </tr>
               <tr v-if="loading">
                 <td colspan="4" class="text-center py-4"><v-progress-circular indeterminate color="primary"></v-progress-circular></td>
@@ -46,23 +49,23 @@
     </v-row>
 
     <!-- Dialog for Create/Edit -->
-    <v-dialog v-model="dialog" max-width="500px">
-      <v-card>
+    <v-dialog v-model="dialog" max-width="500px" persistent>
+      <v-card class="pa-4">
         <v-card-title>
-          <span class="text-h5">{{ isEditing ? 'Edit Interest Tag' : 'New Interest Tag' }}</span>
+          <span class="text-h5 font-weight-bold">{{ isEditing ? 'Edit Real Interest Tag' : 'New Real Interest Tag' }}</span>
         </v-card-title>
 
         <v-card-text>
           <v-container>
             <v-row>
               <v-col cols="12" sm="4">
-                <v-text-field v-model="editedItem.icon" label="Icon (Emoji)" placeholder="e.g. 🎵"></v-text-field>
+                <v-text-field v-model="editedItem.icon" label="Icon (Emoji)" placeholder="e.g. 🎵" variant="outlined"></v-text-field>
               </v-col>
               <v-col cols="12" sm="8">
-                <v-text-field v-model="editedItem.name" label="Tag Name*" required></v-text-field>
+                <v-text-field v-model="editedItem.name" label="Tag Name*" required variant="outlined"></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-switch v-model="editedItem.isActive" label="Active Status" color="success"></v-switch>
+                <v-switch v-model="editedItem.isActive" label="Active Status (Live in App)" color="success" inset></v-switch>
               </v-col>
             </v-row>
           </v-container>
@@ -71,13 +74,16 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="grey-darken-1" variant="text" @click="closeDialog">Cancel</v-btn>
-          <v-btn color="primary" variant="text" @click="saveTag">Save</v-btn>
+          <v-btn color="primary" variant="flat" @click="saveTag">Save to Database</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
       {{ snackbarText }}
+      <template v-slot:actions>
+        <v-btn color="white" variant="text" @click="snackbar = false">Close</v-btn>
+      </template>
     </v-snackbar>
   </v-container>
 </template>
@@ -109,14 +115,12 @@ const fetchTags = async () => {
   loading.value = true;
   try {
     const response = await axios.get(`${API_BASE_URL}/api/interests`);
-    tags.value = response.data || [];
+    // Ensure we only use real data, no mock fallback
+    tags.value = Array.isArray(response.data) ? response.data : [];
   } catch (error) {
-    console.error('Error fetching tags:', error);
-    // Mock data for UI testing if API fails
-    tags.value = [
-      { _id: '1', name: 'Music', icon: '🎵', isActive: true },
-      { _id: '2', name: 'Gaming', icon: '🎮', isActive: true }
-    ];
+    console.error('Error fetching real tags:', error);
+    showSnackbar('Failed to fetch real-time tags from database.', 'error');
+    tags.value = [];
   } finally {
     loading.value = false;
   }
@@ -139,38 +143,36 @@ const closeDialog = () => {
 
 const saveTag = async () => {
   if (!editedItem.value.name) {
-    showSnackbar('Name is required', 'error');
+    showSnackbar('Tag name is mandatory', 'error');
     return;
   }
 
   try {
     if (isEditing.value) {
-      // Update
       await axios.put(`${API_BASE_URL}/api/interests/${editedItem.value._id}`, editedItem.value);
-      showSnackbar('Tag updated successfully');
+      showSnackbar('Tag updated in database successfully');
     } else {
-      // Create
       await axios.post(`${API_BASE_URL}/api/interests`, editedItem.value);
-      showSnackbar('Tag created successfully');
+      showSnackbar('New tag created in database successfully');
     }
     closeDialog();
     fetchTags();
   } catch (error) {
-    console.error('Error saving tag:', error);
-    showSnackbar('Failed to save tag', 'error');
+    console.error('Error saving real tag:', error);
+    showSnackbar('Failed to save tag to database.', 'error');
   }
 };
 
 const deleteTag = async (id: string) => {
-  if (!confirm('Are you sure you want to delete this tag?')) return;
+  if (!confirm('Permanently delete this interest tag from the database?')) return;
   
   try {
     await axios.delete(`${API_BASE_URL}/api/interests/${id}`);
-    showSnackbar('Tag deleted successfully');
+    showSnackbar('Tag removed from database successfully');
     fetchTags();
   } catch (error) {
-    console.error('Error deleting tag:', error);
-    showSnackbar('Failed to delete tag', 'error');
+    console.error('Error deleting real tag:', error);
+    showSnackbar('Failed to delete tag from database.', 'error');
   }
 };
 

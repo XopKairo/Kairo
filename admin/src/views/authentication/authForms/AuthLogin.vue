@@ -8,9 +8,14 @@ const valid = ref(false);
 const show1 = ref(false);
 const email = ref('');
 const password = ref('');
+const loginOtp = ref('');
 const router = useRouter();
 const authStore = useAuthStore();
 const errorMsg = ref('');
+const infoMsg = ref('');
+
+// Step tracking: 1: Credentials, 2: OTP Verification
+const loginStep = ref(1);
 
 // Forgot Password Workflow Refs
 const forgotDialog = ref(false);
@@ -20,33 +25,59 @@ const newPassword = ref('');
 const resetMsg = ref('');
 const step = ref(1); // 1: Send OTP, 2: Reset
 
-const login = async () => {
+const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
+
+const handleLoginSubmit = async () => {
+  if (loginStep.value === 1) {
+    await requestLoginOTP();
+  } else {
+    await verifyLoginOTP();
+  }
+};
+
+const requestLoginOTP = async () => {
   try {
-    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/login', {
+    errorMsg.value = '';
+    const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
       email: email.value,
       password: password.value
     });
+    
+    if (response.data.requireOTP) {
+      loginStep.value = 2;
+      infoMsg.value = "OTP has been sent to your registered email.";
+    }
+  } catch (error: any) {
+    errorMsg.value = error.response?.data?.message || "Login Failed: Invalid Credentials";
+  }
+};
+
+const verifyLoginOTP = async () => {
+  try {
+    errorMsg.value = '';
+    const response = await axios.post(`${API_BASE_URL}/api/admin/verify-otp`, {
+      email: email.value,
+      otp: loginOtp.value
+    });
+    
     if (response.data.success) {
       authStore.user = response.data;
       localStorage.setItem('user', JSON.stringify(response.data));
       router.push('/dashboard/default');
     }
   } catch (error: any) {
-    errorMsg.value = error.response?.data?.message || "Login Failed: Network Error or Invalid Credentials";
+    errorMsg.value = error.response?.data?.message || "Invalid or Expired OTP";
   }
 };
 
-const sendOTP = async () => {
+const sendForgotOTP = async () => {
   try {
-    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/forgot-password', {
+    const response = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, {
       email: resetEmail.value
     });
     if (response.data.success) {
       step.value = 2;
       resetMsg.value = "";
-      alert("OTP Sent! Check your email (Simulated for now).");
-      // For development, we might show OTP in alert if backend sends it
-      if(response.data.otp) console.log("OTP for test:", response.data.otp);
     }
   } catch (error: any) {
     resetMsg.value = error.response?.data?.message || "Failed to send OTP";
@@ -55,7 +86,7 @@ const sendOTP = async () => {
 
 const handleReset = async () => {
   try {
-    const response = await axios.post('https://kairo-b1i9.onrender.com/api/auth/reset-password', {
+    const response = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
       email: resetEmail.value,
       otp: otp.value,
       newPassword: newPassword.value
@@ -84,41 +115,62 @@ const passwordRules = ref([
 </script>
 
 <template>
-  <div class="d-flex align-center justify-space-between mb-2">
+  <div class="d-flex flex-column mb-2">
     <v-alert v-if="errorMsg" type="error" class="mb-4 w-100" density="compact" variant="tonal">
       {{ errorMsg }}
     </v-alert>
+    <v-alert v-if="infoMsg" type="info" class="mb-4 w-100" density="compact" variant="tonal">
+      {{ infoMsg }}
+    </v-alert>
   </div>
-  <v-form v-model="valid" class="mt-7 loginForm" @submit.prevent="login">
-    <v-text-field
-      v-model="email"
-      :rules="emailRules"
-      label="Email Address"
-      class="mt-4 mb-8"
-      required
-      density="comfortable"
-      variant="outlined"
-      color="primary"
-    ></v-text-field>
-    <v-text-field
-      v-model="password"
-      :rules="passwordRules"
-      label="Password"
-      required
-      density="comfortable"
-      variant="outlined"
-      color="primary"
-      :append-inner-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
-      :type="show1 ? 'text' : 'password'"
-      @click:append-inner="show1 = !show1"
-    ></v-text-field>
 
-    <div class="d-flex flex-wrap align-center justify-space-between ml-n2">
-      <div class="ml-sm-auto">
-        <a href="javascript:void(0)" @click="forgotDialog = true" class="text-primary text-decoration-none text-subtitle-1 font-weight-medium">Forgot Password?</a>
+  <v-form v-model="valid" class="mt-7 loginForm" @submit.prevent="handleLoginSubmit">
+    <div v-if="loginStep === 1">
+      <v-text-field
+        v-model="email"
+        :rules="emailRules"
+        label="Email Address"
+        class="mt-4 mb-4"
+        required
+        density="comfortable"
+        variant="outlined"
+        color="primary"
+      ></v-text-field>
+      <v-text-field
+        v-model="password"
+        :rules="passwordRules"
+        label="Password"
+        required
+        density="comfortable"
+        variant="outlined"
+        color="primary"
+        :append-inner-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
+        :type="show1 ? 'text' : 'password'"
+        @click:append-inner="show1 = !show1"
+      ></v-text-field>
+
+      <div class="d-flex flex-wrap align-center justify-space-between ml-n2">
+        <div class="ml-sm-auto">
+          <a href="javascript:void(0)" @click="forgotDialog = true" class="text-primary text-decoration-none text-subtitle-1 font-weight-medium">Forgot Password?</a>
+        </div>
       </div>
+      <v-btn color="secondary" :disabled="!valid" block class="mt-5" variant="flat" size="large" type="submit">Send Login OTP</v-btn>
     </div>
-    <v-btn color="secondary" :disabled="!valid" block class="mt-5" variant="flat" size="large" type="submit">Sign In</v-btn>
+
+    <div v-else>
+      <v-text-field
+        v-model="loginOtp"
+        label="Enter Login OTP"
+        required
+        density="comfortable"
+        variant="outlined"
+        color="primary"
+        class="mt-4 mb-4"
+        placeholder="6-digit code"
+      ></v-text-field>
+      <v-btn color="primary" block class="mt-5" variant="flat" size="large" type="submit">Verify & Login</v-btn>
+      <v-btn variant="text" block class="mt-2" @click="loginStep = 1">Back to Credentials</v-btn>
+    </div>
   </v-form>
 
   <!-- Forgot Password Dialog -->
@@ -130,7 +182,7 @@ const passwordRules = ref([
       <div v-if="step === 1">
         <v-text-field v-model="resetEmail" label="Registered Email" variant="outlined" class="mb-2"></v-text-field>
         <v-card-actions class="px-0 pt-4">
-          <v-btn color="primary" block variant="flat" @click="sendOTP">Send OTP</v-btn>
+          <v-btn color="primary" block variant="flat" @click="sendForgotOTP">Send OTP</v-btn>
         </v-card-actions>
       </div>
 

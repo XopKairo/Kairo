@@ -1,33 +1,60 @@
 const express = require('express');
 const router = express.Router();
-const Banner = require('../models/Banner');
 const multer = require('multer');
 const path = require('path');
+const Banner = require('../models/Banner');
 
-// Configure multer for banners
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/banners/'),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
 });
+
 const upload = multer({ storage });
 
-// Get Banners
-router.get('/banners', async (req, res) => {
-  res.json(await Banner.find({}));
+router.get('/', async (req, res) => {
+  try {
+    const banners = await Banner.find({}).sort({ order: 1 });
+    res.json(banners);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Upload Banner
-router.post('/banners', upload.single('image'), async (req, res) => {
-  const { linkUrl, isActive } = req.body;
-  const imageUrl = req.file ? `/uploads/banners/${req.file.filename}` : '';
-  const banner = await Banner.create({ imageUrl, linkUrl, isActive });
-  res.json(banner);
+router.post('/', upload.single('banner'), async (req, res) => {
+  try {
+    const { title, linkUrl, order } = req.body;
+    const banner = await Banner.create({
+      title,
+      imageUrl: req.file ? `uploads/${req.file.filename}` : '',
+      linkUrl,
+      order: Number(order) || 0
+    });
+    res.json(banner);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Update/Toggle Banner
-router.put('/banners/:id', async (req, res) => {
-  const banner = await Banner.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(banner);
+router.put('/:id', async (req, res) => {
+  try {
+    const banner = await Banner.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(banner);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    await Banner.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Banner deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;

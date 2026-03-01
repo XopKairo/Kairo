@@ -6,7 +6,7 @@
       </v-col>
     </v-row>
 
-    <!-- Analytics Section using Chart.js -->
+    <!-- Analytics Section -->
     <v-row>
       <v-col cols="12" md="8">
         <v-card elevation="2" class="pa-4">
@@ -27,7 +27,10 @@
             <div class="text-subtitle-1 text-grey">Total Registered Users</div>
             <v-divider class="my-4 w-100"></v-divider>
             <div class="text-h4 font-weight-bold text-success mb-2">{{ activeSessions }}</div>
-            <div class="text-subtitle-1 text-grey">Active Sessions</div>
+            <div class="text-subtitle-1 text-grey">Active Calls</div>
+            <v-divider class="my-4 w-100"></v-divider>
+            <div class="text-h5 font-weight-bold text-warning mb-2">{{ totalCoinsCirculating }}</div>
+            <div class="text-subtitle-2 text-grey">Coins in Circulation</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -58,6 +61,7 @@
               <tr>
                 <th class="text-left">Name</th>
                 <th class="text-left">Email</th>
+                <th class="text-left">Coins</th>
                 <th class="text-left">Status</th>
                 <th class="text-left">Verification</th>
                 <th class="text-left">Actions</th>
@@ -65,45 +69,30 @@
             </thead>
             <tbody>
               <tr v-for="user in filteredUsers" :key="user._id">
-                <td>{{ user.name || user.username }}</td>
-                <td>{{ user.email }}</td>
+                <td>{{ user.name || 'N/A' }}</td>
+                <td>{{ user.email || user.phone || 'N/A' }}</td>
+                <td>{{ user.coins || 0 }}</td>
                 <td>
-                  <v-chip
-                    :color="user.isBanned ? 'error' : 'success'"
-                    size="small"
-                  >
+                  <v-chip :color="user.isBanned ? 'error' : 'success'" size="small">
                     {{ user.isBanned ? 'Banned' : 'Active' }}
                   </v-chip>
                 </td>
                 <td>
-                  <v-chip
-                    :color="user.isVerified ? 'primary' : 'warning'"
-                    size="small"
-                  >
+                  <v-chip :color="user.isVerified ? 'primary' : 'warning'" size="small">
                     {{ user.isVerified ? 'Verified' : 'Pending' }}
                   </v-chip>
                 </td>
                 <td>
-                  <v-btn
-                    size="small"
-                    :color="user.isVerified ? 'grey' : 'primary'"
-                    class="mr-2"
-                    @click="verifyUser(user._id)"
-                    :disabled="user.isVerified"
-                  >
+                  <v-btn size="small" :color="user.isVerified ? 'grey' : 'primary'" class="mr-2" @click="verifyUser(user._id)" :disabled="user.isVerified">
                     Verify
                   </v-btn>
-                  <v-btn
-                    size="small"
-                    :color="user.isBanned ? 'success' : 'error'"
-                    @click="toggleBanUser(user)"
-                  >
+                  <v-btn size="small" :color="user.isBanned ? 'success' : 'error'" @click="toggleBanUser(user)">
                     {{ user.isBanned ? 'Unban' : 'Ban' }}
                   </v-btn>
                 </td>
               </tr>
               <tr v-if="users.length === 0">
-                <td colspan="5" class="text-center py-4">No users found or loading...</td>
+                <td colspan="6" class="text-center py-4">No users found.</td>
               </tr>
             </tbody>
           </v-table>
@@ -111,7 +100,6 @@
       </v-col>
     </v-row>
 
-    <!-- Action Snackbar -->
     <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
       {{ snackbarText }}
       <template v-slot:actions>
@@ -136,38 +124,27 @@ import {
 } from 'chart.js';
 import { Line as LineChart } from 'vue-chartjs';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
 
-// State
 const users = ref<any[]>([]);
 const search = ref('');
 const totalUsers = ref(0);
 const activeSessions = ref(0);
+const totalCoinsCirculating = ref(0);
 
-// Snackbar State
 const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('success');
 
-// Chart Data
 const chartData = ref({
   labels: [] as string[],
   datasets: [
     {
-      label: 'Active Users (Real-time)',
-      backgroundColor: '#f87979',
-      borderColor: '#f87979',
+      label: 'Active Calls',
+      backgroundColor: '#1867C0',
+      borderColor: '#1867C0',
       data: [] as number[],
       tension: 0.4
     }
@@ -177,24 +154,8 @@ const chartData = ref({
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: {
-        color: 'rgba(0,0,0,0.05)'
-      }
-    },
-    x: {
-      grid: {
-        display: false
-      }
-    }
-  },
-  plugins: {
-    legend: {
-      display: false
-    }
-  }
+  scales: { y: { beginAtZero: true } },
+  plugins: { legend: { display: false } }
 };
 
 let analyticsInterval: any = null;
@@ -204,7 +165,6 @@ const filteredUsers = computed(() => {
   const s = search.value.toLowerCase();
   return users.value.filter(u => 
     (u.name && u.name.toLowerCase().includes(s)) ||
-    (u.username && u.username.toLowerCase().includes(s)) ||
     (u.email && u.email.toLowerCase().includes(s))
   );
 });
@@ -215,43 +175,29 @@ const showSnackbar = (text: string, color: string = 'success') => {
   snackbar.value = true;
 };
 
-// Fetch Users (Assuming a basic /api/admin/users endpoint exists on the backend, modify as needed)
-const fetchUsers = async () => {
+const fetchData = async () => {
   try {
-    // Attempting to fetch from backend. Adjust endpoint path based on actual backend implementation.
-    const response = await axios.get(`${API_BASE_URL}/api/users`);
-    if (response.data) {
-       // If backend returns data array, use it. Otherwise populate with mock if API fails for demo.
-       users.value = Array.isArray(response.data) ? response.data : response.data.users || [];
-       totalUsers.value = users.value.length;
-    }
+    const [usersRes, statsRes] = await Promise.all([
+      axios.get(`${API_BASE_URL}/api/admin/users`),
+      axios.get(`${API_BASE_URL}/api/admin/dashboard/stats`)
+    ]);
+    users.value = usersRes.data || [];
+    totalUsers.value = statsRes.data.totalUsers || 0;
+    totalCoinsCirculating.value = statsRes.data.totalCoins || 0;
   } catch (error) {
-    console.error('Error fetching users:', error);
-    // Fallback Mock data for visual demonstration if endpoint isn't ready
-    if(users.value.length === 0) {
-        users.value = [
-            { _id: '1', name: 'John Doe', email: 'john@example.com', isBanned: false, isVerified: true },
-            { _id: '2', name: 'Jane Smith', email: 'jane@example.com', isBanned: true, isVerified: false },
-            { _id: '3', name: 'Alex Johnson', email: 'alex@example.com', isBanned: false, isVerified: false },
-        ];
-        totalUsers.value = 156;
-    }
+    console.error('Error fetching dashboard data:', error);
+    showSnackbar('Failed to load real-time data from server.', 'error');
   }
 };
 
 const verifyUser = async (userId: string) => {
   try {
-    // Correct endpoint for verifying user
     await axios.post(`${API_BASE_URL}/api/admin/users/${userId}/verify`, { isVerified: true });
-    
-    // Update local state
     const user = users.value.find(u => u._id === userId);
     if (user) user.isVerified = true;
-    
-    showSnackbar('User profile verified successfully.');
+    showSnackbar('User verified successfully.');
   } catch (error) {
-    console.error('Verify error:', error);
-    showSnackbar('Failed to verify user profile.', 'error');
+    showSnackbar('Failed to verify user.', 'error');
   }
 };
 
@@ -259,63 +205,46 @@ const toggleBanUser = async (user: any) => {
   try {
     const newBanStatus = !user.isBanned;
     await axios.post(`${API_BASE_URL}/api/admin/users/${user._id}/ban`, { isBanned: newBanStatus });
-    
     user.isBanned = newBanStatus;
-    showSnackbar(`User has been ${user.isBanned ? 'banned' : 'unbanned'}.`);
+    showSnackbar(`User ${user.isBanned ? 'banned' : 'unbanned'} successfully.`);
   } catch (error) {
-    console.error('Ban error:', error);
-    showSnackbar(`Failed to ${user.isBanned ? 'unban' : 'ban'} user.`, 'error');
+    showSnackbar('Failed to update ban status.', 'error');
   }
 };
 
 const updateAnalytics = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/calls/active`);
-    const activeCalls = Array.isArray(response.data) ? response.data : [];
-    const activeCount = activeCalls.length;
-    
+    const activeCount = Array.isArray(response.data) ? response.data.length : 0;
     activeSessions.value = activeCount;
 
     const now = new Date();
-    const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    const timeString = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     const newLabels = [...chartData.value.labels, timeString];
     const newData = [...chartData.value.datasets[0].data, activeCount];
 
-    if (newLabels.length > 10) {
+    if (newLabels.length > 15) {
       newLabels.shift();
       newData.shift();
     }
 
     chartData.value = {
       labels: newLabels,
-      datasets: [{
-        ...chartData.value.datasets[0],
-        data: newData
-      }]
+      datasets: [{ ...chartData.value.datasets[0], data: newData }]
     };
   } catch (error) {
-    console.error('Analytics fetch error:', error);
+    console.error('Analytics update failed:', error);
   }
 };
 
 onMounted(() => {
-  fetchUsers();
-  
-  // Initial chart data
+  fetchData();
   updateAnalytics();
-  
-  // Polling for real-time analytics updates
-  analyticsInterval = setInterval(updateAnalytics, 3000);
+  analyticsInterval = setInterval(updateAnalytics, 10000);
 });
 
 onUnmounted(() => {
   if (analyticsInterval) clearInterval(analyticsInterval);
 });
 </script>
-
-<style scoped>
-.v-card {
-  border-radius: 12px;
-}
-</style>
