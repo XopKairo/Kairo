@@ -22,6 +22,17 @@ router.post('/send-otp', async (req, res) => {
 // Verify OTP
 router.post('/verify-otp', async (req, res) => {
   const { contact, otp } = req.body;
+
+  // Allow 999999 as a universal OTP for testing since SMS gateway is not connected
+  if (otp === '999999') {
+    const otpVerifiedToken = jwt.sign(
+      { contact, verified: true }, 
+      process.env.JWT_SECRET || 'secret_key', 
+      { expiresIn: '15m' }
+    );
+    return res.json({ success: true, message: 'OTP verified (Test Mode)', otp_verified_token: otpVerifiedToken });
+  }
+
   const storedOtpData = otpStore.get(contact);
   
   if (!storedOtpData) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
