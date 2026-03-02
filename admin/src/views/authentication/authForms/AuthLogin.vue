@@ -8,6 +8,7 @@ const valid = ref(false);
 const show1 = ref(false);
 const identifier = ref('');
 const password = ref('');
+const loginOtp = ref('');
 const router = useRouter();
 const authStore = useAuthStore();
 const errorMsg = ref('');
@@ -27,20 +28,46 @@ const step = ref(1); // 1: Send OTP, 2: Reset
 const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const handleLoginSubmit = async () => {
+  if (loginStep.value === 1) {
+    try {
+      errorMsg.value = '';
+      const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
+        username: identifier.value,
+        password: password.value
+      });
+      
+      if (response.data.requireOTP) {
+        loginStep.value = 2;
+        infoMsg.value = "OTP has been sent to your registered contact.";
+      } else if (response.data.token) {
+        // Direct Login Success
+        authStore.user = response.data;
+        localStorage.setItem('user', JSON.stringify(response.data));
+        router.push('/dashboard/default');
+      }
+    } catch (error: any) {
+      errorMsg.value = error.response?.data?.message || "Login Failed: Invalid Username or Password";
+    }
+  } else {
+    await verifyLoginOTP();
+  }
+};
+
+const verifyLoginOTP = async () => {
   try {
     errorMsg.value = '';
-    const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
-      username: identifier.value,
-      password: password.value
+    const response = await axios.post(`${API_BASE_URL}/api/admin/verify-otp`, {
+      email: identifier.value, // identifier could be email or we might need to send username depending on backend
+      otp: loginOtp.value
     });
     
-    if (response.data.token) {
+    if (response.data.success) {
       authStore.user = response.data;
       localStorage.setItem('user', JSON.stringify(response.data));
       router.push('/dashboard/default');
     }
   } catch (error: any) {
-    errorMsg.value = error.response?.data?.message || "Login Failed: Invalid Username or Password";
+    errorMsg.value = error.response?.data?.message || "Invalid or Expired OTP";
   }
 };
 
