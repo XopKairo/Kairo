@@ -6,7 +6,7 @@ const otpSchema = new mongoose.Schema({
   expiresAt: { type: Date, required: true }
 }, { timestamps: true });
 
-// Auto-delete document when it expires
-otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Auto-delete document 60 seconds after it expires to allow for server grace period
+otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 60 });
 
 module.exports = mongoose.model('OTP', otpSchema);

@@ -97,6 +97,10 @@ const UserRegisterScreen = ({ navigation }) => {
           Alert.alert('Success', 'Registration complete!', [
             { text: 'OK', onPress: () => navigation.replace('Login') }
           ]);
+          // Fallback redirect after 2s in case Alert fails to render
+          setTimeout(() => {
+            navigation.replace('Login');
+          }, 2000);
         } else {
            Alert.alert('Failed', response.message || 'Registration failed');
         }

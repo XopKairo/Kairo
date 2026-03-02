@@ -56,11 +56,18 @@ function MainTabs() {
 
 export default function App() {
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      NavigationBar.setVisibilityAsync('hidden');
-      NavigationBar.setBehaviorAsync('inset-touch');
-      SystemUI.setBackgroundColorAsync('transparent');
+    async function lockImmersiveMode() {
+      if (Platform.OS === 'android') {
+        try {
+          await NavigationBar.setVisibilityAsync('hidden');
+          await NavigationBar.setBehaviorAsync('inset-touch');
+          await SystemUI.setBackgroundColorAsync('transparent');
+        } catch (e) {
+          // Fallback for non-supported environments
+        }
+      }
     }
+    lockImmersiveMode();
   }, []);
 
   return (
