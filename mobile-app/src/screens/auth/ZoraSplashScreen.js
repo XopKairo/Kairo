@@ -51,7 +51,7 @@ const ZoraSplashScreen = ({ navigation }) => {
 
   return (
     <LinearGradient
-      colors={['#e0f7fa', '#d8bfd8', '#dda0dd']} // Light blue + purple gradient
+      colors={['#1a1a2e', '#16213e', '#0f3460']} // Dark mode gradient
       style={styles.container}
     >
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
@@ -82,13 +82,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 48,
     fontWeight: '900',
-    color: '#4B0082',
+    color: '#ffffff',
     letterSpacing: 2,
     marginBottom: 10,
   },
   quote: {
     fontSize: 16,
-    color: '#333',
+    color: '#A29BFE',
     fontStyle: 'italic',
     fontWeight: '500',
   }

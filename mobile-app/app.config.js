@@ -14,11 +14,11 @@ export default {
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#050505"
+      "backgroundColor": "#1a1a2e"
     },
     "notification": {
       "icon": "./assets/icon.png",
-      "color": "#8A2BE2"
+      "color": "#1a1a2e"
     },
     "ios": {
       "supportsTablet": true,
@@ -38,7 +38,7 @@ export default {
         "INTERNET"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#1a1a2e",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
