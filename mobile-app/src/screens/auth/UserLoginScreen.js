@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Modal, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { loginUser, sendOtp, resetPassword, verifyOtp } from '../../services/api';
 import { registerForPushNotificationsAsync } from '../../services/pushService';
 import { LinearGradient } from 'expo-linear-gradient';
+
+const { width, height } = Dimensions.get('window');
 
 const UserLoginScreen = ({ navigation }) => {
   const [contact, setContact] = useState('');
@@ -16,7 +18,7 @@ const UserLoginScreen = ({ navigation }) => {
   const [fpContact, setFpContact] = useState('');
   const [fpOtp, setFpOtp] = useState('');
   const [fpNewPassword, setFpNewPassword] = useState('');
-  const [fpStep, setFpStep] = useState(1); // 1: Contact, 2: OTP & New Password
+  const [fpStep, setFpStep] = useState(1); 
   const [fpLoading, setFpLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -41,7 +43,7 @@ const UserLoginScreen = ({ navigation }) => {
 
   const handleSendFpOtp = async () => {
     if (!fpContact) {
-      Alert.alert('Error', 'Please enter your registered email or phone');
+      Alert.alert('Error', 'Please enter your registered phone number');
       return;
     }
     setFpLoading(true);
@@ -50,7 +52,6 @@ const UserLoginScreen = ({ navigation }) => {
       if (response.success) {
         setFpStep(2);
         Alert.alert('OTP Sent', 'Check your messages for the OTP.');
-        if (response.otp) console.log("Dev OTP:", response.otp);
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to send OTP');
@@ -72,10 +73,6 @@ const UserLoginScreen = ({ navigation }) => {
         if (resetRes.success) {
           Alert.alert('Success', 'Password reset successfully. You can now login.');
           setFpModalVisible(false);
-          setFpStep(1);
-          setFpContact('');
-          setFpOtp('');
-          setFpNewPassword('');
         }
       }
     } catch (error) {
@@ -86,271 +83,147 @@ const UserLoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        {/* Replace with your actual logo path, using a placeholder for now */}
-        <Image source={require('../../../assets/icon.png')} style={styles.logo} />
-        <Text style={styles.brandName}>Zora</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
-      </View>
-      
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email or Phone Number"
-          value={contact}
-          onChangeText={setContact}
-          autoCapitalize="none"
-          placeholderTextColor="#999"
-        />
-        
-        <View style={styles.passwordContainer}>
-          <TextInput
-            style={styles.passwordInput}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            placeholderTextColor="#999"
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-            <Icon name={showPassword ? "eye-off" : "eye"} size={24} color="#666" />
-          </TouchableOpacity>
-        </View>
+    <LinearGradient colors={['#1a1a2e', '#16213e', '#0f3460']} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <LinearGradient colors={['#8A2BE2', '#4B0082']} style={styles.logoGradient}>
+                <Image source={require('../../../assets/icon.png')} style={styles.logo} />
+              </LinearGradient>
+            </View>
+            <Text style={styles.title}>Zora</Text>
+            <Text style={styles.subtitle}>Connect and Earn</Text>
+          </View>
 
-        <TouchableOpacity style={styles.forgotPasswordContainer} onPress={() => { setFpModalVisible(true); setFpStep(1); }}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
+          <View style={styles.formCard}>
+            <Text style={styles.loginText}>Login</Text>
+            
+            <View style={styles.inputContainer}>
+              <Icon name="person-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Phone or Email"
+                placeholderTextColor="#666"
+                value={contact}
+                onChangeText={setContact}
+                autoCapitalize="none"
+              />
+            </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          <LinearGradient
-            colors={['#8A2BE2', '#4B0082']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.gradientButton}
-          >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
-          </LinearGradient>
-        </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Icon name="lock-closed-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#666"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                <Icon name={showPassword ? "eye-off" : "eye"} size={22} color="#8A2BE2" />
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.registerText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+            <TouchableOpacity 
+              onPress={() => { setFpModalVisible(true); setFpStep(1); }}
+              style={styles.forgotBtn}
+            >
+              <Text style={styles.forgotText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
+              <LinearGradient colors={['#8A2BE2', '#6a11cb']} style={styles.btnGradient}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>SIGN IN</Text>}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>New to Zora? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.signUpText}>Join Now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Forgot Password Modal */}
       <Modal visible={fpModalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeIcon} onPress={() => setFpModalVisible(false)}>
-              <Icon name="close" size={28} color="#333" />
-            </TouchableOpacity>
-            
+          <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Reset Password</Text>
-            
             {fpStep === 1 ? (
               <>
-                <Text style={styles.modalSubtitle}>Enter your registered email or phone to receive an OTP.</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email or Phone Number"
-                  value={fpContact}
-                  onChangeText={setFpContact}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity style={styles.modalButton} onPress={handleSendFpOtp} disabled={fpLoading}>
-                  {fpLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalButtonText}>Send OTP</Text>}
+                <TextInput style={styles.modalInput} placeholder="Enter Phone Number" placeholderTextColor="#999" value={fpContact} onChangeText={setFpContact} />
+                <TouchableOpacity style={styles.modalBtn} onPress={handleSendFpOtp}>
+                  <Text style={styles.btnText}>Send OTP</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={styles.modalSubtitle}>Enter the OTP sent to {fpContact}</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter OTP"
-                  value={fpOtp}
-                  onChangeText={setFpOtp}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="New Password"
-                  value={fpNewPassword}
-                  onChangeText={setFpNewPassword}
-                  secureTextEntry
-                />
-                <TouchableOpacity style={styles.modalButton} onPress={handleResetPassword} disabled={fpLoading}>
-                  {fpLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalButtonText}>Reset Password</Text>}
+                <TextInput style={styles.modalInput} placeholder="6-Digit OTP" value={fpOtp} onChangeText={setFpOtp} keyboardType="number-pad" />
+                <TextInput style={styles.modalInput} placeholder="New Password" value={fpNewPassword} onChangeText={setFpNewPassword} secureEntry />
+                <TouchableOpacity style={styles.modalBtn} onPress={handleResetPassword}>
+                  <Text style={styles.btnText}>Reset</Text>
                 </TouchableOpacity>
               </>
             )}
-          </KeyboardAvoidingView>
+            <TouchableOpacity onPress={() => setFpModalVisible(false)} style={styles.closeBtn}>
+              <Text style={{color: '#8A2BE2'}}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
-    </View>
+
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f4f7fb', // slightly premium background
+  container: { flex: 1 },
+  scrollContainer: { flexGrow: 1, padding: 25, justifyContent: 'center' },
+  header: { alignItems: 'center', marginBottom: 40 },
+  logoContainer: {
+    width: 100, height: 100, borderRadius: 25, elevation: 15,
+    shadowColor: '#8A2BE2', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5, shadowRadius: 15, backgroundColor: '#fff'
   },
-  headerContainer: {
-    flex: 0.4,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 30,
+  logoGradient: { flex: 1, borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+  logo: { width: 60, height: 60, resizeMode: 'contain', tintColor: '#fff' },
+  title: { fontSize: 32, fontWeight: '900', color: '#fff', marginTop: 15, letterSpacing: 2 },
+  subtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 16, letterSpacing: 1 },
+  formCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 30, padding: 30,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2, shadowRadius: 20, elevation: 10
   },
-  logo: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-    marginBottom: 10,
-    borderRadius: 20,
+  loginText: { fontSize: 24, fontWeight: 'bold', color: '#1a1a2e', marginBottom: 25, textAlign: 'center' },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0',
+    borderRadius: 15, marginBottom: 15, paddingHorizontal: 15, height: 55,
+    borderWidth: 1, borderColor: '#e0e0e0'
   },
-  brandName: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: '#333',
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 5,
-  },
-  formContainer: {
-    flex: 0.6,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  input: {
-    height: 55,
-    backgroundColor: '#f9f9f9',
-    borderColor: '#eee',
-    borderWidth: 1,
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    color: '#333',
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 55,
-    backgroundColor: '#f9f9f9',
-    borderColor: '#eee',
-    borderWidth: 1,
-    borderRadius: 15,
-    marginBottom: 10,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    color: '#333',
-  },
-  eyeIcon: {
-    padding: 10,
-  },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 25,
-  },
-  forgotPasswordText: {
-    color: '#8A2BE2',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  button: {
-    height: 55,
-    borderRadius: 15,
-    overflow: 'hidden',
-    shadowColor: '#8A2BE2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  gradientButton: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 30,
-  },
-  footerText: {
-    fontSize: 15,
-    color: '#666',
-  },
-  registerText: {
-    fontSize: 15,
-    color: '#8A2BE2',
-    fontWeight: 'bold',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 30,
-    paddingBottom: 50,
-  },
-  closeIcon: {
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  modalSubtitle: {
-    fontSize: 15,
-    color: '#666',
-    marginBottom: 20,
-    lineHeight: 22,
-  },
-  modalButton: {
-    backgroundColor: '#8A2BE2',
-    height: 55,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, color: '#333', fontSize: 16 },
+  eyeIcon: { padding: 5 },
+  forgotBtn: { alignSelf: 'flex-end', marginBottom: 25 },
+  forgotText: { color: '#8A2BE2', fontWeight: 'bold', fontSize: 14 },
+  loginBtn: { height: 55, borderRadius: 15, overflow: 'hidden', elevation: 5 },
+  btnGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  btnText: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 25 },
+  footerText: { color: '#666' },
+  signUpText: { color: '#8A2BE2', fontWeight: 'bold' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 25 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 25, padding: 25, alignItems: 'center' },
+  modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#333' },
+  modalInput: { width: '100%', height: 50, backgroundColor: '#f5f5f5', borderRadius: 12, paddingHorizontal: 15, marginBottom: 15, color: '#333' },
+  modalBtn: { width: '100%', height: 50, backgroundColor: '#8A2BE2', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  closeBtn: { marginTop: 15 }
 });
 
 export default UserLoginScreen;

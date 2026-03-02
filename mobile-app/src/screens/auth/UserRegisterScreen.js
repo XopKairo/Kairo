@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { registerUser, sendOtp, verifyOtp } from '../../services/api';
-import { registerForPushNotificationsAsync } from '../../services/pushService';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 const UserRegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -24,7 +26,7 @@ const UserRegisterScreen = ({ navigation }) => {
   const takeSelfie = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'We need camera access to verify your identity');
+      Alert.alert('Permission Denied', 'We need camera access for gender verification.');
       return;
     }
 
@@ -50,7 +52,7 @@ const UserRegisterScreen = ({ navigation }) => {
       return;
     }
     if (gender === 'Female' && !selfie) {
-      Alert.alert('Verification Required', 'Female hosts must upload a selfie for gender verification to earn coins.');
+      Alert.alert('Verification Required', 'Female hosts must upload a selfie for verification.');
       return;
     }
 
@@ -79,18 +81,14 @@ const UserRegisterScreen = ({ navigation }) => {
           name.trim(), 
           getFullContact(), 
           password, 
-          true, // isPhone always true now
+          true, 
           gender, 
           selfie, 
           verifyRes.otp_verified_token
         );
         if (response.success) {
           Alert.alert('Success', 'Registration complete!', [
-            { text: 'OK', onPress: () => {
-              // Navigate to Home or Login
-              if (navigation.canGoBack()) navigation.popToTop();
-              navigation.replace('UserLogin'); 
-            }}
+            { text: 'OK', onPress: () => navigation.replace('UserLogin') }
           ]);
         }
       }
@@ -102,109 +100,132 @@ const UserRegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Join Zora</Text>
-        <Text style={styles.subtitle}>Create your profile with phone number</Text>
-        
-        <TextInput style={styles.input} placeholder="Full Name" value={name} onChangeText={setName} />
-
-        <Text style={styles.label}>I am a:</Text>
-        <View style={styles.genderContainer}>
-          <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
-            <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female (Host)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
-            <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male (User)</Text>
-          </TouchableOpacity>
-        </View>
-
-        {gender === 'Female' && (
-          <View style={styles.selfieSection}>
-            <TouchableOpacity style={styles.selfieBtn} onPress={takeSelfie}>
-              {selfie ? (
-                <Image source={{ uri: selfie }} style={styles.previewImage} />
-              ) : (
-                <>
-                  <Icon name="camera" size={30} color="#8A2BE2" />
-                  <Text style={styles.selfieBtnText}>Take Verification Selfie</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            <Text style={styles.helperText}>Face must be clearly visible for admin approval.</Text>
+    <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          
+          <View style={styles.header}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join the Zora community</Text>
           </View>
-        )}
 
-        <Text style={styles.label}>Phone Number:</Text>
-        <View style={styles.contactRow}>
-          <TextInput style={styles.ccInput} value={countryCode} onChangeText={setCountryCode} />
-          <TextInput 
-            style={[styles.input, { flex: 1 }]} 
-            placeholder="Phone Number" 
-            value={contact} 
-            onChangeText={setContact} 
-            keyboardType="phone-pad"
-            maxLength={10}
-          />
-        </View>
-        
-        <View style={styles.passwordContainer}>
-          <TextInput style={styles.passwordInput} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}><Icon name={showPassword ? "eye-off" : "eye"} size={24} color="#666" /></TouchableOpacity>
-        </View>
+          <View style={styles.formCard}>
+            <View style={styles.inputContainer}>
+              <Icon name="person-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
+              <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
+            </View>
 
-        {isOtpSent && (
-          <TextInput 
-            style={styles.input} 
-            placeholder="6-Digit OTP" 
-            value={otp} 
-            onChangeText={setOtp} 
-            keyboardType="number-pad" 
-            maxLength={6} 
-          />
-        )}
+            <Text style={styles.label}>Identify as:</Text>
+            <View style={styles.genderContainer}>
+              <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
+                <Icon name="woman-outline" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} />
+                <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
+                <Icon name="man-outline" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} />
+                <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male</Text>
+              </TouchableOpacity>
+            </View>
 
-        <TouchableOpacity style={[styles.button, isOtpSent && styles.verifyButton]} onPress={isOtpSent ? handleVerifyAndRegister : handleSendOtp} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{isOtpSent ? 'Verify & Finish' : 'Send OTP'}</Text>}
-        </TouchableOpacity>
+            {gender === 'Female' && (
+              <TouchableOpacity style={styles.selfieBtn} onPress={takeSelfie}>
+                {selfie ? (
+                  <Image source={{ uri: selfie }} style={styles.previewImage} />
+                ) : (
+                  <>
+                    <Icon name="camera" size={30} color="#8A2BE2" />
+                    <Text style={styles.selfieBtnText}>Add Verification Selfie</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
 
-        <TouchableOpacity onPress={() => navigation.navigate('UserLogin')} style={{ marginTop: 20, alignItems: 'center' }}>
-          <Text style={{ color: '#8A2BE2' }}>Already have an account? Login</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <View style={styles.contactRow}>
+              <TextInput style={styles.ccInput} value={countryCode} onChangeText={setCountryCode} />
+              <View style={[styles.inputContainer, { flex: 1, marginBottom: 0 }]}>
+                <TextInput style={styles.input} placeholder="Phone Number" placeholderTextColor="#666" value={contact} onChangeText={setContact} keyboardType="phone-pad" maxLength={10} />
+              </View>
+            </View>
+            
+            <View style={styles.inputContainer}>
+              <Icon name="lock-closed-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
+              <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                <Icon name={showPassword ? "eye-off" : "eye"} size={22} color="#8A2BE2" />
+              </TouchableOpacity>
+            </View>
+
+            {isOtpSent && (
+              <View style={styles.inputContainer}>
+                <Icon name="shield-checkmark-outline" size={20} color="#32CD32" style={styles.inputIcon} />
+                <TextInput style={styles.input} placeholder="6-Digit OTP" placeholderTextColor="#666" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.registerBtn} onPress={isOtpSent ? handleVerifyAndRegister : handleSendOtp} disabled={loading}>
+              <LinearGradient colors={['#8A2BE2', '#6a11cb']} style={styles.btnGradient}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{isOtpSent ? 'VERIFY & REGISTER' : 'SEND OTP'}</Text>}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate('UserLogin')} style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <Text style={styles.loginLink}>Login</Text>
+            </TouchableOpacity>
+          </View>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  scrollContainer: { padding: 25, flexGrow: 1 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#8A2BE2' },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
-  genderContainer: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  genderBtn: { flex: 1, padding: 12, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: '#eee' },
-  activeGender: { borderColor: '#8A2BE2', backgroundColor: '#f3e5f5' },
-  genderText: { color: '#666' },
-  activeGenderText: { color: '#8A2BE2', fontWeight: 'bold' },
-  selfieSection: { marginBottom: 20, alignItems: 'center' },
-  selfieBtn: { width: '100%', height: 150, borderStyle: 'dashed', borderWidth: 2, borderColor: '#8A2BE2', borderRadius: 15, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', overflow: 'hidden' },
+  container: { flex: 1 },
+  scrollContainer: { flexGrow: 1, padding: 25, justifyContent: 'center' },
+  header: { marginBottom: 30, alignItems: 'center' },
+  title: { fontSize: 30, fontWeight: '900', color: '#fff', letterSpacing: 1 },
+  subtitle: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
+  formCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 30, padding: 25,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2, shadowRadius: 20, elevation: 10
+  },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 10, marginTop: 5 },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0',
+    borderRadius: 15, marginBottom: 15, paddingHorizontal: 15, height: 55,
+    borderWidth: 1, borderColor: '#e0e0e0'
+  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, color: '#333', fontSize: 16 },
+  eyeIcon: { padding: 5 },
+  genderContainer: { flexDirection: 'row', gap: 10, marginBottom: 15 },
+  genderBtn: { 
+    flex: 1, height: 50, borderRadius: 12, borderWidth: 1, borderColor: '#8A2BE2',
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8
+  },
+  activeGender: { backgroundColor: '#8A2BE2' },
+  genderText: { color: '#8A2BE2', fontWeight: 'bold' },
+  activeGenderText: { color: '#fff' },
+  selfieBtn: { 
+    height: 120, borderRadius: 15, borderStyle: 'dashed', borderWidth: 2, 
+    borderColor: '#8A2BE2', backgroundColor: '#f9f9f9', justifyContent: 'center', 
+    alignItems: 'center', marginBottom: 15, overflow: 'hidden' 
+  },
   previewImage: { width: '100%', height: '100%' },
-  selfieBtnText: { color: '#8A2BE2', marginTop: 10, fontWeight: 'bold' },
-  helperText: { fontSize: 12, color: '#999', marginTop: 5 },
-  tabContainer: { flexDirection: 'row', marginBottom: 15, backgroundColor: '#f0f0f0', borderRadius: 10, padding: 3 },
-  tab: { flex: 1, padding: 8, alignItems: 'center', borderRadius: 8 },
-  activeTab: { backgroundColor: '#fff' },
-  tabText: { color: '#666' },
-  activeTabText: { color: '#8A2BE2', fontWeight: 'bold' },
-  contactRow: { flexDirection: 'row', gap: 10 },
-  ccInput: { width: 60, height: 50, backgroundColor: '#f9f9f9', borderRadius: 10, textAlign: 'center', borderWidth: 1, borderColor: '#eee' },
-  input: { height: 50, backgroundColor: '#f9f9f9', borderRadius: 10, paddingHorizontal: 15, marginBottom: 15, borderWidth: 1, borderColor: '#eee' },
-  passwordContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9f9f9', borderRadius: 10, paddingHorizontal: 15, marginBottom: 15, borderWidth: 1, borderColor: '#eee' },
-  passwordInput: { flex: 1, height: 50 },
-  button: { backgroundColor: '#8A2BE2', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
-  verifyButton: { backgroundColor: '#32CD32' },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+  selfieBtnText: { color: '#8A2BE2', marginTop: 5, fontWeight: 'bold', fontSize: 12 },
+  contactRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
+  ccInput: { 
+    width: 60, height: 55, backgroundColor: '#f0f0f0', borderRadius: 15, 
+    textAlign: 'center', borderWidth: 1, borderColor: '#e0e0e0', color: '#333', fontWeight: 'bold' 
+  },
+  registerBtn: { height: 55, borderRadius: 15, overflow: 'hidden', marginTop: 10, elevation: 5 },
+  btnGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  btnText: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
+  footerText: { color: '#666' },
+  loginLink: { color: '#8A2BE2', fontWeight: 'bold' }
 });
 
 export default UserRegisterScreen;
