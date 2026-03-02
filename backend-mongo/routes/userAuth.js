@@ -45,12 +45,13 @@ router.post('/send-otp', async (req, res) => {
 
   // If email
   if (contact.includes('@')) {
+     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        return res.status(500).json({ success: false, message: 'Email configuration missing on server' });
+     }
+
      const nodemailer = require('nodemailer');
      const transporter = nodemailer.createTransport({
        service: 'gmail',
-       host: 'smtp.gmail.com',
-       port: 465,
-       secure: true,
        auth: {
          user: process.env.EMAIL_USER,
          pass: process.env.EMAIL_PASS
@@ -63,10 +64,11 @@ router.post('/send-otp', async (req, res) => {
            from: `"Zora Support" <${process.env.EMAIL_USER}>`,
            to: contact,
            subject: "Zora Verification Code",
-           text: `Your Zora verification code is: ${otp}`
+           text: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`
          }),
-         new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout')), 10000))
+         new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout (20s)')), 20000))
        ]);
+       console.log(`[Email] OTP sent successfully to ${contact}`);
        return res.json({ success: true, message: 'OTP sent to your email' });
      } catch (error) {
        console.error('[Email Error]', error.message);
