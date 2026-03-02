@@ -119,7 +119,7 @@ router.post('/profile/settings', async (req, res) => {
 router.post('/account/update', async (req, res) => {
   try {
     const { username, email, phone, password } = req.body;
-    const updateData: any = { username, email, phone };
+    const updateData = { username, email, phone };
     if (password) {
        // Manual hashing or let the pre-save hook handle it if it's an instance
        const admin = await Admin.findOne({});
