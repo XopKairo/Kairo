@@ -1,4 +1,4 @@
-{
+export default {
   "expo": {
     "name": "Zora",
     "slug": "zora",
@@ -22,7 +22,7 @@
     },
     "android": {
       "package": "com.zora.live",
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile": process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
       "enableProguardInReleaseBuilds": true,
       "permissions": [
         "CAMERA",
@@ -44,9 +44,18 @@
       "expo-asset",
       "expo-font",
       [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ],
+      [
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "android_app_id": "ca-app-pub-3940256099942544~3347511713",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
@@ -60,4 +69,4 @@
       }
     }
   }
-}
+};
