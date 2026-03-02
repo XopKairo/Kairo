@@ -44,13 +44,28 @@ const UserLoginScreen = ({ navigation }) => {
     }
     
     setLoading(true);
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      Alert.alert('Timeout', 'Login is taking too long. Please check your network.');
+    }, 10000);
+
     try {
-      const response = await loginUser(contact, password);
+      let formattedContact = contact.trim();
+      // Auto-prefix +91 if it looks like a 10-digit Indian phone number
+      if (/^\d{10}$/.test(formattedContact)) {
+        formattedContact = `+91${formattedContact}`;
+      }
+
+      const response = await loginUser(formattedContact, password.trim());
+      clearTimeout(timeoutId);
       if (response.success && response.user) {
         registerForPushNotificationsAsync(response.user.id || response.user._id);
         navigation.replace('Main');
+      } else {
+        Alert.alert('Login Failed', response.message || 'Invalid credentials');
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
       setLoading(false);

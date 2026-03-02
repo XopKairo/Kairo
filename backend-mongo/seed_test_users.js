@@ -9,6 +9,15 @@ const seedTestUsers = async () => {
 
     const testUsers = [
       {
+        name: 'Official Test User',
+        email: 'testuser',
+        password: 'testuser123',
+        gender: 'Male',
+        coins: 5000,
+        zoraPoints: 100,
+        status: 'offline'
+      },
+      {
         name: 'Test User 1',
         email: 'testuser1',
         password: '123456test1',
