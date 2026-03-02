@@ -11,35 +11,51 @@
 
     <!-- Analytics Section -->
     <v-row>
-      <v-col cols="12" md="8">
+      <v-col cols="12" md="6">
         <v-card elevation="2" class="pa-4">
-          <v-card-title class="text-h6">Real-Time App Analytics</v-card-title>
+          <v-card-title class="text-h6">Live Active Sessions</v-card-title>
           <v-card-text>
-            <div style="height: 300px;">
+            <div style="height: 250px;">
               <LineChart v-if="chartData.labels.length > 0" :data="chartData" :options="chartOptions" />
               <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" md="4">
-        <v-card elevation="2" class="pa-4 h-100">
-          <v-card-title class="text-h6">Quick Stats</v-card-title>
-          <v-card-text class="d-flex flex-column justify-center align-center h-100">
-            <div class="text-h3 font-weight-bold text-primary mb-2">{{ totalUsers }}</div>
-            <div class="text-subtitle-1 text-grey">Total Registered Users</div>
-            <v-divider class="my-4 w-100"></v-divider>
-            <div class="text-h4 font-weight-bold text-success mb-2">{{ activeSessions }}</div>
-            <div class="text-subtitle-1 text-grey">Active Calls</div>
-            <v-divider class="my-4 w-100"></v-divider>
-            <div class="text-h5 font-weight-bold text-warning mb-2">{{ totalCoinsCirculating }}</div>
-            <div class="text-subtitle-2 text-grey">Coins in Circulation</div>
+      <v-col cols="12" md="6">
+        <v-card elevation="2" class="pa-4">
+          <v-card-title class="text-h6">6-Month Growth Trends</v-card-title>
+          <v-card-text>
+            <div style="height: 250px;">
+              <LineChart v-if="historicalData" :data="historicalChartData" :options="historicalChartOptions" />
+              <v-progress-circular v-else indeterminate color="primary"></v-progress-circular>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Gender Verification Requests Section -->
+    <!-- Quick Stats Summary -->
+    <v-row class="mb-6">
+      <v-col cols="12" md="4">
+        <v-card elevation="2" class="pa-4 text-center">
+          <div class="text-h4 font-weight-bold text-primary">{{ totalUsers }}</div>
+          <div class="text-subtitle-2 text-grey">TOTAL USERS</div>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="4">
+        <v-card elevation="2" class="pa-4 text-center">
+          <div class="text-h4 font-weight-bold text-success">{{ activeSessions }}</div>
+          <div class="text-subtitle-2 text-grey">ACTIVE CALLS</div>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="4">
+        <v-card elevation="2" class="pa-4 text-center">
+          <div class="text-h4 font-weight-bold text-warning">{{ totalCoinsCirculating }}</div>
+          <div class="text-subtitle-2 text-grey">COINS IN CIRCULATION</div>
+        </v-card>
+      </v-col>
+    </v-row>
     <v-row class="mt-6">
       <v-col cols="12">
         <v-card elevation="2">
@@ -209,6 +225,7 @@ const totalUsers = ref(0);
 const activeSessions = ref(0);
 const totalCoinsCirculating = ref(0);
 const adminRevenue = ref(0);
+const historicalData = ref<any>(null);
 
 const adminWithdrawDialog = ref(false);
 const withdrawAmount = ref('');
@@ -242,6 +259,35 @@ const chartOptions = {
   plugins: { legend: { display: false } }
 };
 
+const historicalChartData = computed(() => ({
+  labels: historicalData.value?.labels || [],
+  datasets: [
+    {
+      label: 'New Users',
+      borderColor: '#1867C0',
+      backgroundColor: 'rgba(24, 103, 192, 0.1)',
+      data: historicalData.value?.userGrowth || [],
+      fill: true,
+      tension: 0.4
+    },
+    {
+      label: 'Revenue (INR)',
+      borderColor: '#4CAF50',
+      backgroundColor: 'rgba(76, 175, 80, 0.1)',
+      data: historicalData.value?.revenueData || [],
+      fill: true,
+      tension: 0.4
+    }
+  ]
+}));
+
+const historicalChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: { y: { beginAtZero: true } },
+  plugins: { legend: { display: true, position: 'bottom' } }
+};
+
 let analyticsInterval: any = null;
 
 const filteredUsers = computed(() => {
@@ -266,16 +312,18 @@ const viewImage = (url: string) => {
 
 const fetchData = async () => {
   try {
-    const [usersRes, statsRes, verRes] = await Promise.all([
+    const [usersRes, statsRes, verRes, analyticsRes] = await Promise.all([
       axios.get(`${API_BASE_URL}/api/admin/users`),
       axios.get(`${API_BASE_URL}/api/admin/dashboard/stats`),
-      axios.get(`${API_BASE_URL}/api/verification`)
+      axios.get(`${API_BASE_URL}/api/verification`),
+      axios.get(`${API_BASE_URL}/api/admin/dashboard/analytics`)
     ]);
     users.value = usersRes.data || [];
     totalUsers.value = statsRes.data.totalUsers || 0;
     totalCoinsCirculating.value = statsRes.data.totalCoins || 0;
     adminRevenue.value = statsRes.data.totalRevenue || 0;
     verificationRequests.value = verRes.data.filter((r: any) => r.status === 'pending');
+    historicalData.value = analyticsRes.data;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     showSnackbar('Failed to load real-time data from server.', 'error');

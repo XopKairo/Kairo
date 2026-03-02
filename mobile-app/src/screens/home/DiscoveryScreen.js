@@ -4,26 +4,36 @@ import api from '../../services/api';
 
 
 
-const DiscoveryScreen = () => {
+const DiscoveryScreen = ({ navigation }) => {
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Debounce the search
-    const delayDebounceFn = setTimeout(() => {
-      searchUsers();
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
+    if (!query.trim()) {
+      fetchAllUsers();
+    } else {
+      const delayDebounceFn = setTimeout(() => {
+        searchUsers();
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    }
   }, [query]);
 
-  const searchUsers = async () => {
-    if (!query.trim()) {
-      setUsers([]);
-      return;
+  const fetchAllUsers = async () => {
+    setLoading(true);
+    try {
+      // Fetch general list of users (showing active ones first)
+      const response = await api.get('/users');
+      setUsers(response.data || []);
+    } catch (error) {
+      console.error('Fetch users error:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  const searchUsers = async () => {
     setLoading(true);
     try {
       const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
@@ -36,24 +46,34 @@ const DiscoveryScreen = () => {
   };
 
   const renderUser = ({ item }) => (
-    <View style={styles.userCard}>
-      <View style={styles.avatarPlaceholder}>
+    <TouchableOpacity 
+      style={styles.userCard}
+      onPress={() => {
+        // Placeholder: Navigate to detail or start chat
+        // navigation.navigate('Chat', { recipientId: item._id, recipientName: item.name });
+      }}
+    >
+      <View style={[styles.avatarPlaceholder, { backgroundColor: item.gender === 'Female' ? '#FF69B4' : '#007BFF' }]}>
         <Text style={styles.avatarText}>{item.name ? item.name.charAt(0).toUpperCase() : '?'}</Text>
+        <View style={[styles.statusDot, { backgroundColor: item.status === 'online' ? '#4CAF50' : '#CCC' }]} />
       </View>
       <View style={styles.userInfo}>
         <Text style={styles.userName}>
-          {item.name} {item.nickname ? `(${item.nickname})` : ''}
+          {item.name}
           {item.isVerified && <Text style={styles.blueTick}> ✓</Text>}
         </Text>
+        <Text style={styles.userStatus}>{item.status === 'online' ? 'Active Now' : 'Offline'}</Text>
         {item.location ? <Text style={styles.userDetail}>📍 {item.location}</Text> : null}
-        {item.interests && item.interests.length > 0 ? (
-          <Text style={styles.userDetail}>💡 {item.interests.join(', ')}</Text>
-        ) : null}
       </View>
-      <TouchableOpacity style={styles.connectButton}>
+      <TouchableOpacity 
+        style={styles.connectButton}
+        onPress={() => {
+           // Direct to video call or chat
+        }}
+      >
         <Text style={styles.connectText}>Connect</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -148,6 +168,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
+    position: 'relative',
+  },
+  statusDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   avatarText: {
     color: '#FFF',
@@ -161,6 +192,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 2,
+  },
+  userStatus: {
+    fontSize: 12,
+    color: '#888',
     marginBottom: 4,
   },
   blueTick: {

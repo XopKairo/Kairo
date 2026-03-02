@@ -36,14 +36,65 @@ router.get('/stats', async (req, res) => {
 // Analytics Route for Chart
 router.get('/analytics', async (req, res) => {
   try {
-    // Return some sample structured data for charts based on real user growth if possible
-    // For now, let's return real count and some growth simulation
-    const count = await User.countDocuments();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    // 1. User Growth Aggregation
+    const userGrowthData = await User.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    // 2. Revenue Aggregation (using the ad-hoc collection)
+    const mongoose = require('mongoose');
+    const revenueCollection = mongoose.connection.db.collection('admin_revenues');
+    const revenueData = await revenueCollection.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
+          total: { $sum: "$adminEarning" }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]).toArray();
+
+    // Map to last 6 months labels
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const labels = [];
+    const userCounts = [];
+    const revenueTotals = [];
+
+    for (let i = 0; i < 6; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (5 - i));
+      const m = d.getMonth() + 1;
+      const y = d.getFullYear();
+      
+      labels.push(`${months[m-1]} ${y}`);
+      
+      const userMatch = userGrowthData.find(ug => ug._id.month === m && ug._id.year === y);
+      userCounts.push(userMatch ? userMatch.count : 0);
+
+      const revMatch = revenueData.find(rd => rd._id.month === m && rd._id.year === y);
+      revenueTotals.push(revMatch ? (revMatch.total * 0.1).toFixed(2) : 0); // Convert coins to INR
+    }
+
     res.json({
-      userGrowth: [0, 0, 0, 0, 0, count], // Simple simulation for now
-      revenueData: [0, 0, 0, 0, 0, 0]
+      labels,
+      userGrowth: userCounts,
+      revenueData: revenueTotals
     });
   } catch (error) {
+     console.error('Analytics Error:', error);
      res.status(500).json({ success: false, message: error.message });
   }
 });

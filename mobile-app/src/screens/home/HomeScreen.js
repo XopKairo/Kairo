@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, Card, Avatar, Searchbar, ActivityIndicator } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 
 const { width } = Dimensions.get('window');
@@ -11,6 +12,8 @@ const HomeScreen = ({ navigation }) => {
   const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [appSettings, setAppSettings] = useState({ callRate: 30 });
 
   useEffect(() => {
     fetchData();
@@ -19,12 +22,23 @@ const HomeScreen = ({ navigation }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [bannerRes, hostRes] = await Promise.all([
+      
+      // Get real user data from local storage
+      const userDataStr = await AsyncStorage.getItem('userData');
+      if (userDataStr) {
+        setCurrentUser(JSON.parse(userDataStr));
+      }
+
+      const [bannerRes, hostRes, settingsRes] = await Promise.all([
         api.get('/marketing/banners'),
-        api.get('/hosts')
+        api.get('/hosts'),
+        api.get('/settings')
       ]);
       setBanners(bannerRes.data);
       setHosts(hostRes.data);
+      if (settingsRes.data) {
+        setAppSettings(settingsRes.data);
+      }
     } catch (error) {
       console.error("Error fetching home data:", error);
     } finally {
@@ -45,14 +59,17 @@ const HomeScreen = ({ navigation }) => {
   const renderHost = ({ item }) => (
     <TouchableOpacity 
       style={styles.hostCard}
-      onPress={() => navigation.navigate('VideoCall', {
-        userId: 'user_123', // This should be real current user ID
-        userName: 'Current User',
-        hostId: item._id,
-        hostName: item.name,
-        callId: 'call_' + Date.now(),
-        callRatePerMinute: 30
-      })}
+      onPress={() => {
+        if (!currentUser) return;
+        navigation.navigate('VideoCall', {
+          userId: currentUser.id || currentUser._id,
+          userName: currentUser.name || 'User',
+          hostId: item._id,
+          hostName: item.name,
+          callId: 'call_' + Date.now(),
+          callRatePerMinute: appSettings.callRate || 30
+        });
+      }}
     >
       <View style={styles.hostImageContainer}>
         <Avatar.Image size={100} source={{ uri: item.profilePicture || 'https://via.placeholder.com/100' }} />
