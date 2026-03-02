@@ -286,7 +286,7 @@ const historicalChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   scales: { y: { beginAtZero: true } },
-  plugins: { legend: { display: true, position: 'bottom' } }
+  plugins: { legend: { display: true, position: 'bottom' as const } }
 };
 
 let analyticsInterval: any = null;
