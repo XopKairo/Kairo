@@ -47,8 +47,7 @@ export default {
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.1.0",
-            "kspVersion": "2.1.0-1.0.29",
+            "kotlinVersion": "1.9.25",
             "newArchEnabled": false
           }
         }
