@@ -73,36 +73,37 @@ const FeedScreen = () => {
         return;
       }
 
-      // Prepare FormData for upload
+      // Prepare FormData for upload (React Native compatible)
       const formData = new FormData();
       formData.append('userId', userId);
-      formData.append('caption', newCaption);
+      formData.append('caption', newCaption.trim());
       
-      const filename = selectedImage.uri.split('/').pop();
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image`;
+      const uriParts = selectedImage.uri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
 
       formData.append('image', {
         uri: selectedImage.uri,
-        name: filename,
-        type: type,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
       });
 
-      // Using raw axios/fetch or api with proper headers for multipart
-      await api.post(`/posts`, formData, {
+      // Execute POST request to backend
+      const response = await api.post('/posts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      setModalVisible(false);
-      setNewCaption('');
-      setSelectedImage(null);
-      handleRefresh(); 
-      Alert.alert('Success', 'Story posted successfully!');
+      if (response.data) {
+        setModalVisible(false);
+        setNewCaption('');
+        setSelectedImage(null);
+        handleRefresh(); 
+        Alert.alert('Success', 'Your story is now live for 24 hours!');
+      }
     } catch (error) {
-      console.error('Error creating post:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to post story.');
+      console.error('Post creation failed:', error);
+      Alert.alert('Upload Failed', error.response?.data?.message || 'Check your connection and try again.');
     } finally {
       setIsPosting(false);
     }

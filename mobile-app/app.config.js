@@ -50,6 +50,7 @@ export default {
     },
     "plugins": [
       "expo-notifications",
+      "expo-image-picker",
       "expo-asset",
       "expo-font",
       [

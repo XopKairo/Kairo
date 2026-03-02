@@ -53,8 +53,9 @@ const breadcrumbs = shallowRef([
           <tbody>
             <tr v-for="payout in payouts" :key="payout._id" class="hover-row">
               <td class="py-4">
-                <div class="font-weight-bold">{{ payout.host?.name || 'N/A' }}</div>
+                <div class="font-weight-bold">{{ payout.user?.name || payout.host?.name || 'N/A' }}</div>
                 <div class="text-caption text-medium-emphasis">ID: {{ payout._id }}</div>
+                <div class="text-caption text-primary" v-if="payout.user?.phone">{{ payout.user.phone }}</div>
               </td>
               <td class="text-success font-weight-bold text-subtitle-1">₹{{ payout.amountINR?.toLocaleString('en-IN') }}</td>
               <td>

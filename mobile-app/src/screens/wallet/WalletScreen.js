@@ -4,6 +4,7 @@ import { Text, Card, Button, TextInput, List, Title, Paragraph, Divider, Activit
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import { initRewardedAd, showRewardedAd } from '../../services/adService';
+import { io } from 'socket.io-client';
 
 const COIN_TO_INR_RATE = 0.1;
 
@@ -35,6 +36,21 @@ const WalletScreen = () => {
   useEffect(() => {
     fetchUserData();
     
+    // Setup Socket Listener for Payout Status
+    const socket = io('https://kairo-b1i9.onrender.com');
+    
+    AsyncStorage.getItem('userData').then(data => {
+      if (data) {
+        const u = JSON.parse(data);
+        socket.emit('registerUser', u.id || u._id);
+      }
+    });
+
+    socket.on('payoutProcessed', (data) => {
+      Alert.alert(data.success ? 'Payout Successful' : 'Payout Rejected', data.message);
+      fetchUserData();
+    });
+
     // Initialize Rewarded Ads
     const cleanupAds = initRewardedAd(
       () => setAdLoading(false), // On Dismiss
@@ -53,6 +69,7 @@ const WalletScreen = () => {
 
     return () => {
       if (typeof cleanupAds === 'function') cleanupAds();
+      socket.disconnect();
     };
   }, []);
 
