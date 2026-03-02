@@ -160,11 +160,9 @@ const UserLoginScreen = ({ navigation }) => {
             <View style={styles.footer}>
               <Text style={styles.footerText}>New to Zora? </Text>
               <TouchableOpacity onPress={() => {
-                try {
+                requestAnimationFrame(() => {
                   navigation.navigate('Register');
-                } catch(e) {
-                  // Navigation error caught silently
-                }
+                });
               }}>
                 <Text style={styles.signUpText}>Join Now</Text>
               </TouchableOpacity>
@@ -190,7 +188,7 @@ const UserLoginScreen = ({ navigation }) => {
             ) : (
               <>
                 <TextInput style={styles.modalInput} placeholder="6-Digit OTP" value={fpOtp} onChangeText={setFpOtp} keyboardType="number-pad" />
-                <TextInput style={styles.modalInput} placeholder="New Password" value={fpNewPassword} onChangeText={setFpNewPassword} secureEntry />
+                <TextInput style={styles.modalInput} placeholder="New Password" value={fpNewPassword} onChangeText={setFpNewPassword} secureTextEntry />
                 <TouchableOpacity style={styles.modalBtn} onPress={handleResetPassword}>
                   <Text style={styles.btnText}>Reset</Text>
                 </TouchableOpacity>
@@ -233,7 +231,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#333', fontSize: 16 },
-  eyeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', zIndex: 10, elevation: 10 },
+  eyeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 25 },
   forgotText: { color: '#8A2BE2', fontWeight: 'bold', fontSize: 14 },
   loginBtn: { height: 55, borderRadius: 15, overflow: 'hidden', elevation: 5 },
