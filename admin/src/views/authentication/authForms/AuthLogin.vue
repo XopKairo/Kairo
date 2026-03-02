@@ -46,6 +46,11 @@ const requestLoginOTP = async () => {
     if (response.data.requireOTP) {
       loginStep.value = 2;
       infoMsg.value = "OTP has been sent to your registered email.";
+    } else if (response.data.token) {
+      // Direct Login Success
+      authStore.user = response.data;
+      localStorage.setItem('user', JSON.stringify(response.data));
+      router.push('/dashboard/default');
     }
   } catch (error: any) {
     errorMsg.value = error.response?.data?.message || "Login Failed: Invalid Credentials";
@@ -154,7 +159,7 @@ const passwordRules = ref([
           <a href="javascript:void(0)" @click="forgotDialog = true" class="text-primary text-decoration-none text-subtitle-1 font-weight-medium">Forgot Password?</a>
         </div>
       </div>
-      <v-btn color="secondary" :disabled="!valid" block class="mt-5" variant="flat" size="large" type="submit">Send Login OTP</v-btn>
+      <v-btn color="secondary" :disabled="!valid" block class="mt-5" variant="flat" size="large" type="submit">Sign In</v-btn>
     </div>
 
     <div v-else>
