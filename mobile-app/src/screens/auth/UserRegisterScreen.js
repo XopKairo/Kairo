@@ -121,7 +121,7 @@ const UserRegisterScreen = ({ navigation }) => {
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior={'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
             
             <View style={styles.header}>
