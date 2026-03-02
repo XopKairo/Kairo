@@ -51,7 +51,7 @@ const sidebarMenu = shallowRef(sidebarItems);
         <!-- <ExtraBox /> -->
       </div>
       <div class="pa-4 text-center">
-        <v-chip color="inputBorder" size="small"> v1.3.0 </v-chip>
+        <v-chip color="primary" size="small" variant="flat"> Zora Gold Master </v-chip>
       </div>
     </perfect-scrollbar>
   </v-navigation-drawer>

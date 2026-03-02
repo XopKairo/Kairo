@@ -40,8 +40,15 @@ onMounted(fetchProfile);
 
 <template>
   <div class="pa-4">
-    <h4 class="mb-n1">{{ getTimeGreeting() }}, <span class="font-weight-regular">{{ profile.name }}</span></h4>
-    <span class="text-subtitle-2 text-medium-emphasis">{{ profile.role }}</span>
+    <div class="d-flex align-center mb-4">
+      <v-avatar size="45" class="mr-3">
+        <img src="@/assets/images/logos/zora-logo.png" alt="Zora" />
+      </v-avatar>
+      <div>
+        <h4 class="mb-n1">{{ getTimeGreeting() }}, <span class="font-weight-regular">{{ profile.name }}</span></h4>
+        <span class="text-subtitle-2 text-medium-emphasis">{{ profile.role }}</span>
+      </div>
+    </div>
 
     <v-text-field v-model="search" persistent-placeholder placeholder="Search settings..." class="my-3" color="primary" variant="outlined" hide-details>
       <template v-slot:prepend-inner>

@@ -10,7 +10,7 @@ const footerLink = shallowRef([]);
     <v-row justify="center" align="center" no-gutters>
       <v-col cols="12" sm="6">
         <p class="text-body-1 mb-0 text-sm-left text-center">
-          Kairo &copy; 2026 | Adult Dating Admin Panel
+          Zora &copy; 2026 | Zora Gold Master Admin Dashboard
         </p>
       </v-col>
       <v-col class="text-sm-right text-center" cols="12" sm="6">

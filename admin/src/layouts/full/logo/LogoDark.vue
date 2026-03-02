@@ -1,7 +1,8 @@
 <template>
   <div class="logo">
     <RouterLink to="/" class="text-decoration-none d-flex align-center">
-      <h2 class="text-h2 font-weight-bold text-primary">Kairo</h2>
+      <img src="@/assets/images/logos/zora-logo.png" alt="Zora" width="40" height="40" class="mr-2 rounded-lg" />
+      <h2 class="text-h2 font-weight-bold text-primary">Zora</h2>
     </RouterLink>
   </div>
 </template>

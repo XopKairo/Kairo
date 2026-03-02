@@ -34,6 +34,7 @@ const sidebarItem: menu[] = [
   { header: 'USER MANAGEMENT' },
   { title: 'Users List', icon: UsersIcon, to: '/admin/users/list' },
   { title: 'Host Management', icon: UserCheckIcon, to: '/admin/hosts/list' },
+  { title: 'Host Verification', icon: UserCheckIcon, to: '/admin/hosts/verify' },
   { title: 'Agencies', icon: UserCheckIcon, to: '/admin/agencies' },
   { divider: true },
   { header: 'ECONOMY' },

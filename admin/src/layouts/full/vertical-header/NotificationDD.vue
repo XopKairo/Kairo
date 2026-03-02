@@ -47,7 +47,7 @@ onUnmounted(() => {
   <div class="pa-4">
     <div class="d-flex align-center justify-space-between mb-3">
       <h6 class="text-subtitle-1">
-        Live Notifications
+        Zora Live Alerts
         <v-chip v-if="notifications.length" color="error" variant="flat" size="small" class="ml-2 text-white">
           {{ notifications.filter(n => !n.read).length }}
         </v-chip>

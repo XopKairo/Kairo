@@ -38,6 +38,9 @@ onMounted(fetchAnalytics);
 
 <template>
   <v-row>
+    <v-col cols="12">
+      <h2 class="text-h4 mb-4">Zora Gold Master <small class="text-subtitle-1 text-grey">Live Performance Overview</small></h2>
+    </v-col>
     <v-col cols="12" md="3">
       <v-card color="secondary" class="pa-6 text-white rounded-xl">
         <div class="text-subtitle-1 mb-1">Total Users</div>
