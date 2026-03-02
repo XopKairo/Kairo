@@ -80,12 +80,12 @@ const UserRegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const verifyRes = await verifyOtp(getFullContact(), otp);
+      const verifyRes = await verifyOtp(String(getFullContact()), otp);
       
       if (verifyRes.success && verifyRes.otp_verified_token) {
         const response = await registerUser(
           name.trim(), 
-          getFullContact(), 
+          String(getFullContact()), 
           password, 
           true, 
           gender, 
