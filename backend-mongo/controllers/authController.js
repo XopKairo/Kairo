@@ -4,20 +4,27 @@ const { sendOTP } = require('../utils/emailService');
 
 // Admin Login - No OTP Required
 const authAdmin = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, email, password } = req.body;
 
   try {
-    const admin = await Admin.findOne({ email });
+    const query = [];
+    if (username) query.push({ username });
+    if (email) query.push({ email });
+
+    if (query.length === 0) return res.status(400).json({ success: false, message: 'Username or Email required' });
+
+    const admin = await Admin.findOne({ $or: query });
 
     if (admin && (await admin.matchPassword(password))) {
       return res.status(200).json({
         success: true,
         _id: admin._id,
+        username: admin.username,
         email: admin.email,
         token: generateToken(admin._id),
       });
     } else {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'Invalid Credentials' });
     }
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
