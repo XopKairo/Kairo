@@ -7,7 +7,6 @@ import { registerForPushNotificationsAsync } from '../../services/pushService';
 
 const UserRegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
-  const [contactType, setContactType] = useState('phone'); 
   const [contact, setContact] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
@@ -17,10 +16,9 @@ const UserRegisterScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
-  const [otpToken, setOtpToken] = useState('');
 
   const getFullContact = () => {
-    return contactType === 'phone' ? `${countryCode}${contact}` : contact;
+    return `${countryCode}${contact.trim()}`;
   };
 
   const takeSelfie = async () => {
@@ -45,6 +43,10 @@ const UserRegisterScreen = ({ navigation }) => {
   const handleSendOtp = async () => {
     if (!name || !contact || !password) {
       Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+    if (contact.length < 10) {
+      Alert.alert('Error', 'Please enter a valid phone number');
       return;
     }
     if (gender === 'Female' && !selfie) {
@@ -73,18 +75,23 @@ const UserRegisterScreen = ({ navigation }) => {
     try {
       const verifyRes = await verifyOtp(getFullContact(), otp);
       if (verifyRes.success) {
-        const isPhone = contactType === 'phone';
         const response = await registerUser(
-          name, 
+          name.trim(), 
           getFullContact(), 
           password, 
-          isPhone, 
+          true, // isPhone always true now
           gender, 
           selfie, 
           verifyRes.otp_verified_token
         );
         if (response.success) {
-          Alert.alert('Success', 'Registration complete!', [{ text: 'OK', onPress: () => navigation.replace('Main') }]);
+          Alert.alert('Success', 'Registration complete!', [
+            { text: 'OK', onPress: () => {
+              // Navigate to Home or Login
+              if (navigation.canGoBack()) navigation.popToTop();
+              navigation.replace('UserLogin'); 
+            }}
+          ]);
         }
       }
     } catch (error) {
@@ -98,7 +105,7 @@ const UserRegisterScreen = ({ navigation }) => {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Join Zora</Text>
-        <Text style={styles.subtitle}>Create your profile to start</Text>
+        <Text style={styles.subtitle}>Create your profile with phone number</Text>
         
         <TextInput style={styles.input} placeholder="Full Name" value={name} onChangeText={setName} />
 
@@ -128,23 +135,16 @@ const UserRegisterScreen = ({ navigation }) => {
           </View>
         )}
 
-        <View style={styles.tabContainer}>
-          <TouchableOpacity style={[styles.tab, contactType === 'phone' && styles.activeTab]} onPress={() => setContactType('phone')}>
-            <Text style={[styles.tabText, contactType === 'phone' && styles.activeTabText]}>Phone</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, contactType === 'email' && styles.activeTab]} onPress={() => setContactType('email')}>
-            <Text style={[styles.tabText, contactType === 'email' && styles.activeTabText]}>Email</Text>
-          </TouchableOpacity>
-        </View>
-
+        <Text style={styles.label}>Phone Number:</Text>
         <View style={styles.contactRow}>
-          {contactType === 'phone' && <TextInput style={styles.ccInput} value={countryCode} editable={false} />}
+          <TextInput style={styles.ccInput} value={countryCode} onChangeText={setCountryCode} />
           <TextInput 
             style={[styles.input, { flex: 1 }]} 
-            placeholder={contactType === 'phone' ? "Phone Number" : "Email Address"} 
+            placeholder="Phone Number" 
             value={contact} 
             onChangeText={setContact} 
-            keyboardType={contactType === 'phone' ? "phone-pad" : "email-address"}
+            keyboardType="phone-pad"
+            maxLength={10}
           />
         </View>
         
@@ -153,10 +153,23 @@ const UserRegisterScreen = ({ navigation }) => {
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}><Icon name={showPassword ? "eye-off" : "eye"} size={24} color="#666" /></TouchableOpacity>
         </View>
 
-        {isOtpSent && <TextInput style={styles.input} placeholder="6-Digit OTP" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />}
+        {isOtpSent && (
+          <TextInput 
+            style={styles.input} 
+            placeholder="6-Digit OTP" 
+            value={otp} 
+            onChangeText={setOtp} 
+            keyboardType="number-pad" 
+            maxLength={6} 
+          />
+        )}
 
         <TouchableOpacity style={[styles.button, isOtpSent && styles.verifyButton]} onPress={isOtpSent ? handleVerifyAndRegister : handleSendOtp} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{isOtpSent ? 'Verify & Finish' : 'Send OTP'}</Text>}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('UserLogin')} style={{ marginTop: 20, alignItems: 'center' }}>
+          <Text style={{ color: '#8A2BE2' }}>Already have an account? Login</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
