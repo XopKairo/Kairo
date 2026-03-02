@@ -110,6 +110,14 @@ const UserRegisterScreen = ({ navigation }) => {
     }
   };
 
+  if (!isIconLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#8A2BE2" />
+      </View>
+    );
+  }
+
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -123,18 +131,21 @@ const UserRegisterScreen = ({ navigation }) => {
 
             <View style={styles.formCard}>
               <View style={styles.inputContainer}>
-                {isIconLoaded && Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                {/* <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> */}
+                <View style={{width:20,height:20,marginRight:10}}/>
                 <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
               </View>
 
               <Text style={styles.label}>Identify as:</Text>
               <View style={styles.genderContainer}>
                 <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
-                  {isIconLoaded && Icon ? <Icon name="gender-female" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
+                  {/* <Icon name="gender-female" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} /> */}
+                  <View style={{width:20,height:20}}/>
                   <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
-                  {isIconLoaded && Icon ? <Icon name="gender-male" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
+                  {/* <Icon name="gender-male" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} /> */}
+                  <View style={{width:20,height:20}}/>
                   <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male</Text>
                 </TouchableOpacity>
               </View>
@@ -147,11 +158,14 @@ const UserRegisterScreen = ({ navigation }) => {
               </View>
               
               <View style={styles.inputContainer}>
-                {isIconLoaded && Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                {/* <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> */}
+                <View style={{width:20,height:20,marginRight:10}}/>
                 <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  {isIconLoaded && Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
-                </TouchableOpacity>              </View>
+                  {/* <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> */}
+                  <Text style={{color: '#8A2BE2', fontSize: 12}}>{showPassword ? 'HIDE' : 'SHOW'}</Text>
+                </TouchableOpacity>
+              </View>
 
               {isOtpSent && (
                 <View style={styles.otpSection}>

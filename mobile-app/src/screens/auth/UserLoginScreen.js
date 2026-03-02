@@ -159,11 +159,7 @@ const UserLoginScreen = ({ navigation }) => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>New to Zora? </Text>
-              <TouchableOpacity onPress={() => {
-                requestAnimationFrame(() => {
-                  navigation.navigate('Register');
-                });
-              }}>
+              <TouchableOpacity onPress={() => navigation.replace('Register')}>
                 <Text style={styles.signUpText}>Join Now</Text>
               </TouchableOpacity>
             </View>
