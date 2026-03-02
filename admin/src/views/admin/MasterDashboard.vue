@@ -148,9 +148,10 @@
                   </v-chip>
                 </td>
                 <td>
-                  <v-btn size="small" :color="user.isBanned ? 'success' : 'error'" @click="toggleBanUser(user)">
+                  <v-btn size="small" :color="user.isBanned ? 'success' : 'error'" @click="toggleBanUser(user)" class="mr-2">
                     {{ user.isBanned ? 'Unban' : 'Ban' }}
                   </v-btn>
+                  <v-btn size="small" color="error" variant="tonal" icon="mdi-delete" @click="deleteUser(user._id)"></v-btn>
                 </td>
               </tr>
               <tr v-if="users.length === 0">
@@ -369,6 +370,17 @@ const toggleBanUser = async (user: any) => {
     showSnackbar(`User ${user.isBanned ? 'banned' : 'unbanned'} successfully.`);
   } catch (error) {
     showSnackbar('Failed to update ban status.', 'error');
+  }
+};
+
+const deleteUser = async (id: string) => {
+  if (!confirm('Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) return;
+  try {
+    await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`);
+    showSnackbar('User deleted successfully.');
+    fetchData();
+  } catch (error) {
+    showSnackbar('Failed to delete user.', 'error');
   }
 };
 
