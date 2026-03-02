@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 
 const valid = ref(false);
 const show1 = ref(false);
-const email = ref('');
+const identifier = ref('');
 const password = ref('');
 const loginOtp = ref('');
 const router = useRouter();
@@ -19,7 +19,7 @@ const loginStep = ref(1);
 
 // Forgot Password Workflow Refs
 const forgotDialog = ref(false);
-const resetEmail = ref('');
+const resetIdentifier = ref('');
 const otp = ref('');
 const newPassword = ref('');
 const resetMsg = ref('');
@@ -28,24 +28,18 @@ const step = ref(1); // 1: Send OTP, 2: Reset
 const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const handleLoginSubmit = async () => {
-  if (loginStep.value === 1) {
-    await requestLoginOTP();
-  } else {
-    await verifyLoginOTP();
-  }
-};
-
-const requestLoginOTP = async () => {
   try {
     errorMsg.value = '';
-    const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
-      email: email.value,
-      password: password.value
-    });
+    const isEmail = identifier.value.includes('@');
+    const payload: any = { password: password.value };
+    if (isEmail) payload.email = identifier.value;
+    else payload.phone = identifier.value;
+
+    const response = await axios.post(`${API_BASE_URL}/api/admin/login`, payload);
     
     if (response.data.requireOTP) {
       loginStep.value = 2;
-      infoMsg.value = "OTP has been sent to your registered email.";
+      infoMsg.value = "OTP has been sent to your registered contact.";
     } else if (response.data.token) {
       // Direct Login Success
       authStore.user = response.data;
@@ -57,32 +51,21 @@ const requestLoginOTP = async () => {
   }
 };
 
-const verifyLoginOTP = async () => {
-  try {
-    errorMsg.value = '';
-    const response = await axios.post(`${API_BASE_URL}/api/admin/verify-otp`, {
-      email: email.value,
-      otp: loginOtp.value
-    });
-    
-    if (response.data.success) {
-      authStore.user = response.data;
-      localStorage.setItem('user', JSON.stringify(response.data));
-      router.push('/dashboard/default');
-    }
-  } catch (error: any) {
-    errorMsg.value = error.response?.data?.message || "Invalid or Expired OTP";
-  }
-};
-
 const sendForgotOTP = async () => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, {
-      email: resetEmail.value
-    });
+    const isEmail = resetIdentifier.value.includes('@');
+    const payload: any = {};
+    if (isEmail) payload.email = resetIdentifier.value;
+    else payload.phone = resetIdentifier.value;
+
+    const response = await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, payload);
     if (response.data.success) {
       step.value = 2;
       resetMsg.value = "";
+      if (response.data.otp) {
+         // Show OTP directly in UI for phone if not using Twilio yet
+         alert(`Debug OTP (Phone): ${response.data.otp}`);
+      }
     }
   } catch (error: any) {
     resetMsg.value = error.response?.data?.message || "Failed to send OTP";
@@ -91,15 +74,16 @@ const sendForgotOTP = async () => {
 
 const handleReset = async () => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
-      email: resetEmail.value,
-      otp: otp.value,
-      newPassword: newPassword.value
-    });
+    const isEmail = resetIdentifier.value.includes('@');
+    const payload: any = { otp: otp.value, newPassword: newPassword.value };
+    if (isEmail) payload.email = resetIdentifier.value;
+    else payload.phone = resetIdentifier.value;
+
+    const response = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, payload);
     if (response.data.success) {
       alert("Password updated successfully!");
       forgotDialog.value = false;
-      resetEmail.value = '';
+      resetIdentifier.value = '';
       otp.value = '';
       newPassword.value = '';
       step.value = 1;
@@ -109,9 +93,8 @@ const handleReset = async () => {
   }
 };
 
-const emailRules = ref([
-  (v: string) => !!v || 'Required',
-  (v: string) => /.+@.+\..+/.test(v) || 'Invalid Email'
+const identifierRules = ref([
+  (v: string) => !!v || 'Required'
 ]);
 const passwordRules = ref([
   (v: string) => !!v || 'Required',
@@ -132,9 +115,9 @@ const passwordRules = ref([
   <v-form v-model="valid" class="mt-7 loginForm" @submit.prevent="handleLoginSubmit">
     <div v-if="loginStep === 1">
       <v-text-field
-        v-model="email"
-        :rules="emailRules"
-        label="Email Address"
+        v-model="identifier"
+        :rules="identifierRules"
+        label="Email or Mobile Number"
         class="mt-4 mb-4"
         required
         density="comfortable"
@@ -185,7 +168,7 @@ const passwordRules = ref([
       <v-alert v-if="resetMsg" type="error" density="compact" class="mb-4">{{ resetMsg }}</v-alert>
       
       <div v-if="step === 1">
-        <v-text-field v-model="resetEmail" label="Registered Email" variant="outlined" class="mb-2"></v-text-field>
+        <v-text-field v-model="resetIdentifier" label="Registered Email or Phone" variant="outlined" class="mb-2"></v-text-field>
         <v-card-actions class="px-0 pt-4">
           <v-btn color="primary" block variant="flat" @click="sendForgotOTP">Send OTP</v-btn>
         </v-card-actions>

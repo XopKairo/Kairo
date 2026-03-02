@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const AdminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
+  phone: { type: String, unique: true, sparse: true },
   password: { type: String, required: true },
   totalRevenue: { type: Number, default: 0 },
   loginOTP: { type: String },

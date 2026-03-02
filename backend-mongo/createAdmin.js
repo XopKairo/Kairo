@@ -8,6 +8,7 @@ const createAdmin = async () => {
     
     const email = 'noobjocker8@gmail.com';
     const password = 'adminpassword123';
+    const phone = '+919000000000'; // Default phone for admin
     
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email });
@@ -16,11 +17,12 @@ const createAdmin = async () => {
       await Admin.deleteOne({ email });
     }
 
-    const admin = new Admin({ email, password });
+    const admin = new Admin({ email, password, phone });
     await admin.save();
     
     console.log('Admin user created successfully!');
     console.log(`Email: ${email}`);
+    console.log(`Phone: ${phone}`);
     console.log(`Password: ${password}`);
     
     mongoose.disconnect();

@@ -19,12 +19,18 @@ const transporter = nodemailer.createTransport({
 
 // Login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, phone, password } = req.body;
   try {
-    const admin = await Admin.findOne({ email });
+    const query = [];
+    if (email) query.push({ email });
+    if (phone) query.push({ phone });
+    
+    if (query.length === 0) return res.status(400).json({ success: false, message: 'Email or phone required' });
+
+    const admin = await Admin.findOne({ $or: query });
     if (admin && (await admin.matchPassword(password))) {
       const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
-      res.json({ success: true, token, email: admin.email, _id: admin._id });
+      res.json({ success: true, token, email: admin.email, phone: admin.phone, _id: admin._id });
     } else {
       res.status(401).json({ success: false, message: 'Invalid Credentials' });
     }
@@ -35,11 +41,17 @@ router.post('/login', async (req, res) => {
 
 // Forgot Password - Send OTP
 router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
+  const { email, phone } = req.body;
   try {
-    const admin = await Admin.findOne({ email });
+    const query = [];
+    if (email) query.push({ email });
+    if (phone) query.push({ phone });
+
+    if (query.length === 0) return res.status(400).json({ success: false, message: 'Email or phone required' });
+
+    const admin = await Admin.findOne({ $or: query });
     if (!admin) {
-      return res.status(404).json({ success: false, message: 'Admin not found with this email' });
+      return res.status(404).json({ success: false, message: 'Admin not found' });
     }
 
     const otp = generateOTP();
@@ -47,34 +59,41 @@ router.post('/forgot-password', async (req, res) => {
     admin.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await admin.save();
 
-    // Sending real email
-    const mailOptions = {
-      from: `"Kairo Admin" <${process.env.EMAIL_USER || 'noobjocker8@gmail.com'}>`,
-      to: email,
-      subject: 'Password Reset OTP',
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; margin: auto;">
-          <h2 style="color: #4A90E2; text-align: center;">Kairo Admin</h2>
-          <p>Hi Admin,</p>
-          <p>You requested to reset your password. Use the following OTP to continue:</p>
-          <div style="font-size: 32px; font-weight: bold; color: #333; letter-spacing: 5px; text-align: center; padding: 20px; background: #f9f9f9; border: 1px dashed #4A90E2; border-radius: 5px;">
-            ${otp}
-          </div>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">This OTP will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="text-align: center; color: #999; font-size: 12px;">© 2026 Kairo. All rights reserved.</p>
-        </div>
-      `
-    };
+    const target = email || phone;
+    console.log(`[ADMIN OTP] Sent to ${target}: ${otp}`);
 
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log(`OTP sent to ${email}`);
-      res.json({ success: true, message: 'OTP sent to your email successfully' }); 
-    } catch (mailError) {
-      console.error('Email Send Error:', mailError);
-      res.status(500).json({ success: false, message: 'Failed to send email. Check SMTP credentials.' });
+    if (email) {
+      // Sending real email
+      const mailOptions = {
+        from: `"Kairo Admin" <${process.env.EMAIL_USER || 'noobjocker8@gmail.com'}>`,
+        to: email,
+        subject: 'Password Reset OTP',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; margin: auto;">
+            <h2 style="color: #4A90E2; text-align: center;">Kairo Admin</h2>
+            <p>Hi Admin,</p>
+            <p>You requested to reset your password. Use the following OTP to continue:</p>
+            <div style="font-size: 32px; font-weight: bold; color: #333; letter-spacing: 5px; text-align: center; padding: 20px; background: #f9f9f9; border: 1px dashed #4A90E2; border-radius: 5px;">
+              ${otp}
+            </div>
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">This OTP will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="text-align: center; color: #999; font-size: 12px;">© 2026 Kairo. All rights reserved.</p>
+          </div>
+        `
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        return res.json({ success: true, message: 'OTP sent to your email successfully' }); 
+      } catch (mailError) {
+        console.error('Email Send Error:', mailError);
+        return res.status(500).json({ success: false, message: 'Failed to send email. Check SMTP credentials.' });
+      }
     }
+
+    // If phone, for now just log it or use twilio if configured (keeping it simple as per user request)
+    return res.json({ success: true, message: `OTP generated for ${phone}. (SMS Service not configured, check server logs)`, otp: process.env.NODE_ENV === 'development' ? otp : undefined });
     
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -83,10 +102,14 @@ router.post('/forgot-password', async (req, res) => {
 
 // Verify OTP
 router.post('/verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
+  const { email, phone, otp } = req.body;
   try {
+    const query = [];
+    if (email) query.push({ email });
+    if (phone) query.push({ phone });
+
     const admin = await Admin.findOne({ 
-      email, 
+      $or: query, 
       resetPasswordOTP: otp,
       resetPasswordExpires: { $gt: Date.now() }
     });
@@ -103,10 +126,14 @@ router.post('/verify-otp', async (req, res) => {
 
 // Reset Password
 router.post('/reset-password', async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+  const { email, phone, otp, newPassword } = req.body;
   try {
+    const query = [];
+    if (email) query.push({ email });
+    if (phone) query.push({ phone });
+
     const admin = await Admin.findOne({ 
-      email, 
+      $or: query, 
       resetPasswordOTP: otp,
       resetPasswordExpires: { $gt: Date.now() }
     });
