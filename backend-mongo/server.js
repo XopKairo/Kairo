@@ -97,9 +97,37 @@ app.use('/api/reports', reportRoutes);
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
+const ensureAdmin = async () => {
+  try {
+    const Admin = require('./models/Admin');
+    const email = process.env.ADMIN_EMAIL || 'omalloorajil@gmail.com';
+    const username = process.env.ADMIN_USERNAME || 'admin';
+    const password = process.env.ADMIN_PASSWORD || 'adminpassword123';
+    const phone = process.env.ADMIN_PHONE || '+917356704978';
+
+    const adminExists = await Admin.findOne({ $or: [{ email }, { username }] });
+    if (!adminExists) {
+      const newAdmin = new Admin({ username, email, password, phone });
+      await newAdmin.save();
+      console.log('Default Admin Created:', username);
+    } else {
+      // Ensure existing admin has the correct username and password if missing
+      let modified = false;
+      if (!adminExists.username) { adminExists.username = username; modified = true; }
+      if (modified) {
+        await adminExists.save();
+        console.log('Admin record updated with username');
+      }
+    }
+  } catch (err) {
+    console.error('Admin Check Error:', err.message);
+  }
+};
+
 mongoose.connect(MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB connected successfully');
+    await ensureAdmin();
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch(err => console.error('MongoDB connection error:', err));
