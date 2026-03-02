@@ -3,6 +3,12 @@ const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { getUserBadge } = require('../utils/badgeSystem');
+const twilio = require('twilio');
+
+// Initialize Twilio client
+const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
+  : null;
 
 // In-memory store for OTPs
 const otpStore = new Map();
@@ -16,22 +22,55 @@ router.post('/send-otp', async (req, res) => {
   otpStore.set(contact, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
   
   console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
-  res.json({ success: true, message: 'OTP sent successfully (Check server logs)', otp });
+
+  // Try to send real SMS via Twilio if configured
+  if (twilioClient && contact.startsWith('+')) {
+    try {
+      await twilioClient.messages.create({
+        body: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: contact
+      });
+      console.log(`[Twilio] SMS sent successfully to ${contact}`);
+      return res.json({ success: true, message: 'OTP sent to your phone via SMS' });
+    } catch (error) {
+      console.error('[Twilio Error]', error.message);
+      // Fallback to success (so user can still use it if they see log, for now)
+      return res.status(500).json({ success: false, message: 'Failed to send SMS. Check Twilio configuration.' });
+    }
+  }
+
+  // If email (Basic implementation for now)
+  if (contact.includes('@')) {
+     const nodemailer = require('nodemailer');
+     const transporter = nodemailer.createTransport({
+       service: 'gmail',
+       auth: {
+         user: process.env.EMAIL_USER,
+         pass: process.env.EMAIL_PASS
+       }
+     });
+
+     try {
+       await transporter.sendMail({
+         from: '"Zora Support" <noreply@zora.live>',
+         to: contact,
+         subject: "Zora Verification Code",
+         text: `Your Zora verification code is: ${otp}`
+       });
+       return res.json({ success: true, message: 'OTP sent to your email' });
+     } catch (error) {
+       console.error('[Email Error]', error.message);
+       return res.status(500).json({ success: false, message: 'Failed to send Email OTP' });
+     }
+  }
+
+  res.json({ success: true, message: 'OTP generated (SMS/Email gateway not fully configured)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
 });
 
 // Verify OTP
 router.post('/verify-otp', async (req, res) => {
   const { contact, otp } = req.body;
-
-  // Allow 999999 as a universal OTP for testing since SMS gateway is not connected
-  if (otp === '999999') {
-    const otpVerifiedToken = jwt.sign(
-      { contact, verified: true }, 
-      process.env.JWT_SECRET || 'secret_key', 
-      { expiresIn: '15m' }
-    );
-    return res.json({ success: true, message: 'OTP verified (Test Mode)', otp_verified_token: otpVerifiedToken });
-  }
 
   const storedOtpData = otpStore.get(contact);
   
@@ -65,9 +104,12 @@ router.post('/register', async (req, res) => {
   try {
     // Verify the temporary token to prevent backdoor registration
     const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET || 'secret_key');
-    const registeredContact = email || phone;
+    const registeredContact = (email || phone).toString().trim();
     
-    if (decoded.contact !== registeredContact || !decoded.verified) {
+    // Normalize decoded contact as well for comparison
+    const decodedContact = decoded.contact.toString().trim();
+
+    if (decodedContact !== registeredContact || !decoded.verified) {
         return res.status(403).json({ success: false, message: 'Unauthorized: OTP verification mismatch' });
     }
 
@@ -76,8 +118,8 @@ router.post('/register', async (req, res) => {
     }
     
     const query = [];
-    if (email) query.push({ email });
-    if (phone) query.push({ phone });
+    if (email) query.push({ email: email.trim() });
+    if (phone) query.push({ phone: phone.trim() });
     const userExists = await User.findOne({ $or: query });
     
     if (userExists) {
@@ -85,15 +127,15 @@ router.post('/register', async (req, res) => {
     }
     
     const userData = { 
-      name, 
+      name: name.trim(), 
       password, 
       gender: req.body.gender || 'Male',
       verificationSelfie: req.body.verificationSelfie || '',
       lastLoginDate: new Date(), 
       zoraPoints: 5 
     };
-    if (email) userData.email = email;
-    if (phone) userData.phone = phone;
+    if (email) userData.email = email.trim();
+    if (phone) userData.phone = phone.trim();
 
     const user = await User.create(userData);
 
