@@ -12,6 +12,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#050505"
     },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#8A2BE2"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zora.live"
