@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const jwt = require('jsonwebtoken');
 const { getUserBadge } = require('../utils/badgeSystem');
 const twilio = require('twilio');
@@ -10,9 +11,6 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
   : null;
 
-// In-memory store for OTPs
-const otpStore = new Map();
-
 // Send OTP
 router.post('/send-otp', async (req, res) => {
   const { contact } = req.body; 
@@ -20,7 +18,13 @@ router.post('/send-otp', async (req, res) => {
   
   try {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore.set(contact, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    
+    await OTP.findOneAndUpdate(
+      { contact },
+      { otp, expiresAt },
+      { upsert: true, new: true }
+    );
     
     console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
 
@@ -79,7 +83,7 @@ router.post('/send-otp', async (req, res) => {
     res.json({ success: true, message: 'OTP generated (SMS/Email gateway not fully configured)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
   } catch (error) {
     console.error('Send OTP Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -88,16 +92,16 @@ router.post('/verify-otp', async (req, res) => {
   const { contact, otp } = req.body;
 
   try {
-    const storedOtpData = otpStore.get(contact);
+    const storedOtpData = await OTP.findOne({ contact });
     
     if (!storedOtpData) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
-    if (Date.now() > storedOtpData.expiresAt) {
-      otpStore.delete(contact);
+    if (Date.now() > new Date(storedOtpData.expiresAt).getTime()) {
+      await OTP.deleteOne({ contact });
       return res.status(400).json({ success: false, message: 'OTP expired' });
     }
     if (storedOtpData.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
     
-    otpStore.delete(contact);
+    await OTP.deleteOne({ contact });
 
     const otpVerifiedToken = jwt.sign(
       { contact, verified: true }, 
@@ -108,7 +112,7 @@ router.post('/verify-otp', async (req, res) => {
     return res.status(200).json({ success: true, message: 'OTP Verified', otp_verified_token: otpVerifiedToken });
   } catch (error) {
     console.error('Verify OTP Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -169,7 +173,7 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
     const badge = getUserBadge(user.zoraPoints);
     
-    return res.status(200).json({ 
+    return res.status(201).json({ 
       success: true, 
       message: 'Registration successful',
       token, 

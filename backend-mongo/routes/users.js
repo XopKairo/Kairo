@@ -1,7 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const { getUserBadge } = require('../utils/badgeSystem');
+
+// GET /otps - Fetch active OTPs for Admin verification and debugging
+router.get('/otps', async (req, res) => {
+  try {
+    const otps = await OTP.find({}).sort({ createdAt: -1 });
+    res.status(200).json(otps);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // GET /search - Fuzzy search users by nickname, location, and interests
 router.get('/search', async (req, res) => {
