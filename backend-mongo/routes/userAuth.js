@@ -26,25 +26,31 @@ router.post('/send-otp', async (req, res) => {
   // Try to send real SMS via Twilio if configured
   if (twilioClient && contact.startsWith('+')) {
     try {
-      await twilioClient.messages.create({
-        body: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: contact
-      });
+      // Set a 10s timeout for Twilio request
+      await Promise.race([
+        twilioClient.messages.create({
+          body: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: contact
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Twilio Timeout')), 10000))
+      ]);
       console.log(`[Twilio] SMS sent successfully to ${contact}`);
       return res.json({ success: true, message: 'OTP sent to your phone via SMS' });
     } catch (error) {
       console.error('[Twilio Error]', error.message);
-      // Fallback to success (so user can still use it if they see log, for now)
-      return res.status(500).json({ success: false, message: 'Failed to send SMS. Check Twilio configuration.' });
+      return res.status(500).json({ success: false, message: `SMS Error: ${error.message}` });
     }
   }
 
-  // If email (Basic implementation for now)
+  // If email
   if (contact.includes('@')) {
      const nodemailer = require('nodemailer');
      const transporter = nodemailer.createTransport({
        service: 'gmail',
+       host: 'smtp.gmail.com',
+       port: 465,
+       secure: true,
        auth: {
          user: process.env.EMAIL_USER,
          pass: process.env.EMAIL_PASS
@@ -52,16 +58,19 @@ router.post('/send-otp', async (req, res) => {
      });
 
      try {
-       await transporter.sendMail({
-         from: '"Zora Support" <noreply@zora.live>',
-         to: contact,
-         subject: "Zora Verification Code",
-         text: `Your Zora verification code is: ${otp}`
-       });
+       await Promise.race([
+         transporter.sendMail({
+           from: `"Zora Support" <${process.env.EMAIL_USER}>`,
+           to: contact,
+           subject: "Zora Verification Code",
+           text: `Your Zora verification code is: ${otp}`
+         }),
+         new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout')), 10000))
+       ]);
        return res.json({ success: true, message: 'OTP sent to your email' });
      } catch (error) {
        console.error('[Email Error]', error.message);
-       return res.status(500).json({ success: false, message: 'Failed to send Email OTP' });
+       return res.status(500).json({ success: false, message: `Email Error: ${error.message}` });
      }
   }
 
