@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import { Text, Card, Button, TextInput, List, Title, Paragraph, Divider } from 'react-native-paper';
+import { Text, Card, Button, TextInput, List, Title, Paragraph, Divider, ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
+import { initRewardedAd, showRewardedAd } from '../../services/adService';
 
 const COIN_TO_INR_RATE = 0.1;
 
@@ -13,15 +14,15 @@ const WalletScreen = () => {
   const [upiId, setUpiId] = useState('');
   const [bankDetails, setBankDetails] = useState({ accountHolder: '', accountNumber: '', ifscCode: '', bankName: '' });
   const [loading, setLoading] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
 
   const fetchUserData = async () => {
     try {
-      const storedUser = await AsyncStorage.getItem('user');
+      const storedUser = await AsyncStorage.getItem('userData');
       const parsedUser = JSON.parse(storedUser || '{}');
-      const response = await api.get(`/users/${parsedUser._id || parsedUser.id}`);
+      const response = await api.get(`/users/${parsedUser.id || parsedUser._id}`);
       setUser(response.data);
       
-      // Pre-fill payment details if they exist
       if (response.data.paymentMethods) {
         if (response.data.paymentMethods.upiId) setUpiId(response.data.paymentMethods.upiId);
         if (response.data.paymentMethods.bankDetails) setBankDetails(response.data.paymentMethods.bankDetails);
@@ -33,7 +34,34 @@ const WalletScreen = () => {
 
   useEffect(() => {
     fetchUserData();
+    
+    // Initialize Rewarded Ads
+    const cleanupAds = initRewardedAd(
+      () => setAdLoading(false), // On Dismiss
+      async (rewardAmount) => {  // On Reward Earned
+        try {
+          const res = await api.post('/wallet/earn-ad', { userId: user?._id || user?.id });
+          if (res.data.success) {
+            Alert.alert('Reward Earned!', `You received ${rewardAmount} coins.`);
+            fetchUserData();
+          }
+        } catch (err) {
+          console.error('Failed to credit ad reward');
+        }
+      }
+    );
+
+    return () => {
+      if (typeof cleanupAds === 'function') cleanupAds();
+    };
   }, []);
+
+  const handleWatchAd = () => {
+    setAdLoading(true);
+    showRewardedAd();
+    // Fallback if ad fails to show
+    setTimeout(() => setAdLoading(false), 5000);
+  };
 
   const handleWithdraw = async () => {
     const amountNum = Number(withdrawAmount);
@@ -57,7 +85,7 @@ const WalletScreen = () => {
     setLoading(true);
     try {
       const response = await api.post('/wallet/withdraw', {
-        userId: user._id,
+        userId: user._id || user.id,
         amountCoins: amountNum,
         paymentDetails: paymentStr
       });
@@ -67,7 +95,7 @@ const WalletScreen = () => {
         setWithdrawAmount('');
         fetchUserData();
       }
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert('Withdrawal Failed', error.response?.data?.error || 'Exceeded limits or server error.');
     } finally {
       setLoading(false);
@@ -83,6 +111,19 @@ const WalletScreen = () => {
           <Title style={styles.balanceTitle}>My Balance</Title>
           <Text style={styles.coinCount}>{user?.coins || 0} Coins</Text>
           <Paragraph style={styles.approxValue}>≈ ₹{( (user?.coins || 0) * COIN_TO_INR_RATE ).toFixed(2)}</Paragraph>
+        </Card.Content>
+      </Card>
+
+      {/* Ad Reward Section */}
+      <Card style={styles.adCard}>
+        <Card.Content className="d-flex align-center justify-space-between">
+          <View style={{flex: 1}}>
+            <Title style={{fontSize: 18}}>Earn Free Coins</Title>
+            <Paragraph style={{fontSize: 12}}>Watch a short video ad to get 5 coins!</Paragraph>
+          </View>
+          <Button mode="contained" onPress={handleWatchAd} loading={adLoading} color="#FFD700" labelStyle={{color: '#000', fontWeight: 'bold'}}>
+            Watch Ad
+          </Button>
         </Card.Content>
       </Card>
 
@@ -159,11 +200,12 @@ const WalletScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa', padding: 16 },
-  balanceCard: { backgroundColor: '#8A2BE2', borderRadius: 20, marginBottom: 20, elevation: 6 },
+  balanceCard: { backgroundColor: '#8A2BE2', borderRadius: 20, marginBottom: 15, elevation: 6 },
   balanceContent: { alignItems: 'center', paddingVertical: 25 },
   balanceTitle: { color: '#fff', fontSize: 16, opacity: 0.9 },
   coinCount: { color: '#fff', fontSize: 42, fontWeight: 'bold' },
   approxValue: { color: '#fff', fontSize: 18, opacity: 0.8 },
+  adCard: { borderRadius: 15, marginBottom: 15, backgroundColor: '#fff', elevation: 2 },
   withdrawCard: { borderRadius: 15, paddingVertical: 10, marginBottom: 20 },
   input: { marginBottom: 15 },
   smallInput: { marginBottom: 10 },

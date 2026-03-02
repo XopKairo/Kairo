@@ -90,4 +90,13 @@ export const logoutUser = async () => {
   await AsyncStorage.removeItem('userData');
 };
 
+export const getAppSettings = async () => {
+  try {
+    const response = await api.get('/settings');
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
 export default api;

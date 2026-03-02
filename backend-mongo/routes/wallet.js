@@ -190,4 +190,32 @@ router.post('/withdraw', async (req, res) => {
   }
 });
 
+// Route to earn coins via Ads
+router.post('/earn-ad', async (req, res) => {
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    const { userId } = req.body;
+
+    const user = await User.findById(userId).session(session);
+    if (!user) throw new Error('User not found');
+
+    // Fetch Reward Amount from Global Settings
+    const Settings = require('../models/Settings');
+    const settings = await Settings.findOne().session(session);
+    const rewardAmount = settings ? settings.rewardPerAd : 5;
+
+    user.coins += rewardAmount;
+    await user.save({ session });
+
+    await session.commitTransaction();
+    res.json({ success: true, message: `You earned ${rewardAmount} coins!`, newBalance: user.coins });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
 module.exports = router;
