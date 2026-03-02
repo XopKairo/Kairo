@@ -9,6 +9,7 @@ const gifts = ref<any[]>([]);
 const dialog = ref(false);
 const editedGift = ref<any>({ name: '', coinCost: 0, category: 'Basic', isActive: true });
 const selectedFile = ref<File | null>(null);
+const baseUrl = import.meta.env.VITE_BASE_URL;
 
 const fetchGifts = async () => {
   const res = await axios.get(`${import.meta.env.VITE_API_URL}/economy/gifts`);
@@ -71,7 +72,7 @@ onMounted(fetchGifts);
           <tbody>
             <tr v-for="gift in gifts" :key="gift._id">
               <td>
-                <img v-if="gift.iconUrl" :src=``${import.meta.env.VITE_BASE_URL}` + gift.iconUrl` alt="icon" style="width: 40px; height: 40px; object-fit: contain;" />
+                <img v-if="gift.iconUrl" :src="baseUrl + gift.iconUrl" alt="icon" style="width: 40px; height: 40px; object-fit: contain;" />
               </td>
               <td>{{ gift.name }}</td>
               <td>{{ gift.coinCost }}</td>
