@@ -27,7 +27,7 @@ const authAdmin = async (req, res) => {
 // Verify OTP - Keep for other potential uses or backward compatibility
 const verifyLoginOTP = async (req, res) => {
   const { email, otp } = req.body;
-...
+
   try {
     const admin = await Admin.findOne({
       email,
