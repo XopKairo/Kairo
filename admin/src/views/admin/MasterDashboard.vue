@@ -258,7 +258,7 @@ const chartOptions = {
   maintainAspectRatio: false,
   scales: { y: { beginAtZero: true } },
   plugins: { legend: { display: false } }
-};
+} as const;
 
 const historicalChartData = computed(() => ({
   labels: historicalData.value?.labels || [],
