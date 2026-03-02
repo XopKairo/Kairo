@@ -38,6 +38,7 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
+# /android (Removed to allow fix commit)
 .env
 google-services.json
+/android
