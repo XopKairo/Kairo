@@ -99,12 +99,11 @@ router.post('/verify-otp', async (req, res) => {
     // Add 60s grace period to account for network lag
     const gracePeriod = 60 * 1000;
     if (Date.now() > (new Date(storedOtpData.expiresAt).getTime() + gracePeriod)) {
-      await OTP.deleteOne({ contact });
       return res.status(400).json({ success: false, message: 'OTP expired' });
     }
     if (storedOtpData.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
     
-    await OTP.deleteOne({ contact });
+    // OTP is persistent for 10 minutes as per requirements. Manual cleanup happens after registration.
 
     const otpVerifiedToken = jwt.sign(
       { contact, verified: true }, 
@@ -162,6 +161,9 @@ router.post('/register', async (req, res) => {
     if (phone) userData.phone = phone.trim();
 
     const user = await User.create(userData);
+
+    // Manual OTP Cleanup - Delete now that account creation is 100% complete
+    await OTP.deleteOne({ contact: decodedContact });
 
     if (userData.gender === 'Female' && userData.verificationSelfie) {
       const VerificationRequest = require('../models/VerificationRequest');
