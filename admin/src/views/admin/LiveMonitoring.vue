@@ -16,7 +16,7 @@ const watchingCallId = ref<string | null>(null);
 let socket: any = null;
 let zp: any = null;
 
-const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const fetchActiveCalls = async () => {
   try {

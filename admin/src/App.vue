@@ -4,14 +4,16 @@
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
-import { onMounted } from 'vue';
-import { io } from 'socket.io-client';
+import { onMounted, onUnmounted } from 'vue';
+import { io, Socket } from 'socket.io-client';
+
+let socket: Socket | null = null;
 
 onMounted(() => {
-  const socket = io('https://kairo-b1i9.onrender.com');
+  socket = io(import.meta.env.VITE_BASE_URL);
   
   socket.on('connect', () => {
-    console.log('Connected to WebSocket server:', socket.id);
+    console.log('Connected to WebSocket server:', socket?.id);
   });
 
   socket.on('payoutAlert', (data) => {
@@ -25,5 +27,11 @@ onMounted(() => {
   socket.on('callStartedAlert', (data) => {
     console.log('Live Call Started:', data);
   });
+});
+
+onUnmounted(() => {
+  if (socket) {
+    socket.disconnect();
+  }
 });
 </script>

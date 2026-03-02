@@ -25,7 +25,7 @@ const newPassword = ref('');
 const resetMsg = ref('');
 const step = ref(1); // 1: Send OTP, 2: Reset
 
-const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const handleLoginSubmit = async () => {
   if (loginStep.value === 1) {

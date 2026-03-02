@@ -5,11 +5,11 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 
 const notifications = ref<any[]>([]);
-const socket = io('https://kairo-b1i9.onrender.com');
+let socket: any = null;
 
 const fetchNotifications = async () => {
   try {
-    const res = await axios.get('https://kairo-b1i9.onrender.com/api/admin/notifications');
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/notifications`);
     notifications.value = res.data;
   } catch (error) {
     console.error("Error fetching notifications");
@@ -18,7 +18,7 @@ const fetchNotifications = async () => {
 
 const dismissNotification = async (id: number) => {
   try {
-    await axios.put(`https://kairo-b1i9.onrender.com/api/admin/notifications/${id}/dismiss`);
+    await axios.put(`${import.meta.env.VITE_API_URL}/admin/notifications/${id}/dismiss`);
     notifications.value = notifications.value.filter(n => n.id !== id);
   } catch (error) {
     console.error("Error dismissing notification");
@@ -32,14 +32,15 @@ const markAllRead = async () => {
 
 onMounted(() => {
   fetchNotifications();
-  socket.on('new-notification', (notif) => {
+  socket = io(`${import.meta.env.VITE_BASE_URL}`);
+  socket.on('new-notification', (notif: any) => {
     notifications.value.unshift(notif);
     // Simple audio or visual alert can be added here
   });
 });
 
 onUnmounted(() => {
-  socket.disconnect();
+  if (socket) socket.disconnect();
 });
 </script>
 

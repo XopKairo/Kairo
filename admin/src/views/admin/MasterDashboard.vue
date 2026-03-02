@@ -200,7 +200,7 @@ import { Line as LineChart } from 'vue-chartjs';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const API_BASE_URL = 'https://kairo-b1i9.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const users = ref<any[]>([]);
 const verificationRequests = ref<any[]>([]);
@@ -353,6 +353,7 @@ const updateAnalytics = async () => {
 onMounted(() => {
   fetchData();
   updateAnalytics();
+  if (analyticsInterval) clearInterval(analyticsInterval);
   analyticsInterval = setInterval(updateAnalytics, 10000);
 });
 

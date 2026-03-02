@@ -94,4 +94,47 @@ router.post('/verify-and-update', async (req, res) => {
   }
 });
 
+// GET Admin Profile
+router.get('/profile', async (req, res) => {
+  try {
+    const admin = await Admin.findOne({}).select('-password');
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+    res.json(admin);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST Update Admin Profile Settings (DND, Notifications)
+router.post('/profile/settings', async (req, res) => {
+  try {
+    const admin = await Admin.findOneAndUpdate({}, req.body, { new: true });
+    res.json(admin);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST Update Admin Account (Username, Email, etc)
+router.post('/account/update', async (req, res) => {
+  try {
+    const { username, email, phone, password } = req.body;
+    const updateData: any = { username, email, phone };
+    if (password) {
+       // Manual hashing or let the pre-save hook handle it if it's an instance
+       const admin = await Admin.findOne({});
+       admin.username = username || admin.username;
+       admin.email = email || admin.email;
+       admin.phone = phone || admin.phone;
+       if (password) admin.password = password;
+       await admin.save();
+       return res.json({ success: true, message: 'Account updated' });
+    }
+    const admin = await Admin.findOneAndUpdate({}, updateData, { new: true });
+    res.json({ success: true, admin });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

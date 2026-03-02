@@ -9,14 +9,14 @@ const notifications = ref<any[]>([]);
 const form = ref({ title: '', message: '' });
 
 const fetchHistory = async () => {
-  const res = await axios.get('https://kairo-b1i9.onrender.com/api/notifications');
+  const res = await axios.get(`${import.meta.env.VITE_API_URL}/notifications`);
   notifications.value = res.data;
 };
 
 const sendNotify = async () => {
   if(!form.value.title) return;
   try {
-    const res = await axios.post('https://kairo-b1i9.onrender.com/api/notifications', { ...form.value, targetAudience: 'All', type: 'Info' });
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/notifications`, { ...form.value, targetAudience: 'All', type: 'Info' });
     alert(`Notification Sent! Targeted ${res.data.tokenCount || 0} mobile users.`);
     form.value = { title: '', message: '' };
     fetchHistory();
