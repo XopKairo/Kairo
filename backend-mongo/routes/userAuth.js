@@ -95,7 +95,10 @@ router.post('/verify-otp', async (req, res) => {
     const storedOtpData = await OTP.findOne({ contact });
     
     if (!storedOtpData) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
-    if (Date.now() > new Date(storedOtpData.expiresAt).getTime()) {
+    
+    // Add 60s grace period to account for network lag
+    const gracePeriod = 60 * 1000;
+    if (Date.now() > (new Date(storedOtpData.expiresAt).getTime() + gracePeriod)) {
       await OTP.deleteOne({ contact });
       return res.status(400).json({ success: false, message: 'OTP expired' });
     }

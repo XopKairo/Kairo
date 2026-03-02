@@ -6,6 +6,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
+import * as SystemUI from 'expo-system-ui';
 
 import ZoraSplashScreen from './src/screens/auth/ZoraSplashScreen';
 import UserLoginScreen from './src/screens/auth/UserLoginScreen';
@@ -58,6 +59,7 @@ export default function App() {
     if (Platform.OS === 'android') {
       NavigationBar.setVisibilityAsync('hidden');
       NavigationBar.setBehaviorAsync('inset-touch');
+      SystemUI.setBackgroundColorAsync('transparent');
     }
   }, []);
 

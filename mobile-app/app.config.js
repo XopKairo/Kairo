@@ -11,6 +11,10 @@ export default {
       "hidden": true,
       "translucent": true
     },
+    "androidNavigationBar": {
+      "visible": false,
+      "backgroundColor": "#00000000"
+    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
