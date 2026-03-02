@@ -61,14 +61,22 @@ const UserRegisterScreen = ({ navigation }) => {
     }
 
     setLoading(true);
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      Alert.alert('Timeout', 'Request is taking too long. Please check your network and try again.');
+    }, 10000);
+
     try {
-      const response = await sendOtp(getFullContact());
+      const formattedContact = String(getFullContact());
+      const response = await sendOtp(formattedContact);
+      clearTimeout(timeoutId);
       if (response.success) {
         setIsOtpSent(true);
         setSnackbarVisible(true);
         setResendTimer(60);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       Alert.alert('Error', error.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
@@ -79,13 +87,19 @@ const UserRegisterScreen = ({ navigation }) => {
     if (!otp) return Alert.alert('Error', 'Enter OTP');
 
     setLoading(true);
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      Alert.alert('Timeout', 'Verification is taking too long. Please try again.');
+    }, 10000);
+
     try {
-      const verifyRes = await verifyOtp(String(getFullContact()), otp);
+      const formattedContact = String(getFullContact());
+      const verifyRes = await verifyOtp(formattedContact, otp);
       
       if (verifyRes.success && verifyRes.otp_verified_token) {
         const response = await registerUser(
           name.trim(), 
-          String(getFullContact()), 
+          formattedContact, 
           password, 
           true, 
           gender, 
@@ -93,6 +107,7 @@ const UserRegisterScreen = ({ navigation }) => {
           verifyRes.otp_verified_token
         );
         
+        clearTimeout(timeoutId);
         if (response.success) {
           Alert.alert('Success', 'Registration complete!', [
             { text: 'OK', onPress: () => navigation.replace('Login') }
@@ -105,9 +120,11 @@ const UserRegisterScreen = ({ navigation }) => {
            Alert.alert('Failed', response.message || 'Registration failed');
         }
       } else {
+         clearTimeout(timeoutId);
          Alert.alert('Error', 'OTP verification failed');
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       Alert.alert('Failed', error.message || 'Registration failed');
     } finally {
       setLoading(false);
@@ -197,6 +214,7 @@ const UserRegisterScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
+            <View style={{ height: 120 }} />
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
