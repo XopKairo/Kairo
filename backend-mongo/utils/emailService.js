@@ -18,10 +18,10 @@ const sendOTP = async (email, otp) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Email send error:', error.message);
-    return false;
+    throw new Error(`Email Service Failed: ${error.message}`);
   }
 };
 

@@ -17,22 +17,21 @@ const authAdmin = async (req, res) => {
       admin.loginOTPExpires = Date.now() + 10 * 60 * 1000; // 10 mins expiry
       await admin.save();
 
-      const emailSent = await sendOTP(admin.email, otp);
-
-      if (emailSent) {
-        res.json({
+      try {
+        await sendOTP(admin.email, otp);
+        return res.status(200).json({
           success: true,
           message: 'OTP sent to your registered email.',
           requireOTP: true
         });
-      } else {
-        res.status(500).json({ message: 'Failed to send OTP. Please check email config.' });
+      } catch (emailError) {
+        return res.status(500).json({ success: false, message: emailError.message });
       }
     } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -48,7 +47,7 @@ const verifyLoginOTP = async (req, res) => {
     });
 
     if (!admin) {
-      return res.status(401).json({ message: 'Invalid or expired OTP' });
+      return res.status(401).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
     // Clear OTP after successful use
@@ -56,14 +55,14 @@ const verifyLoginOTP = async (req, res) => {
     admin.loginOTPExpires = undefined;
     await admin.save();
 
-    res.json({
+    return res.status(200).json({
       success: true,
       _id: admin._id,
       email: admin.email,
       token: generateToken(admin._id),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
 
