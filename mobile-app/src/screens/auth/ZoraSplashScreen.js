@@ -11,14 +11,14 @@ const ZoraSplashScreen = ({ navigation }) => {
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 400,
+      duration: 800,
       useNativeDriver: true,
     }).start();
 
     const checkTokenAndNavigate = async () => {
       try {
-        // Force exactly 500ms delay while checking settings
-        const minDelay = new Promise(resolve => setTimeout(resolve, 500));
+        // Force exactly 1000ms delay while checking settings
+        const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
         const settingsReq = axios.get('https://kairo-b1i9.onrender.com/api/settings', { timeout: 3000 }).catch(() => null);
         
         const [_, settingsRes] = await Promise.all([minDelay, settingsReq]);

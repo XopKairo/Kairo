@@ -13,12 +13,20 @@ const UserLoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isIconLoaded, setIsIconLoaded] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+    setIsIconLoaded(true);
     if (Platform.OS === 'android') {
-      NavigationBar.setVisibilityAsync('hidden');
-      NavigationBar.setBehaviorAsync('inset-touch');
+      setTimeout(() => {
+        if (mounted && NavigationBar && NavigationBar.setVisibilityAsync) {
+          NavigationBar.setVisibilityAsync('hidden').catch(() => {});
+          NavigationBar.setBehaviorAsync('inset-touch').catch(() => {});
+        }
+      }, 100);
     }
+    return () => { mounted = false; };
   }, []);
 
   // Forgot Password States
@@ -110,7 +118,7 @@ const UserLoginScreen = ({ navigation }) => {
             <Text style={styles.loginText}>Login</Text>
             
             <View style={styles.inputContainer}>
-              {Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+              {isIconLoaded && Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
               <TextInput
                 style={styles.input}
                 placeholder="Phone or Email"
@@ -122,7 +130,7 @@ const UserLoginScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.inputContainer}>
-              {Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+              {isIconLoaded && Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -132,7 +140,7 @@ const UserLoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                {Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
+                {isIconLoaded && Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
               </TouchableOpacity>
             </View>
 
@@ -225,7 +233,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#333', fontSize: 16 },
-  eyeIcon: { padding: 5, zIndex: 10, elevation: 10 },
+  eyeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', zIndex: 10, elevation: 10 },
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 25 },
   forgotText: { color: '#8A2BE2', fontWeight: 'bold', fontSize: 14 },
   loginBtn: { height: 55, borderRadius: 15, overflow: 'hidden', elevation: 5 },

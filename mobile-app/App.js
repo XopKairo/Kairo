@@ -59,7 +59,7 @@ export default function App() {
         <Stack.Navigator initialRouteName="Splash">
           <Stack.Screen name="Splash" component={ZoraSplashScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Login" component={UserLoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
           <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
           <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
             {(props) => (

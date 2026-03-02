@@ -20,13 +20,21 @@ const UserRegisterScreen = ({ navigation }) => {
   const [otp, setOtp] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [isIconLoaded, setIsIconLoaded] = useState(false);
   const timerRef = useRef(null);
 
   useEffect(() => {
+    let mounted = true;
+    setIsIconLoaded(true);
     if (Platform.OS === 'android') {
-      NavigationBar.setVisibilityAsync('hidden');
-      NavigationBar.setBehaviorAsync('inset-touch');
+      setTimeout(() => {
+        if (mounted && NavigationBar && NavigationBar.setVisibilityAsync) {
+          NavigationBar.setVisibilityAsync('hidden').catch(() => {});
+          NavigationBar.setBehaviorAsync('inset-touch').catch(() => {});
+        }
+      }, 100);
     }
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -115,18 +123,18 @@ const UserRegisterScreen = ({ navigation }) => {
 
             <View style={styles.formCard}>
               <View style={styles.inputContainer}>
-                {Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                {isIconLoaded && Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
                 <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
               </View>
 
               <Text style={styles.label}>Identify as:</Text>
               <View style={styles.genderContainer}>
                 <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
-                  {Icon ? <Icon name="gender-female" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
+                  {isIconLoaded && Icon ? <Icon name="gender-female" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
                   <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
-                  {Icon ? <Icon name="gender-male" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
+                  {isIconLoaded && Icon ? <Icon name="gender-male" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
                   <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male</Text>
                 </TouchableOpacity>
               </View>
@@ -139,16 +147,16 @@ const UserRegisterScreen = ({ navigation }) => {
               </View>
               
               <View style={styles.inputContainer}>
-                {Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                {isIconLoaded && Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
                 <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  {Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
+                  {isIconLoaded && Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
                 </TouchableOpacity>              </View>
 
               {isOtpSent && (
                 <View style={styles.otpSection}>
                   <View style={styles.inputContainer}>
-                    {Icon ? <Icon name="shield-check-outline" size={20} color="#32CD32" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                    {isIconLoaded && Icon ? <Icon name="shield-check-outline" size={20} color="#32CD32" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
                     <TextInput style={styles.input} placeholder="6-Digit OTP" placeholderTextColor="#666" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
                   </View>
                   <TouchableOpacity disabled={resendTimer > 0} onPress={handleSendOtp} style={styles.resendBtn}>
@@ -205,7 +213,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#333', fontSize: 16 },
-  eyeIcon: { padding: 5, zIndex: 10, elevation: 10 },
+  eyeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', zIndex: 10, elevation: 10 },
   genderContainer: { flexDirection: 'row', gap: 10, marginBottom: 15 },
   genderBtn: { 
     flex: 1, height: 50, borderRadius: 12, borderWidth: 1, borderColor: '#8A2BE2',
