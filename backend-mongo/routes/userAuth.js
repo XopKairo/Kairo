@@ -18,93 +18,101 @@ router.post('/send-otp', async (req, res) => {
   const { contact } = req.body; 
   if (!contact) return res.status(400).json({ success: false, message: 'Contact info required' });
   
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(contact, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
-  
-  console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore.set(contact, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+    
+    console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
 
-  // Try to send real SMS via Twilio if configured
-  if (twilioClient && contact.startsWith('+')) {
-    try {
-      // Set a 10s timeout for Twilio request
-      await Promise.race([
-        twilioClient.messages.create({
-          body: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: contact
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Twilio Timeout')), 10000))
-      ]);
-      console.log(`[Twilio] SMS sent successfully to ${contact}`);
-      return res.json({ success: true, message: 'OTP sent to your phone via SMS' });
-    } catch (error) {
-      console.error('[Twilio Error]', error.message);
-      return res.status(500).json({ success: false, message: `SMS Error: ${error.message}` });
+    // Try to send real SMS via Twilio if configured
+    if (twilioClient && contact.startsWith('+')) {
+      try {
+        await Promise.race([
+          twilioClient.messages.create({
+            body: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: contact
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Twilio Timeout')), 10000))
+        ]);
+        console.log(`[Twilio] SMS sent successfully to ${contact}`);
+        return res.json({ success: true, message: 'OTP sent to your phone via SMS' });
+      } catch (error) {
+        console.error('[Twilio Error]', error.message);
+        return res.status(500).json({ success: false, message: `SMS Error: ${error.message}` });
+      }
     }
-  }
 
-  // If email
-  if (contact.includes('@')) {
-     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        return res.status(500).json({ success: false, message: 'Email configuration missing on server' });
-     }
-
-     const nodemailer = require('nodemailer');
-     const transporter = nodemailer.createTransport({
-       service: 'gmail',
-       auth: {
-         user: process.env.EMAIL_USER,
-         pass: process.env.EMAIL_PASS
+    // If email
+    if (contact && contact.includes('@')) {
+       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+          return res.status(500).json({ success: false, message: 'Email configuration missing on server' });
        }
-     });
 
-     try {
-       await Promise.race([
-         transporter.sendMail({
-           from: `"Zora Support" <${process.env.EMAIL_USER}>`,
-           to: contact,
-           subject: "Zora Verification Code",
-           text: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`
-         }),
-         new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout (20s)')), 20000))
-       ]);
-       console.log(`[Email] OTP sent successfully to ${contact}`);
-       return res.json({ success: true, message: 'OTP sent to your email' });
-     } catch (error) {
-       console.error('[Email Error]', error.message);
-       return res.status(500).json({ success: false, message: `Email Error: ${error.message}` });
-     }
+       const nodemailer = require('nodemailer');
+       const transporter = nodemailer.createTransport({
+         service: 'gmail',
+         auth: {
+           user: process.env.EMAIL_USER,
+           pass: process.env.EMAIL_PASS
+         }
+       });
+
+       try {
+         await Promise.race([
+           transporter.sendMail({
+             from: `"Zora Support" <${process.env.EMAIL_USER}>`,
+             to: contact,
+             subject: "Zora Verification Code",
+             text: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`
+           }),
+           new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout (20s)')), 20000))
+         ]);
+         console.log(`[Email] OTP sent successfully to ${contact}`);
+         return res.json({ success: true, message: 'OTP sent to your email' });
+       } catch (error) {
+         console.error('[Email Error]', error.message);
+         return res.status(500).json({ success: false, message: `Email Error: ${error.message}` });
+       }
+    }
+
+    res.json({ success: true, message: 'OTP generated (SMS/Email gateway not fully configured)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
+  } catch (error) {
+    console.error('Send OTP Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
-
-  res.json({ success: true, message: 'OTP generated (SMS/Email gateway not fully configured)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
 });
 
-// Verify OTP
+// Verify OTP - Standard Route Handler (No next parameter)
 router.post('/verify-otp', async (req, res) => {
   const { contact, otp } = req.body;
 
-  const storedOtpData = otpStore.get(contact);
-  
-  if (!storedOtpData) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
-  if (Date.now() > storedOtpData.expiresAt) {
+  try {
+    const storedOtpData = otpStore.get(contact);
+    
+    if (!storedOtpData) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
+    if (Date.now() > storedOtpData.expiresAt) {
+      otpStore.delete(contact);
+      return res.status(400).json({ success: false, message: 'OTP expired' });
+    }
+    if (storedOtpData.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    
     otpStore.delete(contact);
-    return res.status(400).json({ success: false, message: 'OTP expired' });
+
+    const otpVerifiedToken = jwt.sign(
+      { contact, verified: true }, 
+      process.env.JWT_SECRET || 'secret_key', 
+      { expiresIn: '15m' }
+    );
+
+    return res.status(200).json({ success: true, message: 'OTP Verified', otp_verified_token: otpVerifiedToken });
+  } catch (error) {
+    console.error('Verify OTP Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
-  if (storedOtpData.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
-  
-  otpStore.delete(contact);
-
-  // Generate a temporary OTP Verification Token (valid for 15 minutes)
-  const otpVerifiedToken = jwt.sign(
-    { contact, verified: true }, 
-    process.env.JWT_SECRET || 'secret_key', 
-    { expiresIn: '15m' }
-  );
-
-  res.json({ success: true, message: 'OTP verified', otp_verified_token: otpVerifiedToken });
 });
 
-// User Registration (Protected by OTP Token)
+// User Registration - Standard Route Handler (No next parameter)
 router.post('/register', async (req, res) => {
   const { name, email, phone, password, otp_verified_token } = req.body;
   
@@ -113,11 +121,8 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Verify the temporary token to prevent backdoor registration
     const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET || 'secret_key');
     const registeredContact = (email || phone).toString().trim();
-    
-    // Normalize decoded contact as well for comparison
     const decodedContact = decoded.contact.toString().trim();
 
     if (decodedContact !== registeredContact || !decoded.verified) {
@@ -143,20 +148,20 @@ router.post('/register', async (req, res) => {
       gender: req.body.gender || 'Male',
       verificationSelfie: req.body.verificationSelfie || '',
       lastLoginDate: new Date(), 
-      zoraPoints: 5 
+      zoraPoints: 5,
+      coins: 0
     };
     if (email) userData.email = email.trim();
     if (phone) userData.phone = phone.trim();
 
     const user = await User.create(userData);
 
-    // If Female, create a Verification Request for Admin
     if (userData.gender === 'Female' && userData.verificationSelfie) {
       const VerificationRequest = require('../models/VerificationRequest');
       await VerificationRequest.create({
         userId: user._id,
         photoUrl: userData.verificationSelfie,
-        idUrl: 'Selfie Verification', // Placeholder
+        idUrl: 'Selfie Verification',
         status: 'pending'
       });
     }
@@ -164,16 +169,18 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
     const badge = getUserBadge(user.zoraPoints);
     
-    res.status(201).json({ 
+    return res.status(200).json({ 
       success: true, 
+      message: 'Registration successful',
       token, 
       user: { id: user._id, name: user.name, email: user.email, phone: user.phone, coins: user.coins, zoraPoints: user.zoraPoints, badge } 
     });
   } catch (error) {
+    console.error('Registration Error:', error);
     if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
        return res.status(403).json({ success: false, message: 'OTP token invalid or expired. Please verify OTP again.' });
     }
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -204,17 +211,18 @@ router.post('/login', async (req, res) => {
       const badge = getUserBadge(user.zoraPoints);
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
       
-      res.json({ 
+      return res.status(200).json({ 
         success: true, 
         token, 
         pointsAwarded,
         user: { id: user._id, name: user.name, email: user.email, phone: user.phone, coins: user.coins, zoraPoints: user.zoraPoints, badge } 
       });
     } else {
-      res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Login Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 
@@ -228,9 +236,10 @@ router.post('/reset-password', async (req, res) => {
     user.password = newPassword;
     await user.save();
     
-    res.json({ success: true, message: 'Password reset successfully' });
+    return res.status(200).json({ success: true, message: 'Password reset successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Reset Password Error:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 

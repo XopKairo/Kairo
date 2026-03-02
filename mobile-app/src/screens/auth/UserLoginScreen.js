@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Modal, KeyboardAvoidingView, Platform, ScrollView, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image, Modal, KeyboardAvoidingView, Platform, ScrollView, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { loginUser, sendOtp, resetPassword, verifyOtp } from '../../services/api';
 import { registerForPushNotificationsAsync } from '../../services/pushService';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,6 +13,13 @@ const UserLoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('inset-touch');
+    }
+  }, []);
 
   // Forgot Password States
   const [fpModalVisible, setFpModalVisible] = useState(false);
@@ -84,8 +92,9 @@ const UserLoginScreen = ({ navigation }) => {
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e', '#0f3460']} style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           
           <View style={styles.header}>
             <View style={styles.logoContainer}>
@@ -101,7 +110,7 @@ const UserLoginScreen = ({ navigation }) => {
             <Text style={styles.loginText}>Login</Text>
             
             <View style={styles.inputContainer}>
-              <Icon name="person-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
+              {Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
               <TextInput
                 style={styles.input}
                 placeholder="Phone or Email"
@@ -113,7 +122,7 @@ const UserLoginScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.inputContainer}>
-              <Icon name="lock-closed-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
+              {Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -123,7 +132,7 @@ const UserLoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                <Icon name={showPassword ? "eye-off" : "eye"} size={22} color="#8A2BE2" />
+                {Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
               </TouchableOpacity>
             </View>
 
@@ -142,7 +151,13 @@ const UserLoginScreen = ({ navigation }) => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>New to Zora? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <TouchableOpacity onPress={() => {
+                try {
+                  navigation.navigate('Register');
+                } catch(e) {
+                  // Navigation error caught silently
+                }
+              }}>
                 <Text style={styles.signUpText}>Join Now</Text>
               </TouchableOpacity>
             </View>
@@ -150,6 +165,7 @@ const UserLoginScreen = ({ navigation }) => {
 
         </ScrollView>
       </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
 
       {/* Forgot Password Modal */}
       <Modal visible={fpModalVisible} animationType="slide" transparent={true}>
@@ -209,7 +225,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#333', fontSize: 16 },
-  eyeIcon: { padding: 5 },
+  eyeIcon: { padding: 5, zIndex: 10, elevation: 10 },
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 25 },
   forgotText: { color: '#8A2BE2', fontWeight: 'bold', fontSize: 14 },
   loginBtn: { height: 55, borderRadius: 15, overflow: 'hidden', elevation: 5 },

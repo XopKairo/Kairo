@@ -32,7 +32,7 @@ const UserProfileScreen = ({ navigation }) => {
       <View style={styles.header}>
         <Avatar.Image 
           size={100} 
-          source={{ uri: user?.profilePicture || 'https://i.pravatar.cc/300' }} 
+          source={user?.profilePicture ? { uri: user.profilePicture } : require('../../../assets/icon.png')} 
         />
         <Title style={styles.name}>{user?.name || 'Loading...'}</Title>
         <Paragraph style={styles.email}>{user?.email || user?.phone || ''}</Paragraph>

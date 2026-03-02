@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import api from '../../services/api';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-
-
 
 const FeedScreen = () => {
   const [posts, setPosts] = useState([]);
@@ -14,6 +13,7 @@ const FeedScreen = () => {
   // New Post State
   const [modalVisible, setModalVisible] = useState(false);
   const [newCaption, setNewCaption] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
   const [isPosting, setIsPosting] = useState(false);
 
   useEffect(() => {
@@ -37,37 +37,72 @@ const FeedScreen = () => {
     fetchFeed();
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+    }
+  };
+
   const createPost = async () => {
-    if (!newCaption.trim()) {
-      Alert.alert('Error', 'Please enter a caption for your story.');
+    if (!selectedImage) {
+      Alert.alert('Error', 'Please select an image for your story.');
       return;
     }
 
     setIsPosting(true);
     try {
-      const userStr = await AsyncStorage.getItem('user');
-      const user = userStr ? JSON.parse(userStr) : null;
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      const userId = userData?._id || userData?.id;
 
-      if (!user || !user.id) {
-        Alert.alert('Error', 'User not found. Please log in.');
+      if (!userId) {
+        Alert.alert('Error', 'User not found. Please log in again.');
         return;
       }
 
-      // Simulated image URL for demonstration (in a real app, use expo-image-picker and upload to S3/Cloudinary)
-      const dummyImage = `https://picsum.photos/400/300?random=${Math.random()}`;
+      // Prepare FormData for upload
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('caption', newCaption);
+      
+      const filename = selectedImage.uri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image`;
 
-      await api.post(`/posts`, {
-        userId: user.id,
-        mediaUrl: dummyImage,
-        caption: newCaption
+      formData.append('image', {
+        uri: selectedImage.uri,
+        name: filename,
+        type: type,
+      });
+
+      // Using raw axios/fetch or api with proper headers for multipart
+      await api.post(`/posts`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       setModalVisible(false);
       setNewCaption('');
-      handleRefresh(); // Refresh feed to show new post
+      setSelectedImage(null);
+      handleRefresh(); 
+      Alert.alert('Success', 'Story posted successfully!');
     } catch (error) {
       console.error('Error creating post:', error);
-      Alert.alert('Error', 'Failed to create story.');
+      Alert.alert('Error', error.response?.data?.message || 'Failed to post story.');
     } finally {
       setIsPosting(false);
     }
@@ -146,25 +181,38 @@ const FeedScreen = () => {
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>New Story (24h)</Text>
+            <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>New Story (24h)</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                    <Icon name="close" size={24} color="#333" />
+                </TouchableOpacity>
+            </View>
             <Text style={styles.modalSubtitle}>Posts disappear after 24 hours.</Text>
             
+            <TouchableOpacity style={styles.imagePlaceholder} onPress={pickImage}>
+                {selectedImage ? (
+                    <Image source={{ uri: selectedImage.uri }} style={styles.selectedImg} />
+                ) : (
+                    <View style={styles.placeholderContent}>
+                        <Icon name="camera-plus" size={40} color="#8A2BE2" />
+                        <Text style={styles.placeholderText}>Tap to select image</Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+
             <TextInput
               style={styles.input}
-              placeholder="What's happening?"
+              placeholder="What's happening? (Caption)"
               multiline
               value={newCaption}
               onChangeText={setNewCaption}
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.postBtn, isPosting && { opacity: 0.7 }]} 
+                style={[styles.postBtn, (isPosting || !selectedImage) && { opacity: 0.7 }]} 
                 onPress={createPost}
-                disabled={isPosting}
+                disabled={isPosting || !selectedImage}
               >
                 {isPosting ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.postBtnText}>Post Story</Text>}
               </TouchableOpacity>
@@ -177,15 +225,8 @@ const FeedScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -196,11 +237,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     elevation: 2,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333' },
   addBtn: {
     backgroundColor: '#8A2BE2',
     width: 40,
@@ -209,25 +246,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listContainer: {
-    padding: 15,
-  },
+  listContainer: { padding: 15 },
   postCard: {
     backgroundColor: '#FFF',
     borderRadius: 15,
     marginBottom: 20,
     overflow: 'hidden',
     elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
   },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-  },
+  postHeader: { flexDirection: 'row', alignItems: 'center', padding: 15 },
   avatar: {
     width: 40,
     height: 40,
@@ -237,24 +264,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
   },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#555',
-  },
-  headerInfo: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'flex-start'
-  },
-  authorName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  blueTick: {
-    color: '#007BFF',
-  },
+  avatarText: { fontSize: 16, fontWeight: 'bold', color: '#555' },
+  headerInfo: { flex: 1 },
+  authorName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  blueTick: { color: '#007BFF' },
   featuredBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -263,98 +276,64 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 10,
     marginTop: 2,
+    alignSelf: 'flex-start'
   },
-  featuredText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginLeft: 2,
-  },
-  timeText: {
-    fontSize: 12,
-    color: '#999',
-  },
-  postImage: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'cover',
-  },
-  postFooter: {
-    padding: 15,
-  },
-  caption: {
-    fontSize: 15,
-    color: '#444',
-    lineHeight: 22,
-  },
-  captionAuthor: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 50,
-    color: '#888',
-    fontSize: 16,
-  },
+  featuredText: { fontSize: 10, fontWeight: 'bold', color: '#FFF', marginLeft: 2 },
+  timeText: { fontSize: 12, color: '#999' },
+  postImage: { width: '100%', height: 300, resizeMode: 'cover' },
+  postFooter: { padding: 15 },
+  caption: { fontSize: 15, color: '#444', lineHeight: 22 },
+  captionAuthor: { fontWeight: 'bold', color: '#333' },
+  emptyText: { textAlign: 'center', marginTop: 50, color: '#888', fontSize: 16 },
+  
   // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     padding: 25,
-    minHeight: 300,
+    minHeight: 450,
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#888',
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
+  modalTitle: { fontSize: 22, fontWeight: 'bold', color: '#333' },
+  modalSubtitle: { fontSize: 14, color: '#888', marginBottom: 20 },
+  imagePlaceholder: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#F3E5F5',
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#D1C4E9',
+    borderStyle: 'dashed'
   },
+  placeholderContent: { alignItems: 'center' },
+  placeholderText: { marginTop: 10, color: '#8A2BE2', fontWeight: 'bold' },
+  selectedImg: { width: '100%', height: '100%', resizeMode: 'cover' },
   input: {
     backgroundColor: '#F9F9F9',
     borderRadius: 15,
     padding: 15,
     fontSize: 16,
-    minHeight: 100,
+    minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 25,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EEE'
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  cancelBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginRight: 10,
-  },
-  cancelBtnText: {
-    color: '#888',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  modalActions: { flexDirection: 'row', justifyContent: 'center' },
   postBtn: {
     backgroundColor: '#8A2BE2',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 60,
+    borderRadius: 30,
+    elevation: 4
   },
-  postBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  }
+  postBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' }
 });
 
 export default FeedScreen;

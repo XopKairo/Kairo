@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image, Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image, Dimensions, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Snackbar } from 'react-native-paper';
 import { registerUser, sendOtp, verifyOtp } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const { width } = Dimensions.get('window');
 
@@ -12,34 +13,33 @@ const UserRegisterScreen = ({ navigation }) => {
   const [contact, setContact] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
-  const [gender, setGender] = useState('Female'); 
-  const [selfie, setSelfie] = useState(null);
+  const [gender, setGender] = useState('Male'); 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('inset-touch');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      timerRef.current = setTimeout(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timerRef.current);
+  }, [resendTimer]);
 
   const getFullContact = () => {
     return `${countryCode}${contact.trim()}`;
-  };
-
-  const takeSelfie = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'We need camera access for gender verification.');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-      base64: true
-    });
-
-    if (!result.canceled) {
-      setSelfie(`data:image/jpeg;base64,${result.assets[0].base64}`);
-    }
   };
 
   const handleSendOtp = async () => {
@@ -51,17 +51,14 @@ const UserRegisterScreen = ({ navigation }) => {
       Alert.alert('Error', 'Please enter a valid phone number');
       return;
     }
-    if (gender === 'Female' && !selfie) {
-      Alert.alert('Verification Required', 'Female hosts must upload a selfie for verification.');
-      return;
-    }
 
     setLoading(true);
     try {
       const response = await sendOtp(getFullContact());
       if (response.success) {
         setIsOtpSent(true);
-        Alert.alert('OTP Sent', 'Check your messages for the 6-digit code.');
+        setSnackbarVisible(true);
+        setResendTimer(60);
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to send OTP');
@@ -76,21 +73,27 @@ const UserRegisterScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const verifyRes = await verifyOtp(getFullContact(), otp);
-      if (verifyRes.success) {
+      
+      if (verifyRes.success && verifyRes.otp_verified_token) {
         const response = await registerUser(
           name.trim(), 
           getFullContact(), 
           password, 
           true, 
           gender, 
-          selfie, 
+          '', 
           verifyRes.otp_verified_token
         );
+        
         if (response.success) {
           Alert.alert('Success', 'Registration complete!', [
-            { text: 'OK', onPress: () => navigation.replace('UserLogin') }
+            { text: 'OK', onPress: () => navigation.replace('Login') }
           ]);
+        } else {
+           Alert.alert('Failed', response.message || 'Registration failed');
         }
+      } else {
+         Alert.alert('Error', 'OTP verification failed');
       }
     } catch (error) {
       Alert.alert('Failed', error.message || 'Registration failed');
@@ -101,81 +104,84 @@ const UserRegisterScreen = ({ navigation }) => {
 
   return (
     <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join the Zora community</Text>
-          </View>
-
-          <View style={styles.formCard}>
-            <View style={styles.inputContainer}>
-              <Icon name="person-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
-              <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
-            </View>
-
-            <Text style={styles.label}>Identify as:</Text>
-            <View style={styles.genderContainer}>
-              <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
-                <Icon name="woman-outline" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} />
-                <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
-                <Icon name="man-outline" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} />
-                <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male</Text>
-              </TouchableOpacity>
-            </View>
-
-            {gender === 'Female' && (
-              <TouchableOpacity style={styles.selfieBtn} onPress={takeSelfie}>
-                {selfie ? (
-                  <Image source={{ uri: selfie }} style={styles.previewImage} />
-                ) : (
-                  <>
-                    <Icon name="camera" size={30} color="#8A2BE2" />
-                    <Text style={styles.selfieBtnText}>Add Verification Selfie</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.contactRow}>
-              <TextInput style={styles.ccInput} value={countryCode} onChangeText={setCountryCode} />
-              <View style={[styles.inputContainer, { flex: 1, marginBottom: 0 }]}>
-                <TextInput style={styles.input} placeholder="Phone Number" placeholderTextColor="#666" value={contact} onChangeText={setContact} keyboardType="phone-pad" maxLength={10} />
-              </View>
-            </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
             
-            <View style={styles.inputContainer}>
-              <Icon name="lock-closed-outline" size={20} color="#8A2BE2" style={styles.inputIcon} />
-              <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                <Icon name={showPassword ? "eye-off" : "eye"} size={22} color="#8A2BE2" />
+            <View style={styles.header}>
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>Join the Zora community</Text>
+            </View>
+
+            <View style={styles.formCard}>
+              <View style={styles.inputContainer}>
+                {Icon ? <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
+              </View>
+
+              <Text style={styles.label}>Identify as:</Text>
+              <View style={styles.genderContainer}>
+                <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
+                  {Icon ? <Icon name="gender-female" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
+                  <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
+                  {Icon ? <Icon name="gender-male" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} /> : <View style={{width:20,height:20}}/>}
+                  <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.contactRow}>
+                <TextInput style={styles.ccInput} value={countryCode} onChangeText={setCountryCode} />
+                <View style={[styles.inputContainer, { flex: 1, marginBottom: 0 }]}>
+                  <TextInput style={styles.input} placeholder="Phone Number" placeholderTextColor="#666" value={contact} onChangeText={setContact} keyboardType="phone-pad" maxLength={10} />
+                </View>
+              </View>
+              
+              <View style={styles.inputContainer}>
+                {Icon ? <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  {Icon ? <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> : <View style={{width: 24, height: 24}} />}
+                </TouchableOpacity>              </View>
+
+              {isOtpSent && (
+                <View style={styles.otpSection}>
+                  <View style={styles.inputContainer}>
+                    {Icon ? <Icon name="shield-check-outline" size={20} color="#32CD32" style={styles.inputIcon} /> : <View style={{width:20,height:20,marginRight:10}}/>}
+                    <TextInput style={styles.input} placeholder="6-Digit OTP" placeholderTextColor="#666" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
+                  </View>
+                  <TouchableOpacity disabled={resendTimer > 0} onPress={handleSendOtp} style={styles.resendBtn}>
+                    <Text style={[styles.resendText, resendTimer > 0 && styles.disabledText]}>
+                      {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.registerBtn} onPress={isOtpSent ? handleVerifyAndRegister : handleSendOtp} disabled={loading}>
+                <LinearGradient colors={['#8A2BE2', '#6a11cb']} style={styles.btnGradient}>
+                  {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{isOtpSent ? 'VERIFY & REGISTER' : 'SEND OTP'}</Text>}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
 
-            {isOtpSent && (
-              <View style={styles.inputContainer}>
-                <Icon name="shield-checkmark-outline" size={20} color="#32CD32" style={styles.inputIcon} />
-                <TextInput style={styles.input} placeholder="6-Digit OTP" placeholderTextColor="#666" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.registerBtn} onPress={isOtpSent ? handleVerifyAndRegister : handleSendOtp} disabled={loading}>
-              <LinearGradient colors={['#8A2BE2', '#6a11cb']} style={styles.btnGradient}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{isOtpSent ? 'VERIFY & REGISTER' : 'SEND OTP'}</Text>}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => navigation.navigate('UserLogin')} style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <Text style={styles.loginLink}>Login</Text>
-            </TouchableOpacity>
-          </View>
-
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={2000}
+        style={styles.snackbar}
+      >
+        OTP Sent! Check your messages.
+      </Snackbar>
     </LinearGradient>
   );
 };
@@ -199,7 +205,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#333', fontSize: 16 },
-  eyeIcon: { padding: 5 },
+  eyeIcon: { padding: 5, zIndex: 10, elevation: 10 },
   genderContainer: { flexDirection: 'row', gap: 10, marginBottom: 15 },
   genderBtn: { 
     flex: 1, height: 50, borderRadius: 12, borderWidth: 1, borderColor: '#8A2BE2',
@@ -208,13 +214,6 @@ const styles = StyleSheet.create({
   activeGender: { backgroundColor: '#8A2BE2' },
   genderText: { color: '#8A2BE2', fontWeight: 'bold' },
   activeGenderText: { color: '#fff' },
-  selfieBtn: { 
-    height: 120, borderRadius: 15, borderStyle: 'dashed', borderWidth: 2, 
-    borderColor: '#8A2BE2', backgroundColor: '#f9f9f9', justifyContent: 'center', 
-    alignItems: 'center', marginBottom: 15, overflow: 'hidden' 
-  },
-  previewImage: { width: '100%', height: '100%' },
-  selfieBtnText: { color: '#8A2BE2', marginTop: 5, fontWeight: 'bold', fontSize: 12 },
   contactRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
   ccInput: { 
     width: 60, height: 55, backgroundColor: '#f0f0f0', borderRadius: 15, 
@@ -225,7 +224,12 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   footerText: { color: '#666' },
-  loginLink: { color: '#8A2BE2', fontWeight: 'bold' }
+  loginLink: { color: '#8A2BE2', fontWeight: 'bold' },
+  snackbar: { backgroundColor: '#8A2BE2' },
+  otpSection: { marginBottom: 15 },
+  resendBtn: { alignSelf: 'flex-end', marginTop: -10, padding: 5 },
+  resendText: { color: '#8A2BE2', fontSize: 13, fontWeight: '600' },
+  disabledText: { color: '#999' }
 });
 
 export default UserRegisterScreen;

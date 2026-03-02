@@ -7,6 +7,10 @@ export default {
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "jsEngine": "hermes",
+    "androidStatusBar": {
+      "hidden": true,
+      "translucent": true
+    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -24,6 +28,7 @@ export default {
       "package": "com.zora.live",
       "googleServicesFile": process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
       "enableProguardInReleaseBuilds": true,
+      "enableGenerateArchitectureSpecificApks": true,
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
@@ -66,7 +71,7 @@ export default {
     },
     "extra": {
       "eas": {
-        "projectId": "a8fb9a25-d6c1-4100-b2d5-5e350206295a"
+        "projectId": "e60fc663-b454-4068-a3ab-9ee38551aff4"
       }
     }
   }

@@ -13,3 +13,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnp*
 .cache/
+.env
+RENDER_ENV_CONFIG.txt
+google-services.json
+serviceAccountKey.json
+*.apk

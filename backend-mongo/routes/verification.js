@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const { getStorage } = require('../config/cloudinaryConfig');
 const VerificationRequest = require('../models/VerificationRequest');
 const User = require('../models/User');
+
+// Configure Multer for Cloudinary
+const upload = multer({ storage: getStorage('verification') });
 
 // GET all verification requests (Admin)
 router.get('/', async (req, res) => {
@@ -13,15 +18,26 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST a new verification request (App)
-router.post('/submit', async (req, res) => {
+// POST a new verification request (App) - Supports multiple file uploads
+router.post('/submit', upload.fields([
+  { name: 'selfie', maxCount: 1 },
+  { name: 'idProof', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { userId, photoUrl, idUrl } = req.body;
+    const { userId } = req.body;
     
     // Check if user already has a pending request
     const existingRequest = await VerificationRequest.findOne({ userId, status: 'pending' });
     if (existingRequest) {
       return res.status(400).json({ message: 'You already have a pending verification request' });
+    }
+
+    // Get Cloudinary URLs
+    const photoUrl = req.files['selfie'] ? req.files['selfie'][0].path : null;
+    const idUrl = req.files['idProof'] ? req.files['idProof'][0].path : null;
+
+    if (!photoUrl) {
+      return res.status(400).json({ message: 'Selfie is required for verification.' });
     }
 
     const request = new VerificationRequest({ userId, photoUrl, idUrl });
@@ -51,14 +67,15 @@ router.post('/:id/status', async (req, res) => {
     
     // If approved, update user model
     if (status === 'approved') {
+      const user = await User.findById(request.userId);
       await User.findByIdAndUpdate(request.userId, { 
         isVerified: true,
-        isGenderVerified: true // Assuming gender verification also sets isVerified or we handle it separately
+        isGenderVerified: true 
       });
       
       // Also update Host if exists
       const Host = require('../models/Host');
-      await Host.findOneAndUpdate({ email: (await User.findById(request.userId)).email }, { isGenderVerified: true, isVerified: true });
+      await Host.findOneAndUpdate({ email: user.email }, { isGenderVerified: true, isVerified: true });
     } else {
       await User.findByIdAndUpdate(request.userId, { isGenderVerified: false });
     }

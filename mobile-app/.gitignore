@@ -40,5 +40,5 @@ yarn-error.*
 /ios
 # /android (Removed to allow fix commit)
 .env
-google-services.json
+# google-services.json
 /android

@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const { getStorage } = require('../config/cloudinaryConfig');
 const Post = require('../models/Post');
+
+// Configure Multer for Cloudinary
+const upload = multer({ storage: getStorage('posts') });
 
 // GET feed (Mobile App) - Returns active posts, featured first
 router.get('/', async (req, res) => {
@@ -22,10 +27,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST a new story/post (Mobile App)
-router.post('/', async (req, res) => {
+// POST a new story/post (Mobile App) - Supports real image upload
+router.post('/', upload.single('image'), async (req, res) => {
   try {
-    const { userId, mediaUrl, caption } = req.body;
+    const { userId, caption } = req.body;
+    
+    // Check if file was uploaded to Cloudinary
+    const mediaUrl = req.file ? req.file.path : null;
+    
+    if (!mediaUrl) {
+      return res.status(400).json({ message: 'Media/Image is required.' });
+    }
+
     // Set expiration to 24 hours from now
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     
