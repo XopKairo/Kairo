@@ -9,7 +9,18 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const { clean } = require('xss-clean/lib/xss');
+
+const xss = () => (req, res, next) => {
+  if (req.body) req.body = clean(req.body);
+  if (req.query) {
+    const cleanedQuery = clean(req.query);
+    for (const key in req.query) delete req.query[key];
+    Object.assign(req.query, cleanedQuery);
+  }
+  if (req.params) req.params = clean(req.params);
+  next();
+};
 const hpp = require('hpp');
 
 const { errorHandler } = require('./middleware/errorMiddleware');
