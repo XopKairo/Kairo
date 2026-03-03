@@ -93,7 +93,17 @@ app.use(helmet({
     preload: true
   }
 }));
-app.use(mongoSanitize());
+app.use((req, res, next) => {
+  if (req.body) req.body = mongoSanitize.sanitize(req.body);
+  if (req.params) req.params = mongoSanitize.sanitize(req.params);
+  if (req.headers) req.headers = mongoSanitize.sanitize(req.headers);
+  if (req.query) {
+    const sanitizedQuery = mongoSanitize.sanitize(req.query);
+    for (const key in req.query) delete req.query[key];
+    Object.assign(req.query, sanitizedQuery);
+  }
+  next();
+});
 app.use(xss());
 app.use(hpp());
 app.use(compression());
