@@ -230,6 +230,7 @@ const verificationRequests = ref<any[]>([]);
 const search = ref('');
 const totalUsers = ref(0);
 const activeUsersToday = ref(0);
+const activeSessions = ref(0);
 const totalCalls = ref(0);
 const totalTransactions = ref(0);
 const adminRevenue = ref(0);
