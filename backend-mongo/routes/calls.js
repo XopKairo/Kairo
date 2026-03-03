@@ -5,12 +5,16 @@ const mongoose = require('mongoose');
 const Call = require('../models/Call');
 const User = require('../models/User');
 const Host = require('../models/Host');
+const { protectUser } = require('../middleware/authMiddleware');
 
-// 1. Generate ZegoCloud Token (Optional if AppSign is directly used in App)
-router.post('/generate-token', (req, res) => {
+// 1. Generate ZegoCloud Token
+router.post('/generate-token', protectUser, (req, res) => {
   const { userId, roomId } = req.body;
   const appId = parseInt(process.env.ZEGO_APP_ID) || 1106955329;
-  const serverSecret = process.env.ZEGO_SERVER_SECRET || "f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2";
+  const serverSecret = process.env.ZEGO_SERVER_SECRET;
+  if (!serverSecret) {
+    return res.status(500).json({ success: false, message: 'ZEGO_SERVER_SECRET is not configured' });
+  }
   
   res.json({
     appId,
@@ -19,28 +23,39 @@ router.post('/generate-token', (req, res) => {
   });
 });
 
-// 2. Start Call (Live Monitoring)
-router.post('/start', async (req, res) => {
+// 2. Start Call (Live Monitoring & Coin Enforcement)
+router.post('/start', protectUser, async (req, res) => {
   try {
-    const { userId, hostId, callId } = req.body;
+    const { hostId, callId } = req.body;
+    const userId = req.user._id;
+
+    // RULE 1: Minimum coins required to start a call: 30
+    if (req.user.coins < 30) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Minimum 30 coins required to start a call' 
+      });
+    }
     
     const call = await Call.create({
       userId,
       hostId,
       callId,
-      status: 'Active'
+      status: 'Active',
+      startTime: new Date()
     });
 
     if (req.io) {
       req.io.to('admin-room').emit('callStartedAlert', {
-        message: `New call started between User ${userId} and Host ${hostId}`,
-        callId
+        message: `New call started between User ${req.user.name} and Host ${hostId}`,
+        callId,
+        userId
       });
     }
 
-    res.json({ message: 'Call started successfully', call });
+    res.json({ success: true, message: 'Call allowed', call });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

@@ -43,7 +43,10 @@ const watchStream = async (callId: string) => {
   await nextTick();
   
   const appId = Number(import.meta.env.VITE_ZEGO_APP_ID) || 1106955329;
-  const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET || "f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2";
+  const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET;
+if (!serverSecret) {
+  console.error("ZEGO_SERVER_SECRET is missing in environment variables");
+}
   
   const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
     appId,

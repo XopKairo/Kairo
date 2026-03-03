@@ -150,6 +150,23 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
+
+// STRICT SECURITY CHECK: Validate required environment variables
+const requiredEnvVars = [
+  'MONGO_URI',
+  'JWT_SECRET',
+  'ADMIN_PASSWORD',
+  'ZEGO_SERVER_SECRET',
+  'FIREBASE_SERVICE_ACCOUNT'
+];
+
+requiredEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.error(`CRITICAL ERROR: Environment variable ${varName} is missing.`);
+    process.exit(1);
+  }
+});
+
 const ensureAdmin = async () => {
   try {
     const Admin = require('./models/Admin');
@@ -157,10 +174,10 @@ const ensureAdmin = async () => {
     const count = await Admin.countDocuments();
     console.log(`[DB] Current Admin count: ${count}`);
 
-    const email = process.env.ADMIN_EMAIL || 'omalloorajil@gmail.com';
+    const email = process.env.ADMIN_EMAIL || 'admin@kairo.com';
     const username = process.env.ADMIN_USERNAME || 'admin';
-    const password = process.env.ADMIN_PASSWORD || 'adminpassword123';
-    const phone = process.env.ADMIN_PHONE || '+917356704978';
+    const password = process.env.ADMIN_PASSWORD; // No fallback
+    const phone = process.env.ADMIN_PHONE || '+910000000000';
 
     let admin = await Admin.findOne({ $or: [{ email }, { username }] });
     if (!admin) {

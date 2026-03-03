@@ -97,7 +97,7 @@ router.post('/verify-otp', validateRequest(verifyOTPSchema), async (req, res) =>
     
     const otpVerifiedToken = jwt.sign(
       { contact, verified: true }, 
-      process.env.JWT_SECRET || 'secret_key', 
+      process.env.JWT_SECRET, 
       { expiresIn: '15m' }
     );
 
@@ -127,7 +127,7 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
   if (!otp_verified_token) return res.status(403).json({ success: false, message: 'OTP verification token missing' });
 
   try {
-    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET || 'secret_key');
+    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
     const registeredContact = (email || phone).toString().trim();
     const decodedContact = decoded.contact.toString().trim();
 
@@ -155,7 +155,7 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
     await OTP.deleteOne({ contact: decodedContact });
 
     const expiry = process.env.USER_JWT_EXPIRY || '30d';
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: expiry });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: expiry });
     const badge = getUserBadge(user.zoraPoints);
     
     return res.status(201).json({ 
@@ -191,7 +191,7 @@ router.post('/login', validateRequest(loginSchema), async (req, res) => {
 
       const badge = getUserBadge(user.zoraPoints);
       const expiry = process.env.USER_JWT_EXPIRY || '30d';
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: expiry });
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: expiry });
       
       return res.status(200).json({ 
         success: true, 

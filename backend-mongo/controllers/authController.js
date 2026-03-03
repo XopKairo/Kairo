@@ -43,7 +43,7 @@ const authAdmin = async (req, res) => {
     }
 
     const expiry = process.env.ADMIN_JWT_EXPIRY || '8h';
-    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET || 'secret_key', { expiresIn: expiry });
+    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: expiry });
     return res.status(200).json({
       success: true,
       _id: admin._id,
@@ -76,7 +76,7 @@ const verifyLoginOTP = async (req, res) => {
     admin.loginOTPExpires = undefined;
     await admin.save();
 
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
+    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     return res.status(200).json({
       success: true,

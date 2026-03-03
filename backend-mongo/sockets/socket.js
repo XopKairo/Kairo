@@ -1,6 +1,9 @@
 const { Server } = require("socket.io");
 const Message = require('../models/Message');
 const User = require('../models/User');
+const Call = require('../models/Call');
+const Host = require('../models/Host');
+const Admin = require('../models/Admin');
 
 const setupSockets = (server) => {
   const allowedOrigins = [
@@ -24,6 +27,7 @@ const setupSockets = (server) => {
   });
 
   const onlineUsers = new Map(); // userId -> Set of socketIds
+  const liveCalls = new Map(); // callId -> { userId, hostId, interval }
 
   io.on("connection", (socket) => {
     let currentUserId = null;
@@ -73,6 +77,57 @@ const setupSockets = (server) => {
     socket.on('typing', (data) => {
       const { senderId, receiverId, isTyping } = data;
       io.to(receiverId).emit('userTyping', { senderId, isTyping });
+    });
+
+    // Handle Live Call Coin Deduction
+    socket.on('callStarted', async (data) => {
+      const { callId, userId, hostId } = data;
+      
+      if (liveCalls.has(callId)) return;
+
+      const interval = setInterval(async () => {
+        try {
+          const user = await User.findById(userId);
+          const host = await Host.findById(hostId);
+          
+          if (!user || user.coins < 30) {
+            io.to(userId).emit('callTerminated', { reason: 'Insufficient coins' });
+            io.to(hostId).emit('callTerminated', { reason: 'User ran out of coins' });
+            clearInterval(interval);
+            liveCalls.delete(callId);
+            return;
+          }
+
+          user.coins -= 30;
+          await user.save();
+
+          const hostShare = 30 * 0.7;
+          const adminShare = 30 * 0.3;
+          const adminShareINR = adminShare * 0.1;
+
+          if (host && host.gender === 'Female' && host.isGenderVerified) {
+            host.earnings += hostShare;
+            await host.save();
+            await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } });
+          } else {
+            await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: 30 * 0.1 } });
+          }
+
+          await Call.findOneAndUpdate({ callId }, { $inc: { durationInMinutes: 1, coinsDeducted: 30 } });
+          io.to(userId).emit('walletUpdate', { newBalance: user.coins });
+        } catch (err) {
+          console.error('Deduction Error:', err);
+        }
+      }, 60000);
+
+      liveCalls.set(callId, { userId, hostId, interval });
+    });
+
+    socket.on('callEnded', (callId) => {
+      if (liveCalls.has(callId)) {
+        clearInterval(liveCalls.get(callId).interval);
+        liveCalls.delete(callId);
+      }
     });
 
     // Admin room participation
