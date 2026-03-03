@@ -6,20 +6,30 @@ const authAdmin = async (req, res) => {
   const { username, email, password } = req.body;
 
   try {
+    console.log(`[AUTH] Admin login attempt. Body:`, JSON.stringify({ 
+      username: username || 'not provided', 
+      email: email || 'not provided', 
+      password: password ? '********' : 'missing' 
+    }));
+
     const query = [];
     if (username) query.push({ username });
     if (email) query.push({ email });
 
     if (query.length === 0) {
+      console.log(`[AUTH] Login failed: No username or email provided.`);
       return res.status(400).json({ success: false, message: 'Username or Email required' });
     }
 
+    console.log(`[AUTH] Executing Admin.findOne with query:`, JSON.stringify({ $or: query }));
     const admin = await Admin.findOne({ $or: query });
 
     if (!admin) {
       console.log(`[AUTH] Admin not found for query:`, JSON.stringify(query));
       return res.status(401).json({ success: false, message: 'Invalid Username or Password' });
     }
+
+    console.log(`[AUTH] Admin user found: ${admin.username}. Comparing password...`);
 
     const isMatch = await admin.matchPassword(password);
     if (!isMatch) {

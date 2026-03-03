@@ -12,7 +12,7 @@ const AdminSchema = new mongoose.Schema({
   loginOTPExpires: { type: Date },
   resetPasswordOTP: { type: String },
   resetPasswordExpires: { type: Date }
-});
+}, { collection: 'admins' });
 
 // Async function aayathu kond 'next' vilikkenda aavashyamilla
 AdminSchema.pre('save', async function() {
