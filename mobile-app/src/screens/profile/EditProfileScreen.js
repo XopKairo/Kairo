@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { updateUserProfile } from '../../services/api';
+import { updateUserProfile, API_URL } from '../../services/api';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -90,7 +90,7 @@ const EditProfileScreen = ({ navigation }) => {
         // We use the posts endpoint for a generic upload if no dedicated upload endpoint exists
         // or we can just pass the base64/uri if the backend is updated.
         // Let's assume we need to upload to get a URL.
-        const uploadRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/posts`, {
+        const uploadRes = await fetch(`${API_URL}/posts`, {
           method: 'POST',
           body: formData,
           headers: {
