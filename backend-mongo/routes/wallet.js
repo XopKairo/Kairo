@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Payout = require('../models/Payout');
 const Transaction = require('../models/Transaction');
 const CoinPackage = require('../models/CoinPackage');
+const AdminActionLog = require('../models/AdminActionLog');
 const razorpay = require('../utils/razorpay');
 const { createOrderSchema, validateRequest } = require('../utils/validation');
 
@@ -303,6 +304,34 @@ router.post('/earn-ad', async (req, res) => {
     res.status(400).json({ error: error.message });
   } finally {
     session.endSession();
+  }
+});
+
+// Admin Route: Override User Coins
+router.post('/override-coins', async (req, res) => {
+  // server.js ensures this is only called on /api/admin/wallet which has protectAdmin
+  if (!req.admin) return res.status(403).json({ success: false, message: 'Admin access required' });
+
+  const { userId, amount, reason } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const oldBalance = user.coins;
+    user.coins += Number(amount);
+    await user.save();
+
+    await AdminActionLog.create({
+      adminId: req.admin._id,
+      action: 'PAYMENT_OVERRIDE',
+      targetId: user._id,
+      details: `Adjusted coins by ${amount}. Old balance: ${oldBalance}, New: ${user.coins}. Reason: ${reason || 'N/A'}`,
+      ipAddress: req.ip
+    });
+
+    res.json({ success: true, message: 'Coins adjusted successfully', newBalance: user.coins });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

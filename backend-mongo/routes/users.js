@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const OTP = require('../models/OTP');
+const AdminActionLog = require('../models/AdminActionLog');
 const { getUserBadge } = require('../utils/badgeSystem');
 const { protectUser } = require('../middleware/authMiddleware');
 
@@ -210,6 +211,17 @@ router.post('/:id/ban', async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, { isBanned }, { new: true });
     if (!user) return res.status(404).json({ message: 'User not found' });
     
+    // Audit Log
+    if (req.admin) {
+      await AdminActionLog.create({
+        adminId: req.admin._id,
+        action: isBanned ? 'BAN_USER' : 'UNBAN_USER',
+        targetId: user._id,
+        details: `${isBanned ? 'Banned' : 'Unbanned'} user ${user.username || user.email}`,
+        ipAddress: req.ip
+      });
+    }
+
     // Real-time Ban Enforcement via Socket
     if (isBanned && req.io) {
       req.io.to(req.params.id).emit('userBanned', {
@@ -228,6 +240,18 @@ router.delete('/:id', async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Audit Log
+    if (req.admin) {
+      await AdminActionLog.create({
+        adminId: req.admin._id,
+        action: 'DELETE_USER',
+        targetId: user._id,
+        details: `Deleted user ${user.username || user.email}`,
+        ipAddress: req.ip
+      });
+    }
+
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

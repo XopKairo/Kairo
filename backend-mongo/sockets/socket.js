@@ -3,15 +3,21 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 
 const setupSockets = (server) => {
+  const allowedOrigins = [
+    process.env.ADMIN_URL,
+    process.env.MOBILE_APP_URL,
+    'https://kairo-sooty.vercel.app'
+  ].filter(Boolean);
+
   const io = new Server(server, {
     cors: {
-      origin: [
-        /https:\/\/.*\.vercel\.app$/,
-        'https://kairo-admin.vercel.app',
-        'https://kairo-sooty.vercel.app',
-        process.env.ADMIN_URL,
-        process.env.MOBILE_APP_URL
-      ].filter(Boolean),
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+          return callback(new Error('CORS not allowed'), false);
+        }
+        return callback(null, true);
+      },
       methods: ["GET", "POST"],
       credentials: true
     }

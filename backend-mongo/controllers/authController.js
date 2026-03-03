@@ -42,7 +42,8 @@ const authAdmin = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access Denied: Admin role required' });
     }
 
-    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
+    const expiry = process.env.ADMIN_JWT_EXPIRY || '8h';
+    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET || 'secret_key', { expiresIn: expiry });
     return res.status(200).json({
       success: true,
       _id: admin._id,

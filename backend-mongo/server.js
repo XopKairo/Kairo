@@ -8,8 +8,13 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+require('dotenv').config();
 
 const { errorHandler } = require('./middleware/errorMiddleware');
+const { protectUser, protectAdmin } = require('./middleware/authMiddleware');
 const { authAdmin, verifyLoginOTP } = require('./controllers/authController');
 const setupSockets = require('./sockets/socket');
 
@@ -40,51 +45,53 @@ const server = http.createServer(app);
 const io = setupSockets(server); // initialize socket.io
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet()); // Set security HTTP headers
+app.use(mongoSanitize()); // Sanitize data
+app.use(xss()); // Prevent XSS attacks
+app.use(hpp()); // Prevent HTTP Parameter Pollution
 app.use(compression());
 app.use(morgan('combined'));
+
+// Body parser with limit
+app.use(express.json({ limit: '10mb' }));
 
 // Rate Limiting
 const genericLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { message: 'Too many requests from this IP, please try again after 15 minutes' },
+  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' },
 });
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { message: 'Too many login attempts from this IP, please try again after 15 minutes' },
-});
-
-const otpLimiter = rateLimit({
+const adminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: { message: 'Too many OTP requests from this IP, please try again after 15 minutes' },
+  message: { success: false, message: 'Too many admin login attempts, please try again after 15 minutes' },
 });
 
 app.use('/api/', genericLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api/admin/login', authLimiter);
-app.use('/api/user/auth/login', authLimiter);
-app.use('/api/admin/verify-otp', otpLimiter);
-app.use('/api/user/auth/request-otp', otpLimiter);
+app.use('/api/admin/login', adminLoginLimiter);
 
-// CORS configuration for Vercel and local development
+// CORS configuration
+const allowedOrigins = [
+  process.env.ADMIN_URL,
+  process.env.MOBILE_APP_URL,
+  'https://kairo-sooty.vercel.app'
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    /https:\/\/.*\.vercel\.app$/,
-    'https://kairo-admin.vercel.app',
-    'https://kairo-sooty.vercel.app',
-    process.env.ADMIN_URL,
-    process.env.MOBILE_APP_URL
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true
 }));
-
-app.use(express.json());
 
 // Root Route
 app.get('/', (req, res) => {
@@ -100,41 +107,37 @@ app.use((req, res, next) => {
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Main Auth Routes (Direct)
-app.post('/api/auth/login', authAdmin);
+// Public Auth Routes
 app.post('/api/admin/login', authAdmin);
 app.post('/api/admin/verify-otp', verifyLoginOTP);
-
-// Authentication Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/user/auth', userAuthRoutes);
 
-// Admin Routes Alias (to match frontend expectations)
-app.use('/api/admin/auth', authRoutes);
-app.use('/api/admin/dashboard', dashboardRoutes);
-app.use('/api/admin/settings', settingsRoutes);
-app.use('/api/admin/users', userRoutes);
-app.use('/api/admin/notifications', notificationRoutes);
+// Admin Routes (Protected)
+app.use('/api/admin/dashboard', protectAdmin, dashboardRoutes);
+app.use('/api/admin/settings', protectAdmin, settingsRoutes);
+app.use('/api/admin/users', protectAdmin, userRoutes);
+app.use('/api/admin/notifications', protectAdmin, notificationRoutes);
+app.use('/api/admin/wallet', protectAdmin, walletRoutes);
 
-// Standard Routes
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/hosts', hostRoutes);
-app.use('/api/economy', economyRoutes);
-app.use('/api/calls', callRoutes);
-app.use('/api/payouts', payoutRoutes);
-app.use('/api/marketing', marketingRoutes);
-app.use('/api/monitoring', monitoringRoutes);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/verification', verificationRoutes);
-app.use('/api/interests', interestRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/agencies', agencyRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/reports', reportRoutes);
+// Standard Routes (User Protected)
+app.use('/api/dashboard', protectUser, dashboardRoutes);
+app.use('/api/settings', protectUser, settingsRoutes);
+app.use('/api/users', protectUser, userRoutes);
+app.use('/api/hosts', protectUser, hostRoutes);
+app.use('/api/economy', protectUser, economyRoutes);
+app.use('/api/calls', protectUser, callRoutes);
+app.use('/api/payouts', protectUser, payoutRoutes);
+app.use('/api/marketing', protectUser, marketingRoutes);
+app.use('/api/monitoring', protectUser, monitoringRoutes);
+app.use('/api/wallet', protectUser, walletRoutes);
+app.use('/api/verification', protectUser, verificationRoutes);
+app.use('/api/interests', protectUser, interestRoutes);
+app.use('/api/chat', protectUser, chatRoutes);
+app.use('/api/posts', protectUser, postRoutes);
+app.use('/api/notifications', protectUser, notificationRoutes);
+app.use('/api/agencies', protectUser, agencyRoutes);
+app.use('/api/tickets', protectUser, ticketRoutes);
+app.use('/api/reports', protectUser, reportRoutes);
 
 // 404 handler
 app.use((req, res, next) => {

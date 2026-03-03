@@ -9,16 +9,25 @@ const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-      req.admin = await Admin.findById(decoded.id).select('-password');
+      
+      const admin = await Admin.findById(decoded.id).select('-password');
+      if (!admin || admin.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Not authorized as an admin' });
+      }
+      
+      req.admin = admin;
       return next();
     } catch (error) {
-      return res.status(401).json({ message: 'Not authorized, token failed' });
+      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   }
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
+    return res.status(401).json({ success: false, message: 'Not authorized, no token' });
   }
 };
+
+// Alias for clarity in server.js
+const protectAdmin = protect;
 
 // Protect User Middleware (Live Ban Sync)
 const protectUser = async (req, res, next) => {

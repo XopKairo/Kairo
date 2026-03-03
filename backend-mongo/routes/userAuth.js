@@ -154,7 +154,8 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
     // Persistent OTP is only deleted AFTER successful registration
     await OTP.deleteOne({ contact: decodedContact });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
+    const expiry = process.env.USER_JWT_EXPIRY || '30d';
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: expiry });
     const badge = getUserBadge(user.zoraPoints);
     
     return res.status(201).json({ 
@@ -189,7 +190,8 @@ router.post('/login', validateRequest(loginSchema), async (req, res) => {
       }
 
       const badge = getUserBadge(user.zoraPoints);
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
+      const expiry = process.env.USER_JWT_EXPIRY || '30d';
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: expiry });
       
       return res.status(200).json({ 
         success: true, 
