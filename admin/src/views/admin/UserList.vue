@@ -28,9 +28,9 @@ const banUser = async (id: string | number) => {
 };
 
 const updateCoins = async (id: number, currentCoins: number) => {
-  const newCoins = prompt("Enter new coin balance:", currentCoins.toString());
-  if (newCoins !== null) {
-    await axios.put(`${import.meta.env.VITE_API_URL}/users/${id}`, { coins: parseInt(newCoins) });
+  const newCoins = prompt("Enter coins to ADD or DEDUCT (e.g. 100 or -50):", "0");
+  if (newCoins !== null && newCoins !== "0") {
+    await axios.put(`${import.meta.env.VITE_API_URL}/users/${id}/coins`, { amount: parseInt(newCoins) });
     fetchUsers();
   }
 };
