@@ -11,14 +11,14 @@ const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_T
   ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
   : null;
 
-// Send OTP
+// Send OTP - Strict async/await, direct res.json
 router.post('/send-otp', async (req, res) => {
   const { contact } = req.body; 
   if (!contact) return res.status(400).json({ success: false, message: 'Contact info required' });
   
   try {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
     
     await OTP.findOneAndUpdate(
       { contact },
@@ -28,7 +28,6 @@ router.post('/send-otp', async (req, res) => {
     
     console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
 
-    // Try to send real SMS via Twilio if configured
     if (twilioClient && contact.startsWith('+')) {
       try {
         await Promise.race([
@@ -39,27 +38,18 @@ router.post('/send-otp', async (req, res) => {
           }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Twilio Timeout')), 10000))
         ]);
-        console.log(`[Twilio] SMS sent successfully to ${contact}`);
-        return res.json({ success: true, message: 'OTP sent to your phone via SMS' });
+        return res.status(200).json({ success: true, message: 'OTP sent via SMS' });
       } catch (error) {
         console.error('[Twilio Error]', error.message);
         return res.status(500).json({ success: false, message: `SMS Error: ${error.message}` });
       }
     }
 
-    // If email
-    if (contact && contact.includes('@')) {
-       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-          return res.status(500).json({ success: false, message: 'Email configuration missing on server' });
-       }
-
+    if (contact.includes('@')) {
        const nodemailer = require('nodemailer');
        const transporter = nodemailer.createTransport({
          service: 'gmail',
-         auth: {
-           user: process.env.EMAIL_USER,
-           pass: process.env.EMAIL_PASS
-         }
+         auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
        });
 
        try {
@@ -70,24 +60,21 @@ router.post('/send-otp', async (req, res) => {
              subject: "Zora Verification Code",
              text: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`
            }),
-           new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout (20s)')), 20000))
+           new Promise((_, reject) => setTimeout(() => reject(new Error('Email Timeout')), 20000))
          ]);
-         console.log(`[Email] OTP sent successfully to ${contact}`);
-         return res.json({ success: true, message: 'OTP sent to your email' });
+         return res.status(200).json({ success: true, message: 'OTP sent to email' });
        } catch (error) {
-         console.error('[Email Error]', error.message);
          return res.status(500).json({ success: false, message: `Email Error: ${error.message}` });
        }
     }
 
-    res.json({ success: true, message: 'OTP generated (SMS/Email gateway not fully configured)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
+    return res.status(200).json({ success: true, message: 'OTP generated (Dev Mode)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
   } catch (error) {
-    console.error('Send OTP Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Verify OTP - Standard Route Handler (No next parameter)
+// Verify OTP - Direct res.json
 router.post('/verify-otp', async (req, res) => {
   const { contact, otp } = req.body;
 
@@ -96,15 +83,12 @@ router.post('/verify-otp', async (req, res) => {
     
     if (!storedOtpData) return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
     
-    // Add 60s grace period to account for network lag
-    const gracePeriod = 60 * 1000;
-    if (Date.now() > (new Date(storedOtpData.expiresAt).getTime() + gracePeriod)) {
+    if (Date.now() > new Date(storedOtpData.expiresAt).getTime()) {
       return res.status(400).json({ success: false, message: 'OTP expired' });
     }
+    
     if (storedOtpData.otp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
     
-    // OTP is persistent for 10 minutes as per requirements. Manual cleanup happens after registration.
-
     const otpVerifiedToken = jwt.sign(
       { contact, verified: true }, 
       process.env.JWT_SECRET || 'secret_key', 
@@ -113,18 +97,15 @@ router.post('/verify-otp', async (req, res) => {
 
     return res.status(200).json({ success: true, message: 'OTP Verified', otp_verified_token: otpVerifiedToken });
   } catch (error) {
-    console.error('Verify OTP Error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// User Registration - Standard Route Handler (No next parameter)
+// User Registration - OTP deletion only on success
 router.post('/register', async (req, res) => {
-  const { name, email, phone, password, otp_verified_token } = req.body;
+  const { name, email, phone, password, otp_verified_token, gender, verificationSelfie } = req.body;
   
-  if (!otp_verified_token) {
-     return res.status(403).json({ success: false, message: 'Unauthorized: OTP verification token missing' });
-  }
+  if (!otp_verified_token) return res.status(403).json({ success: false, message: 'OTP verification token missing' });
 
   try {
     const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET || 'secret_key');
@@ -132,44 +113,35 @@ router.post('/register', async (req, res) => {
     const decodedContact = decoded.contact.toString().trim();
 
     if (decodedContact !== registeredContact || !decoded.verified) {
-        return res.status(403).json({ success: false, message: 'Unauthorized: OTP verification mismatch' });
+        return res.status(403).json({ success: false, message: 'OTP verification mismatch' });
     }
 
-    if (!email && !phone) {
-      return res.status(400).json({ success: false, message: 'Email or phone required' });
-    }
-    
     const query = [];
     if (email) query.push({ email: email.trim() });
     if (phone) query.push({ phone: phone.trim() });
     const userExists = await User.findOne({ $or: query });
+    if (userExists) return res.status(400).json({ success: false, message: 'User already exists' });
     
-    if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
-    }
-    
-    const userData = { 
+    const user = await User.create({ 
       name: name.trim(), 
       password, 
-      gender: req.body.gender || 'Male',
-      verificationSelfie: req.body.verificationSelfie || '',
+      email: email ? email.trim() : undefined,
+      phone: phone ? phone.trim() : undefined,
+      gender: gender || 'Male',
+      verificationSelfie: verificationSelfie || '',
       lastLoginDate: new Date(), 
       zoraPoints: 5,
       coins: 0
-    };
-    if (email) userData.email = email.trim();
-    if (phone) userData.phone = phone.trim();
+    });
 
-    const user = await User.create(userData);
-
-    // Manual OTP Cleanup - Delete now that account creation is 100% complete
+    // Persistent OTP is only deleted AFTER successful registration
     await OTP.deleteOne({ contact: decodedContact });
 
-    if (userData.gender === 'Female' && userData.verificationSelfie) {
+    if (user.gender === 'Female' && user.verificationSelfie) {
       const VerificationRequest = require('../models/VerificationRequest');
       await VerificationRequest.create({
         userId: user._id,
-        photoUrl: userData.verificationSelfie,
+        photoUrl: user.verificationSelfie,
         idUrl: 'Selfie Verification',
         status: 'pending'
       });
@@ -180,41 +152,33 @@ router.post('/register', async (req, res) => {
     
     return res.status(201).json({ 
       success: true, 
-      message: 'Registration successful',
       token, 
       user: { id: user._id, name: user.name, email: user.email, phone: user.phone, coins: user.coins, zoraPoints: user.zoraPoints, badge } 
     });
   } catch (error) {
-    console.error('Registration Error:', error);
     if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
-       return res.status(403).json({ success: false, message: 'OTP token invalid or expired. Please verify OTP again.' });
+       return res.status(403).json({ success: false, message: 'OTP token invalid or expired' });
     }
     return res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// User Login
+// User Login - Direct res.json
 router.post('/login', async (req, res) => {
   const { contact, password } = req.body;
   try {
-    const user = await User.findOne({ 
-      $or: [{ email: contact }, { phone: contact }] 
-    });
+    const user = await User.findOne({ $or: [{ email: contact }, { phone: contact }] });
     
     if (user && (await user.matchPassword(password))) {
-      if (user.isBanned) {
-         return res.status(403).json({ success: false, message: 'Account is banned by admin' });
-      }
+      if (user.isBanned) return res.status(403).json({ success: false, message: 'Account is banned' });
 
       const today = new Date().setHours(0, 0, 0, 0);
       const lastLogin = user.lastLoginDate ? new Date(user.lastLoginDate).setHours(0, 0, 0, 0) : 0;
       
-      let pointsAwarded = false;
       if (today > lastLogin || !user.lastLoginDate) {
         user.zoraPoints += 5; 
         user.lastLoginDate = new Date();
         await user.save();
-        pointsAwarded = true;
       }
 
       const badge = getUserBadge(user.zoraPoints);
@@ -223,32 +187,12 @@ router.post('/login', async (req, res) => {
       return res.status(200).json({ 
         success: true, 
         token, 
-        pointsAwarded,
         user: { id: user._id, name: user.name, email: user.email, phone: user.phone, coins: user.coins, zoraPoints: user.zoraPoints, badge } 
       });
-    } else {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
+    return res.status(401).json({ success: false, message: 'Invalid credentials' });
   } catch (error) {
-    console.error('Login Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error' });
-  }
-});
-
-// Forgot Password
-router.post('/reset-password', async (req, res) => {
-  const { contact, newPassword } = req.body;
-  try {
-    const user = await User.findOne({ $or: [{ email: contact }, { phone: contact }] });
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    
-    user.password = newPassword;
-    await user.save();
-    
-    return res.status(200).json({ success: true, message: 'Password reset successfully' });
-  } catch (error) {
-    console.error('Reset Password Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 

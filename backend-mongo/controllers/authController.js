@@ -1,8 +1,7 @@
 const Admin = require('../models/Admin');
-const generateToken = require('../utils/generateToken');
-const { sendOTP } = require('../utils/emailService');
+const jwt = require('jsonwebtoken');
 
-// Admin Login - No OTP Required
+// Admin Login - No OTP Required, strict async/await, direct res.json
 const authAdmin = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -11,27 +10,30 @@ const authAdmin = async (req, res) => {
     if (username) query.push({ username });
     if (email) query.push({ email });
 
-    if (query.length === 0) return res.status(400).json({ success: false, message: 'Username or Email required' });
+    if (query.length === 0) {
+      return res.status(400).json({ success: false, message: 'Username or Email required' });
+    }
 
     const admin = await Admin.findOne({ $or: query });
 
     if (admin && (await admin.matchPassword(password))) {
+      const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
       return res.status(200).json({
         success: true,
         _id: admin._id,
         username: admin.username,
         email: admin.email,
-        token: generateToken(admin._id),
+        token: token,
       });
     } else {
       return res.status(401).json({ success: false, message: 'Invalid Credentials' });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Verify OTP - Keep for other potential uses or backward compatibility
+// Verify OTP - Backward compatibility or specific admin flows
 const verifyLoginOTP = async (req, res) => {
   const { email, otp } = req.body;
 
@@ -46,19 +48,20 @@ const verifyLoginOTP = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    // Clear OTP after successful use
     admin.loginOTP = undefined;
     admin.loginOTPExpires = undefined;
     await admin.save();
+
+    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
 
     return res.status(200).json({
       success: true,
       _id: admin._id,
       email: admin.email,
-      token: generateToken(admin._id),
+      token: token,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
