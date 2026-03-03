@@ -22,6 +22,7 @@ import WalletScreen from './src/screens/wallet/WalletScreen';
 import ChatScreen from './src/screens/call/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
+import NetworkBanner from './src/components/NetworkBanner';
 
 // Lazy load the heavy VideoCallScreen
 const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'));
@@ -73,6 +74,7 @@ export default function App() {
 
   return (
     <PaperProvider>
+      <NetworkBanner />
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Splash">
           <Stack.Screen name="Splash" component={ZoraSplashScreen} options={{ headerShown: false }} />
