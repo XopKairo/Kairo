@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,7 +8,6 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
 
 const { errorHandler } = require('./middleware/errorMiddleware');
 const { authAdmin, verifyLoginOTP } = require('./controllers/authController');
@@ -184,6 +184,14 @@ const ensureAdmin = async () => {
 
 const connectDB = async (retryCount = 5) => {
   try {
+    console.log('--- Environment Configuration ---');
+    console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`MONGO_URI: ${process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) + '...' : 'MISSING'}`);
+    console.log(`JWT_SECRET: ${process.env.JWT_SECRET ? 'DEFINED' : 'MISSING'}`);
+    console.log(`PORT: ${process.env.PORT || 5000}`);
+    console.log(`APP_MODE: ${process.env.APP_MODE || 'Not set'}`);
+    console.log('---------------------------------');
+
     await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected successfully');
     await ensureAdmin();
