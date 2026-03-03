@@ -33,6 +33,7 @@ const handleLoginSubmit = async () => {
       errorMsg.value = '';
       const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
         username: identifier.value,
+        email: identifier.value,
         password: password.value
       });
       

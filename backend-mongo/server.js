@@ -36,7 +36,7 @@ const io = setupSockets(server); // initialize socket.io
 
 // CORS configuration for Vercel and local development
 app.use(cors({
-  origin: ['https://kairo-admin.vercel.app', 'https://kairo-sooty.vercel.app'], // Locked to production admin
+  origin: [/https:\/\/.*\.vercel\.app$/, 'https://kairo-admin.vercel.app', 'https://kairo-sooty.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true
