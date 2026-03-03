@@ -52,12 +52,9 @@ const reportRoutes = require('./routes/reports');
 const paymentRoutes = require('./routes/payments');
 
 // STRICT SECURITY CHECK: Validate required environment variables
-const requiredEnvVars = [
+const criticalEnvVars = [
   'MONGO_URI',
   'JWT_SECRET',
-  'ADMIN_EMAIL',
-  'ADMIN_PHONE',
-  'ADMIN_PASSWORD',
   'ZEGO_APP_ID',
   'ZEGO_SERVER_SECRET',
   'FIREBASE_SERVICE_ACCOUNT',
@@ -66,10 +63,17 @@ const requiredEnvVars = [
   'CASHFREE_ENDPOINT'
 ];
 
-requiredEnvVars.forEach((varName) => {
+criticalEnvVars.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(`CRITICAL ERROR: Environment variable ${varName} is missing.`);
     process.exit(1);
+  }
+});
+
+const adminEnvVars = ['ADMIN_EMAIL', 'ADMIN_PHONE', 'ADMIN_PASSWORD'];
+adminEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.warn(`WARNING: Admin credential ${varName} is missing. Admin seeding will be skipped or incomplete.`);
   }
 });
 
@@ -130,8 +134,8 @@ app.use('/api/admin/login', adminLoginLimiter);
 
 // CORS configuration - Reject all unknown origins
 const allowedOrigins = [
-  process.env.ADMIN_URL,
-  process.env.MOBILE_APP_URL,
+  process.env.ADMIN_URL ? process.env.ADMIN_URL.replace(/\/$/, '') : null,
+  process.env.MOBILE_APP_URL ? process.env.MOBILE_APP_URL.replace(/\/$/, '') : null,
   'https://kairo-sooty.vercel.app'
 ].filter(Boolean);
 
@@ -225,6 +229,11 @@ const ensureAdmin = async () => {
     const username = process.env.ADMIN_USERNAME || 'admin';
     const password = process.env.ADMIN_PASSWORD;
     const phone = process.env.ADMIN_PHONE;
+
+    if (!email || !password) {
+      console.log('[DB] Missing ADMIN_EMAIL or ADMIN_PASSWORD in environment. Skipping admin creation/update.');
+      return;
+    }
 
     let admin = await Admin.findOne({ $or: [{ email }, { username }] });
     if (!admin) {
