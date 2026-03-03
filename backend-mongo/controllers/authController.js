@@ -16,18 +16,31 @@ const authAdmin = async (req, res) => {
 
     const admin = await Admin.findOne({ $or: query });
 
-    if (admin && (await admin.matchPassword(password))) {
-      const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
-      return res.status(200).json({
-        success: true,
-        _id: admin._id,
-        username: admin.username,
-        email: admin.email,
-        token: token,
-      });
-    } else {
-      return res.status(401).json({ success: false, message: 'Invalid Credentials' });
+    if (!admin) {
+      console.log(`[AUTH] Admin not found for query:`, JSON.stringify(query));
+      return res.status(401).json({ success: false, message: 'Invalid Username or Password' });
     }
+
+    const isMatch = await admin.matchPassword(password);
+    if (!isMatch) {
+      console.log(`[AUTH] Password mismatch for admin: ${admin.username}`);
+      return res.status(401).json({ success: false, message: 'Invalid Username or Password' });
+    }
+
+    if (admin.role !== 'admin') {
+      console.log(`[AUTH] Invalid role for user: ${admin.username}, role: ${admin.role}`);
+      return res.status(403).json({ success: false, message: 'Access Denied: Admin role required' });
+    }
+
+    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1d' });
+    return res.status(200).json({
+      success: true,
+      _id: admin._id,
+      username: admin.username,
+      email: admin.email,
+      role: admin.role,
+      token: token,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

@@ -147,7 +147,6 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
-
 const ensureAdmin = async () => {
   try {
     const Admin = require('./models/Admin');
@@ -156,23 +155,29 @@ const ensureAdmin = async () => {
     const password = process.env.ADMIN_PASSWORD || 'adminpassword123';
     const phone = process.env.ADMIN_PHONE || '+917356704978';
 
-    const adminExists = await Admin.findOne({ $or: [{ email }, { username }] });
-    if (!adminExists) {
-      const newAdmin = new Admin({ username, email, password, phone });
-      await newAdmin.save();
+    let admin = await Admin.findOne({ $or: [{ email }, { username }] });
+    if (!admin) {
+      admin = new Admin({ username, email, password, phone, role: 'admin' });
+      await admin.save();
       console.log('Default Admin Created:', username);
     } else {
       let modified = false;
-      if (!adminExists.username) { adminExists.username = username; modified = true; }
+      if (!admin.username) { admin.username = username; modified = true; }
+      if (admin.role !== 'admin') { admin.role = 'admin'; modified = true; }
+
+      // If password needs update (optional, but good for resetting if failing)
+      // For now, just ensuring role exists.
+
       if (modified) {
-        await adminExists.save();
-        console.log('Admin record updated with username');
+        await admin.save();
+        console.log('Admin record updated with username/role');
       }
     }
   } catch (err) {
     console.error('Admin Check Error:', err.message);
   }
 };
+
 
 const connectDB = async (retryCount = 5) => {
   try {

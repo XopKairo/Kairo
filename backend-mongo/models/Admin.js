@@ -6,6 +6,7 @@ const AdminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phone: { type: String, unique: true, sparse: true },
   password: { type: String, required: true },
+  role: { type: String, default: 'admin' },
   totalRevenue: { type: Number, default: 0 },
   loginOTP: { type: String },
   loginOTPExpires: { type: Date },
