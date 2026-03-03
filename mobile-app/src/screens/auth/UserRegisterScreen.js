@@ -112,7 +112,6 @@ const UserRegisterScreen = ({ navigation }) => {
           Alert.alert('Success', 'Registration complete!', [
             { text: 'OK', onPress: () => navigation.replace('Login') }
           ]);
-          // Fallback redirect after 2s in case Alert fails to render
           setTimeout(() => {
             navigation.replace('Login');
           }, 2000);
@@ -152,7 +151,6 @@ const UserRegisterScreen = ({ navigation }) => {
 
             <View style={styles.formCard}>
               <View style={styles.inputContainer}>
-                {/* <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> */}
                 <View style={{width:20,height:20,marginRight:10}}/>
                 <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
               </View>
@@ -165,11 +163,9 @@ const UserRegisterScreen = ({ navigation }) => {
               </View>
               
               <View style={styles.inputContainer}>
-                {/* <Icon name="lock-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> */}
                 <View style={{width:20,height:20,marginRight:10}}/>
                 <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                  {/* <Icon name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#8A2BE2" /> */}
                   <Text style={{color: '#8A2BE2', fontSize: 12}}>{showPassword ? 'HIDE' : 'SHOW'}</Text>
                 </TouchableOpacity>
               </View>
@@ -236,14 +232,6 @@ const styles = StyleSheet.create({
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: '#333', fontSize: 16 },
   eyeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', zIndex: 5 },
-  genderContainer: { flexDirection: 'row', gap: 10, marginBottom: 15 },
-  genderBtn: { 
-    flex: 1, height: 50, borderRadius: 12, borderWidth: 1, borderColor: '#8A2BE2',
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8
-  },
-  activeGender: { backgroundColor: '#8A2BE2' },
-  genderText: { color: '#8A2BE2', fontWeight: 'bold' },
-  activeGenderText: { color: '#fff' },
   contactRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
   ccInput: { 
     width: 60, height: 55, backgroundColor: '#f0f0f0', borderRadius: 15, 
