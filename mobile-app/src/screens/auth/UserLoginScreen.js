@@ -5,6 +5,7 @@ import { loginUser, sendOtp, resetPassword, verifyOtp } from '../../services/api
 import { registerForPushNotificationsAsync } from '../../services/pushService';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as NavigationBar from 'expo-navigation-bar';
+import * as SystemUI from 'expo-system-ui';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,14 +19,16 @@ const UserLoginScreen = ({ navigation }) => {
   useEffect(() => {
     let mounted = true;
     setIsIconLoaded(true);
-    if (Platform.OS === 'android') {
-      setTimeout(() => {
-        if (mounted && NavigationBar && NavigationBar.setVisibilityAsync) {
-          NavigationBar.setVisibilityAsync('hidden').catch(() => {});
-          NavigationBar.setBehaviorAsync('inset-touch').catch(() => {});
-        }
-      }, 100);
+    async function setupUI() {
+      if (Platform.OS === 'android') {
+        try {
+          await NavigationBar.setVisibilityAsync('hidden');
+          await NavigationBar.setBehaviorAsync('inset-touch');
+          await SystemUI.setBackgroundColorAsync('transparent');
+        } catch (e) {}
+      }
     }
+    setupUI();
     return () => { mounted = false; };
   }, []);
 

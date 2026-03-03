@@ -23,4 +23,6 @@ const hostSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false }
 }, { timestamps: true });
 
+hostSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Host', hostSchema);

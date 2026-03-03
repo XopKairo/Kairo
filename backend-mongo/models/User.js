@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema({
   pushToken: { type: String, default: '' }
 }, { timestamps: true });
 
+// Add text index for search
+userSchema.index({ name: 'text', email: 'text' });
+
 // Ensure either email or phone is provided
 userSchema.pre('validate', function(next) {
   if (!this.email && !this.phone) {

@@ -3,6 +3,8 @@ const router = express.Router();
 const User = require('../models/User');
 const Host = require('../models/Host');
 const Payout = require('../models/Payout');
+const Call = require('../models/Call');
+const Transaction = require('../models/Transaction');
 
 // Real-time stats fetching from DB
 router.get('/stats', async (req, res) => {
@@ -10,23 +12,38 @@ router.get('/stats', async (req, res) => {
     const totalUsers = await User.countDocuments();
     const verifiedHosts = await Host.countDocuments({ isVerified: true });
     const pendingPayouts = await Payout.countDocuments({ status: 'Pending' });
+    const totalCalls = await Call.countDocuments();
+    const totalTransactions = await Transaction.countDocuments({ status: 'completed' });
     
-    // Calculate total coins in circulation
-    const users = await User.find({}).select('coins');
-    const totalCoins = users.reduce((sum, user) => sum + (user.coins || 0), 0);
-    
-    // Real Admin Revenue from Admin model
-    const Admin = require('../models/Admin');
-    const admin = await Admin.findOne({});
-    const totalRevenue = admin ? admin.totalRevenue : 0;
+    // Active Users (Logged in today)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const activeUsersToday = await User.countDocuments({ lastLoginDate: { $gte: startOfToday } });
+
+    // Daily Revenue (Completed transactions today)
+    const dailyRevenueResult = await Transaction.aggregate([
+      { $match: { status: 'completed', createdAt: { $gte: startOfToday } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const dailyRevenue = dailyRevenueResult.length > 0 ? dailyRevenueResult[0].total : 0;
+
+    // Total Revenue (Lifetime)
+    const totalRevenueResult = await Transaction.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
 
     res.json({
       totalUsers,
-      totalCoins,
+      activeUsersToday,
+      totalCalls,
+      totalTransactions,
       verifiedHosts,
       pendingPayouts,
-      revenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
-      totalRevenue
+      dailyRevenue: `₹${dailyRevenue.toLocaleString('en-IN')}`,
+      totalRevenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
+      rawTotalRevenue: totalRevenue
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

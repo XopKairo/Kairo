@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const postSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   mediaUrl: { type: String, default: '' },
+  mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
   caption: { type: String, default: '' },
   isFeatured: { type: Boolean, default: false },
   expiresAt: { type: Date, required: true }

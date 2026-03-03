@@ -13,4 +13,6 @@ const callSchema = new mongoose.Schema({
   endTime: { type: Date }
 }, { timestamps: true });
 
+callSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Call', callSchema);

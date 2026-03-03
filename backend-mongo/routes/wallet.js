@@ -1,72 +1,160 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const User = require('../models/User');
 const Payout = require('../models/Payout');
+const Transaction = require('../models/Transaction');
+const CoinPackage = require('../models/CoinPackage');
+const razorpay = require('../utils/razorpay');
+const { createOrderSchema, validateRequest } = require('../utils/validation');
 
 // Conversion Rate: 100 Coins = 10 INR (1 Coin = 0.1 INR)
 const COIN_TO_INR_RATE = 0.1;
 
-// Route to recharge user wallet (Protected with Transactions)
-router.post('/recharge', async (req, res) => {
-  const session = await mongoose.startSession();
+// Create Razorpay Order
+router.post('/create-order', validateRequest(createOrderSchema), async (req, res) => {
   try {
-    session.startTransaction();
-    const { userId, amount, transactionId } = req.body;
+    const { amount, coinPackageId, userId } = req.body;
 
-    if (!userId || !amount || !transactionId) {
-      throw new Error('User ID, amount, and transactionId are required');
+    if (!razorpay) {
+      return res.status(500).json({ success: false, message: 'Razorpay is not configured' });
     }
 
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      throw new Error('User not found');
+    const coinPackage = await CoinPackage.findById(coinPackageId);
+    if (!coinPackage) {
+      return res.status(404).json({ success: false, message: 'Coin package not found' });
     }
 
-    const transactionCollection = mongoose.connection.db.collection('transactions');
-    
-    // Uniqueness Check for transactionId
-    const existingTx = await transactionCollection.findOne({ transactionId }, { session });
-    if (existingTx) {
-      throw new Error('Transaction ID already processed');
+    // Verify amount matches package price
+    if (coinPackage.priceINR !== amount) {
+       return res.status(400).json({ success: false, message: 'Amount mismatch' });
     }
 
-    // Add coins to user wallet
-    user.coins += Number(amount);
-    await user.save({ session });
+    const options = {
+      amount: amount * 100, // amount in the smallest currency unit (paise)
+      currency: 'INR',
+      receipt: `receipt_${Date.now()}`,
+    };
 
-    // Update Admin's Master Transactions Table
-    await transactionCollection.insertOne({
-      userId: user._id,
-      type: 'RECHARGE',
-      amount: Number(amount),
-      transactionId,
-      status: 'SUCCESS',
-      createdAt: new Date()
-    }, { session });
+    const order = await razorpay.orders.create(options);
 
-    await session.commitTransaction();
+    // Save pending transaction
+    await Transaction.create({
+      userId,
+      amount,
+      razorpayOrderId: order.id,
+      coinPackageId,
+      status: 'pending',
+      coinsCredited: coinPackage.coins
+    });
 
-    // Notify Admin & User via Socket
-    if (req.io) {
-      req.io.to('admin-room').emit('rechargeAlert', {
-        message: `User ${user.name} recharged ${amount} coins. TxId: ${transactionId}`,
-        userId,
-        amount,
-        transactionId
-      });
-      req.io.to(userId).emit('walletUpdate', {
-        message: 'Coin Recharge Successful',
-        newBalance: user.coins
-      });
-    }
-
-    res.json({ message: 'Recharge successful', newBalance: user.coins, transactionId });
+    res.status(200).json({
+      success: true,
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency
+    });
   } catch (error) {
-    await session.abortTransaction();
-    res.status(400).json({ error: error.message });
-  } finally {
-    session.endSession();
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Manual Payment Verification (Called by mobile app)
+router.post('/verify-payment', async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, userId } = req.body;
+
+  const body = razorpay_order_id + '|' + razorpay_payment_id;
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest('hex');
+
+  if (expectedSignature === razorpay_signature) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const transaction = await Transaction.findOne({ razorpayOrderId: razorpay_order_id }).session(session);
+      
+      if (!transaction) throw new Error('Transaction not found');
+      if (transaction.status === 'completed') {
+        await session.commitTransaction();
+        return res.status(200).json({ success: true, message: 'Payment already verified' });
+      }
+
+      transaction.status = 'completed';
+      transaction.razorpayPaymentId = razorpay_payment_id;
+      transaction.razorpaySignature = razorpay_signature;
+      await transaction.save({ session });
+
+      const user = await User.findById(transaction.userId).session(session);
+      if (!user) throw new Error('User not found');
+
+      user.coins += transaction.coinsCredited;
+      await user.save({ session });
+
+      await session.commitTransaction();
+
+      // Notify User via Socket
+      if (req.io) {
+        req.io.to(user._id.toString()).emit('walletUpdate', {
+          message: `${transaction.coinsCredited} coins credited!`,
+          newBalance: user.coins
+        });
+      }
+
+      res.status(200).json({ success: true, message: 'Payment verified successfully' });
+    } catch (error) {
+      await session.abortTransaction();
+      res.status(400).json({ success: false, message: error.message });
+    } finally {
+      session.endSession();
+    }
+  } else {
+    res.status(400).json({ success: false, message: 'Invalid signature' });
+  }
+});
+
+// Razorpay Webhook
+router.post('/webhook', async (req, res) => {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const signature = req.headers['x-razorpay-signature'];
+
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+
+  if (expectedSignature === signature) {
+    if (req.body.event === 'payment.captured') {
+      const { order_id, id: payment_id } = req.body.payload.payment.entity;
+      
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        const transaction = await Transaction.findOne({ razorpayOrderId: order_id }).session(session);
+        if (transaction && transaction.status === 'pending') {
+          transaction.status = 'completed';
+          transaction.razorpayPaymentId = payment_id;
+          await transaction.save({ session });
+
+          const user = await User.findById(transaction.userId).session(session);
+          if (user) {
+            user.coins += transaction.coinsCredited;
+            await user.save({ session });
+          }
+        }
+        await session.commitTransaction();
+      } catch (err) {
+        await session.abortTransaction();
+        console.error('Webhook processing error:', err);
+      } finally {
+        session.endSession();
+      }
+    }
+    res.status(200).send('OK');
+  } else {
+    res.status(400).send('Invalid signature');
   }
 });
 

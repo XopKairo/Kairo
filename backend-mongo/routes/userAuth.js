@@ -5,6 +5,12 @@ const OTP = require('../models/OTP');
 const jwt = require('jsonwebtoken');
 const { getUserBadge } = require('../utils/badgeSystem');
 const twilio = require('twilio');
+const { 
+  registerSchema, 
+  loginSchema, 
+  verifyOTPSchema, 
+  validateRequest 
+} = require('../utils/validation');
 
 // Initialize Twilio client
 const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
@@ -75,7 +81,7 @@ router.post('/send-otp', async (req, res) => {
 });
 
 // Verify OTP - Direct res.json
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-otp', validateRequest(verifyOTPSchema), async (req, res) => {
   const { contact, otp } = req.body;
 
   try {
@@ -102,7 +108,7 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 // User Registration - OTP deletion only on success
-router.post('/register', async (req, res) => {
+router.post('/register', validateRequest(registerSchema), async (req, res) => {
   const { name, email, phone, password, otp_verified_token, gender, verificationSelfie } = req.body;
   
   if (!otp_verified_token) return res.status(403).json({ success: false, message: 'OTP verification token missing' });
@@ -164,7 +170,7 @@ router.post('/register', async (req, res) => {
 });
 
 // User Login - Direct res.json
-router.post('/login', async (req, res) => {
+router.post('/login', validateRequest(loginSchema), async (req, res) => {
   const { contact, password } = req.body;
   try {
     const user = await User.findOne({ $or: [{ email: contact }, { phone: contact }] });
@@ -191,6 +197,22 @@ router.post('/login', async (req, res) => {
       });
     }
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Delete Account
+router.delete('/delete-account/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    
+    // Clean up related data if necessary (posts, etc.)
+    const Post = require('../models/Post');
+    await Post.deleteMany({ userId: req.params.id });
+
+    return res.status(200).json({ success: true, message: 'Account deleted successfully' });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

@@ -3,8 +3,13 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const path = require('path');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+const { errorHandler } = require('./middleware/errorMiddleware');
 const { authAdmin, verifyLoginOTP } = require('./controllers/authController');
 const setupSockets = require('./sockets/socket');
 
@@ -34,9 +39,46 @@ const app = express();
 const server = http.createServer(app);
 const io = setupSockets(server); // initialize socket.io
 
+// Security Middleware
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined'));
+
+// Rate Limiting
+const genericLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: 'Too many requests from this IP, please try again after 15 minutes' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many login attempts from this IP, please try again after 15 minutes' },
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Too many OTP requests from this IP, please try again after 15 minutes' },
+});
+
+app.use('/api/', genericLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/admin/login', authLimiter);
+app.use('/api/user/auth/login', authLimiter);
+app.use('/api/admin/verify-otp', otpLimiter);
+app.use('/api/user/auth/request-otp', otpLimiter);
+
 // CORS configuration for Vercel and local development
 app.use(cors({
-  origin: [/https:\/\/.*\.vercel\.app$/, 'https://kairo-admin.vercel.app', 'https://kairo-sooty.vercel.app'],
+  origin: [
+    /https:\/\/.*\.vercel\.app$/,
+    'https://kairo-admin.vercel.app',
+    'https://kairo-sooty.vercel.app',
+    process.env.ADMIN_URL,
+    process.env.MOBILE_APP_URL
+  ].filter(Boolean),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true
@@ -94,6 +136,15 @@ app.use('/api/agencies', agencyRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/reports', reportRoutes);
 
+// 404 handler
+app.use((req, res, next) => {
+  res.status(404);
+  next(new Error(`Not Found - ${req.originalUrl}`));
+});
+
+// Centralized Error Handler
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -111,7 +162,6 @@ const ensureAdmin = async () => {
       await newAdmin.save();
       console.log('Default Admin Created:', username);
     } else {
-      // Ensure existing admin has the correct username and password if missing
       let modified = false;
       if (!adminExists.username) { adminExists.username = username; modified = true; }
       if (modified) {
@@ -124,10 +174,20 @@ const ensureAdmin = async () => {
   }
 };
 
-mongoose.connect(MONGO_URI)
-  .then(async () => {
+const connectDB = async (retryCount = 5) => {
+  try {
+    await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected successfully');
     await ensureAdmin();
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => console.error('MongoDB connection error:', err));
+  } catch (err) {
+    console.error(`MongoDB connection error (retries left ${retryCount}):`, err);
+    if (retryCount > 0) {
+      setTimeout(() => connectDB(retryCount - 1), 5000);
+    } else {
+      process.exit(1);
+    }
+  }
+};
+
+connectDB();

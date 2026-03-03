@@ -4,11 +4,25 @@ import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotificationsAsync } from '../../services/pushService';
+import * as NavigationBar from 'expo-navigation-bar';
+import * as SystemUI from 'expo-system-ui';
+import { Platform } from 'react-native';
 
 const ZoraSplashScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    async function setupUI() {
+      if (Platform.OS === 'android') {
+        try {
+          await NavigationBar.setVisibilityAsync('hidden');
+          await NavigationBar.setBehaviorAsync('inset-touch');
+          await SystemUI.setBackgroundColorAsync('transparent');
+        } catch (e) {}
+      }
+    }
+    setupUI();
+
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,

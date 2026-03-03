@@ -8,14 +8,22 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const getStorage = (folderName) => {
+const getStorage = (folderName, type = 'image') => {
+  const params = {
+    folder: `kairo/${folderName}`,
+  };
+
+  if (type === 'video') {
+    params.resource_type = 'video';
+    params.allowed_formats = ['mp4', 'mov', 'avi'];
+  } else {
+    params.allowed_formats = ['jpg', 'png', 'jpeg', 'webp'];
+    params.transformation = [{ width: 1080, height: 1080, crop: 'limit' }];
+  }
+
   return new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: {
-      folder: `kairo/${folderName}`,
-      allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-      transformation: [{ width: 500, height: 500, crop: 'limit' }]
-    }
+    params: params
   });
 };
 

@@ -37,22 +37,28 @@
 
     <!-- Quick Stats Summary -->
     <v-row class="mb-6">
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-card elevation="2" class="pa-4 text-center">
           <div class="text-h4 font-weight-bold text-primary">{{ totalUsers }}</div>
           <div class="text-subtitle-2 text-grey">TOTAL USERS</div>
         </v-card>
       </v-col>
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-card elevation="2" class="pa-4 text-center">
-          <div class="text-h4 font-weight-bold text-success">{{ activeSessions }}</div>
-          <div class="text-subtitle-2 text-grey">ACTIVE CALLS</div>
+          <div class="text-h4 font-weight-bold text-info">{{ activeUsersToday }}</div>
+          <div class="text-subtitle-2 text-grey">ACTIVE USERS TODAY</div>
         </v-card>
       </v-col>
-      <v-col cols="12" md="4">
+      <v-col cols="12" md="3">
         <v-card elevation="2" class="pa-4 text-center">
-          <div class="text-h4 font-weight-bold text-warning">{{ totalCoinsCirculating }}</div>
-          <div class="text-subtitle-2 text-grey">COINS IN CIRCULATION</div>
+          <div class="text-h4 font-weight-bold text-success">{{ totalCalls }}</div>
+          <div class="text-subtitle-2 text-grey">TOTAL CALLS</div>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="3">
+        <v-card elevation="2" class="pa-4 text-center">
+          <div class="text-h4 font-weight-bold text-warning">{{ totalTransactions }}</div>
+          <div class="text-subtitle-2 text-grey">COMPLETED TRANSACTIONS</div>
         </v-card>
       </v-col>
     </v-row>
@@ -223,9 +229,11 @@ const users = ref<any[]>([]);
 const verificationRequests = ref<any[]>([]);
 const search = ref('');
 const totalUsers = ref(0);
-const activeSessions = ref(0);
-const totalCoinsCirculating = ref(0);
+const activeUsersToday = ref(0);
+const totalCalls = ref(0);
+const totalTransactions = ref(0);
 const adminRevenue = ref(0);
+const dailyRevenue = ref('₹0');
 const historicalData = ref<any>(null);
 
 const adminWithdrawDialog = ref(false);
@@ -321,8 +329,11 @@ const fetchData = async () => {
     ]);
     users.value = usersRes.data || [];
     totalUsers.value = statsRes.data.totalUsers || 0;
-    totalCoinsCirculating.value = statsRes.data.totalCoins || 0;
-    adminRevenue.value = statsRes.data.totalRevenue || 0;
+    activeUsersToday.value = statsRes.data.activeUsersToday || 0;
+    totalCalls.value = statsRes.data.totalCalls || 0;
+    totalTransactions.value = statsRes.data.totalTransactions || 0;
+    adminRevenue.value = statsRes.data.rawTotalRevenue || 0;
+    dailyRevenue.value = statsRes.data.dailyRevenue || '₹0';
     verificationRequests.value = verRes.data.filter((r: any) => r.status === 'pending');
     historicalData.value = analyticsRes.data;
   } catch (error) {
@@ -413,11 +424,19 @@ const updateAnalytics = async () => {
 onMounted(() => {
   fetchData();
   updateAnalytics();
-  if (analyticsInterval) clearInterval(analyticsInterval);
-  analyticsInterval = setInterval(updateAnalytics, 10000);
+  if (analyticsInterval) {
+    clearInterval(analyticsInterval);
+  }
+  analyticsInterval = setInterval(() => {
+    fetchData();
+    updateAnalytics();
+  }, 30000); // 30 seconds for live refresh
 });
 
 onUnmounted(() => {
-  if (analyticsInterval) clearInterval(analyticsInterval);
+  if (analyticsInterval) {
+    clearInterval(analyticsInterval);
+    analyticsInterval = null;
+  }
 });
 </script>

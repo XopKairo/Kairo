@@ -14,7 +14,7 @@ router.get('/otps', async (req, res) => {
   }
 });
 
-// GET /search - Fuzzy search users by nickname, location, and interests
+// GET /search - Search users by name, email, nickname, location, and interests
 router.get('/search', async (req, res) => {
   try {
     const { q } = req.query;
@@ -22,16 +22,24 @@ router.get('/search', async (req, res) => {
       return res.json([]);
     }
 
-    // Create a case-insensitive regex for fuzzy search
-    const regex = new RegExp(q, 'i');
-
+    // Use $text search first
     let users = await User.find({
-      $or: [
-        { nickname: { $regex: regex } },
-        { location: { $regex: regex } },
-        { interests: { $regex: regex } }
-      ]
+      $text: { $search: q }
     }).select('-password -__v').limit(20);
+
+    // If no results, fallback to fuzzy search on other fields
+    if (users.length === 0) {
+      const regex = new RegExp(q, 'i');
+      users = await User.find({
+        $or: [
+          { name: { $regex: regex } },
+          { email: { $regex: regex } },
+          { nickname: { $regex: regex } },
+          { location: { $regex: regex } },
+          { interests: { $regex: regex } }
+        ]
+      }).select('-password -__v').limit(20);
+    }
 
     // Map badges
     users = users.map(u => {

@@ -5,32 +5,46 @@ const User = require('../models/User');
 const setupSockets = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "*", // allow all origins for now
-      methods: ["GET", "POST"]
+      origin: [
+        /https:\/\/.*\.vercel\.app$/,
+        'https://kairo-admin.vercel.app',
+        'https://kairo-sooty.vercel.app',
+        process.env.ADMIN_URL,
+        process.env.MOBILE_APP_URL
+      ].filter(Boolean),
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
 
-  const onlineUsers = new Map(); // Map userId -> socketId
+  const onlineUsers = new Map(); // userId -> Set of socketIds
 
   io.on("connection", (socket) => {
-    console.log("New client connected", socket.id);
+    let currentUserId = null;
 
     // Register user when they connect
     socket.on('registerUser', async (userId) => {
-      onlineUsers.set(userId, socket.id);
-      socket.join(userId);
-      console.log(`User ${userId} is online with socket ${socket.id}`);
+      currentUserId = userId;
       
-      // Broadcast user online status
-      io.emit('userStatusChanged', { userId, status: 'online' });
-      await User.findByIdAndUpdate(userId, { status: 'online' });
+      if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+      }
+      onlineUsers.get(userId).add(socket.id);
+      
+      socket.join(userId);
+      console.log(`User ${userId} connected with socket ${socket.id}`);
+      
+      // Update status only if this is the first connection for this user
+      if (onlineUsers.get(userId).size === 1) {
+        io.emit('userStatusChanged', { userId, status: 'online' });
+        await User.findByIdAndUpdate(userId, { status: 'online' }).catch(() => {});
+      }
     });
 
     // Handle private messages
     socket.on('sendMessage', async (data) => {
       const { senderId, receiverId, content } = data;
       try {
-        // Save to DB
         const newMessage = new Message({ senderId, receiverId, content });
         await newMessage.save();
 
@@ -42,12 +56,10 @@ const setupSockets = (server) => {
           createdAt: newMessage.createdAt
         };
 
-        // Emit to receiver if online
         io.to(receiverId).emit('receiveMessage', messageData);
-        // Also emit back to sender (useful for multiple devices)
         io.to(senderId).emit('receiveMessage', messageData);
       } catch (error) {
-        console.error('Error saving message:', error);
+        console.error('Socket Message Error:', error);
       }
     });
 
@@ -57,38 +69,23 @@ const setupSockets = (server) => {
       io.to(receiverId).emit('userTyping', { senderId, isTyping });
     });
 
-    // Explicitly join admin room
+    // Admin room participation
     socket.on('joinAdminRoom', () => {
       socket.join('admin-room');
-      console.log(`Socket ${socket.id} joined admin-room`);
-    });
-
-    socket.on("newPayoutRequest", (data) => {
-      io.to('admin-room').emit('payoutAlert', data);
-    });
-
-    socket.on("newSupportTicket", (data) => {
-       io.to('admin-room').emit('supportAlert', data);
-    });
-
-    socket.on("liveCallStarted", (data) => {
-        io.to('admin-room').emit('callStartedAlert', data);
     });
 
     socket.on("disconnect", async () => {
-      console.log("Client disconnected", socket.id);
-      let disconnectedUserId = null;
-      for (const [userId, socketId] of onlineUsers.entries()) {
-        if (socketId === socket.id) {
-          disconnectedUserId = userId;
-          onlineUsers.delete(userId);
-          break;
+      if (currentUserId && onlineUsers.has(currentUserId)) {
+        onlineUsers.get(currentUserId).delete(socket.id);
+        
+        if (onlineUsers.get(currentUserId).size === 0) {
+          onlineUsers.delete(currentUserId);
+          io.emit('userStatusChanged', { userId: currentUserId, status: 'offline' });
+          await User.findByIdAndUpdate(currentUserId, { status: 'offline' }).catch(() => {});
+          console.log(`User ${currentUserId} is now fully offline`);
         }
       }
-      if (disconnectedUserId) {
-         io.emit('userStatusChanged', { userId: disconnectedUserId, status: 'offline' });
-         await User.findByIdAndUpdate(disconnectedUserId, { status: 'offline' }).catch(e => console.log(e));
-      }
+      console.log("Client disconnected", socket.id);
     });
   });
 

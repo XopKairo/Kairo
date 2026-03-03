@@ -3,9 +3,13 @@ const router = express.Router();
 const multer = require('multer');
 const { getStorage } = require('../config/cloudinaryConfig');
 const Post = require('../models/Post');
+const { postUploadSchema, validateRequest } = require('../utils/validation');
 
 // Configure Multer for Cloudinary
-const upload = multer({ storage: getStorage('posts') });
+const imageStorage = getStorage('posts', 'image');
+const videoStorage = getStorage('posts', 'video');
+const uploadImage = multer({ storage: imageStorage });
+const uploadVideo = multer({ storage: videoStorage });
 
 // GET feed (Mobile App) - Returns active posts, featured first
 router.get('/', async (req, res) => {
@@ -27,22 +31,36 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST a new story/post (Mobile App) - Supports real image upload
-router.post('/', upload.single('image'), async (req, res) => {
+// POST a new story/post
+router.post('/', (req, res, next) => {
+  const mediaType = req.body.mediaType || 'image';
+  if (mediaType === 'video') {
+    uploadVideo.single('video')(req, res, next);
+  } else {
+    uploadImage.single('image')(req, res, next);
+  }
+}, validateRequest(postUploadSchema), async (req, res) => {
   try {
-    const { userId, caption } = req.body;
+    const { userId, caption, mediaType } = req.body;
     
     // Check if file was uploaded to Cloudinary
     const mediaUrl = req.file ? req.file.path : null;
     
     if (!mediaUrl) {
-      return res.status(400).json({ message: 'Media/Image is required.' });
+      return res.status(400).json({ message: 'Media (Image or Video) is required.' });
     }
 
     // Set expiration to 24 hours from now
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     
-    const post = new Post({ userId, mediaUrl, caption, expiresAt });
+    const post = new Post({ 
+      userId, 
+      mediaUrl, 
+      caption, 
+      expiresAt, 
+      mediaType: mediaType || 'image' 
+    });
+    
     await post.save();
     res.status(201).json(post);
   } catch (error) {
