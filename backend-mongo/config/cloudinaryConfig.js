@@ -1,6 +1,8 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-require('dotenv').config();
+const multerStorageCloudinary = require('multer-storage-cloudinary');
+
+// Handle different import versions safely
+const CloudinaryStorage = multerStorageCloudinary.CloudinaryStorage || multerStorageCloudinary;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,10 +23,15 @@ const getStorage = (folderName, type = 'image') => {
     params.transformation = [{ width: 1080, height: 1080, crop: 'limit' }];
   }
 
-  return new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: params
-  });
+  try {
+    return new CloudinaryStorage({
+      cloudinary: cloudinary,
+      params: params
+    });
+  } catch (err) {
+    console.error('Failed to instantiate CloudinaryStorage:', err.message);
+    throw err;
+  }
 };
 
 module.exports = { cloudinary, getStorage };

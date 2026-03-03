@@ -103,7 +103,7 @@ const setupSockets = (server) => {
       
       if (liveCalls.has(callId)) return;
 
-      const interval = setInterval(async () => {
+      const performDeduction = async () => {
         try {
           const user = await User.findById(userId);
           const host = await Host.findById(hostId);
@@ -111,9 +111,11 @@ const setupSockets = (server) => {
           if (!user || user.coins < 30) {
             io.to(userId).emit('callTerminated', { reason: 'Insufficient coins' });
             io.to(hostId).emit('callTerminated', { reason: 'User ran out of coins' });
-            clearInterval(interval);
-            liveCalls.delete(callId);
-            return;
+            if (liveCalls.has(callId)) {
+                clearInterval(liveCalls.get(callId).interval);
+                liveCalls.delete(callId);
+            }
+            return false;
           }
 
           // Deduct 30 coins per minute
@@ -140,11 +142,18 @@ const setupSockets = (server) => {
 
           await Call.findOneAndUpdate({ callId }, { $inc: { durationInMinutes: 1, coinsDeducted: 30 } });
           io.to(userId).emit('walletUpdate', { newBalance: user.coins });
+          return true;
         } catch (err) {
           console.error('Deduction Error:', err);
+          return false;
         }
-      }, 60000);
+      };
 
+      // Immediate first deduction
+      const success = await performDeduction();
+      if (!success) return;
+
+      const interval = setInterval(performDeduction, 60000);
       liveCalls.set(callId, { userId, hostId, interval });
     });
 

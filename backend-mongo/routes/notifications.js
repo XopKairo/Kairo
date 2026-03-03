@@ -1,35 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('firebase-admin');
-const path = require('path');
+const { admin } = require('../utils/pushNotification');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 
-// Initialize Firebase Admin
-let serviceAccount;
-try {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    const rawEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
-    // Check if it looks like a JSON string
-    if (rawEnv.trim().startsWith('{')) {
-      serviceAccount = JSON.parse(rawEnv);
-    } else {
-      // Assume it's base64 encoded to avoid JSON parsing and escaping issues
-      const decoded = Buffer.from(rawEnv, 'base64').toString('utf8');
-      serviceAccount = JSON.parse(decoded);
-    }
-  } else {
-    serviceAccount = require(path.join(__dirname, '../serviceAccountKey.json'));
-  }
-} catch (error) {
-  console.error('Firebase service account error:', error.message);
-}
-
-if (serviceAccount && !admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
+// Initialize Firebase Admin removed - now in utils/pushNotification.js
 
 // GET all notifications (Admin)
 router.get('/', async (req, res) => {

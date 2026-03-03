@@ -38,6 +38,7 @@ const notificationRoutes = require('./routes/notifications');
 const agencyRoutes = require('./routes/agencies');
 const ticketRoutes = require('./routes/tickets');
 const reportRoutes = require('./routes/reports');
+const paymentRoutes = require('./routes/payments');
 
 // STRICT SECURITY CHECK: Validate required environment variables
 const requiredEnvVars = [
@@ -50,7 +51,10 @@ const requiredEnvVars = [
   'ZEGO_SERVER_SECRET',
   'FIREBASE_SERVICE_ACCOUNT',
   'RAZORPAY_KEY_ID',
-  'RAZORPAY_KEY_SECRET'
+  'RAZORPAY_KEY_SECRET',
+  'CASHFREE_APP_ID',
+  'CASHFREE_SECRET_KEY',
+  'CASHFREE_ENDPOINT'
 ];
 
 requiredEnvVars.forEach((varName) => {
@@ -181,6 +185,7 @@ app.use(`${userBase}/notifications`, protectUser, notificationRoutes);
 app.use(`${userBase}/agencies`, protectUser, agencyRoutes);
 app.use(`${userBase}/tickets`, protectUser, ticketRoutes);
 app.use(`${userBase}/reports`, protectUser, reportRoutes);
+app.use(`${userBase}/payments`, protectUser, paymentRoutes);
 
 // 404 handler
 app.use((req, res, next) => {

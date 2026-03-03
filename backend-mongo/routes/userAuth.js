@@ -161,6 +161,7 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
     return res.status(201).json({ 
       success: true, 
       token, 
+      otp_verified_token: otp_verified_token || undefined,
       user: { id: user._id, name: user.name, email: user.email, phone: user.phone, coins: user.coins, zoraPoints: user.zoraPoints, badge } 
     });
   } catch (error) {

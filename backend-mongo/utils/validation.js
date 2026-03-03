@@ -6,7 +6,9 @@ const registerSchema = Joi.object({
   phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/),
   password: Joi.string().min(6).required(),
   nickname: Joi.string().allow(''),
-  location: Joi.string().allow('')
+  location: Joi.string().allow(''),
+  // Optional for mobile app registration flow
+  otp_verified_token: Joi.string()
 }).or('email', 'phone');
 
 const loginSchema = Joi.object({
