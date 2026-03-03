@@ -36,19 +36,17 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ name: 'text', email: 'text' });
 
 // Ensure either email or phone is provided
-userSchema.pre('validate', function(next) {
+userSchema.pre('validate', function() {
   if (!this.email && !this.phone) {
-    return next(new Error('Either email or phone must be provided.'));
+    throw new Error('Either email or phone must be provided.');
   }
-  next();
 });
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // Match password

@@ -44,7 +44,7 @@ onMounted(fetchSettings);
     <v-col cols="12" md="6">
       <UiParentCard title="System Control">
         <v-switch v-model="settings.maintenance" label="Maintenance Mode" color="error"></v-switch>
-        <v-btn color="secondary" block @click="saveSettings">Update System</v-btn>
+        <v-btn color="secondary" block @click="saveSettings" prepend-icon="mdi-cog">Update System</v-btn>
       </UiParentCard>
     </v-col>
   </v-row>

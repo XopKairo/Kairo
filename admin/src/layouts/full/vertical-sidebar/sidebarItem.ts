@@ -9,7 +9,8 @@ import {
   PaletteIcon,
   WindmillIcon,
   HelpIcon,
-  TypographyIcon
+  TypographyIcon,
+  SettingsIcon
 } from 'vue-tabler-icons';
 
 export interface menu {
@@ -51,7 +52,7 @@ const sidebarItem: menu[] = [
   { header: 'SYSTEM' },
   { title: 'Support Tickets', icon: HelpIcon, to: '/admin/support' },
   { title: 'Reports & Bans', icon: AlertTriangleIcon, to: '/admin/reports' },
-  { title: 'App Settings', icon: WindmillIcon, to: '/admin/settings' },
+  { title: 'App Settings', icon: SettingsIcon, to: '/admin/settings' },
   { title: 'Ad Settings', icon: CashIcon, to: '/admin/ads' }
 ];
 

@@ -95,7 +95,7 @@ function searchbox() {
           <v-avatar size="30" class="mr-2">
             <img src="@/assets/images/logos/zora-logo.png" alt="Zora" />
           </v-avatar>
-          <SettingsIcon stroke-width="1.5" />
+          <SettingsIcon stroke-width="1.5" size="22" />
         </v-btn>
       </template>
       <v-sheet rounded="md" width="330" elevation="12">
