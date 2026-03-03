@@ -3,9 +3,12 @@ const jwt = require('jsonwebtoken');
 
 // Admin Login - No OTP Required, strict async/await, direct res.json
 const authAdmin = async (req, res) => {
-  const { username, email, password } = req.body;
+  let { username, email, password } = req.body;
 
   try {
+    if (username) username = username.trim();
+    if (email) email = email.trim();
+
     console.log(`[AUTH] Admin login attempt. Body:`, JSON.stringify({ 
       username: username || 'not provided', 
       email: email || 'not provided', 

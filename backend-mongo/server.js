@@ -78,6 +78,7 @@ adminEnvVars.forEach((varName) => {
 });
 
 const app = express();
+app.set('trust proxy', 1); // Enable trusting Render reverse proxy for correct IP rate limiting
 const server = http.createServer(app);
 const io = setupSockets(server); // initialize socket.io
 
@@ -116,22 +117,6 @@ app.use(morgan('combined'));
 // Body parser with limit
 app.use(express.json({ limit: '10mb' }));
 
-// Rate Limiting
-const genericLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' },
-});
-
-const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { success: false, message: 'Too many admin login attempts, please try again after 15 minutes' },
-});
-
-app.use('/api/', genericLimiter);
-app.use('/api/admin/login', adminLoginLimiter);
-
 // CORS configuration - Reject all unknown origins
 const allowedOrigins = [
   process.env.ADMIN_URL ? process.env.ADMIN_URL.replace(/\/$/, '') : null,
@@ -152,6 +137,22 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true
 }));
+
+// Rate Limiting
+const genericLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' },
+});
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Too many admin login attempts, please try again after 15 minutes' },
+});
+
+app.use('/api/', genericLimiter);
+app.use('/api/admin/login', adminLoginLimiter);
 
 // Root Route
 app.get('/', (req, res) => {
