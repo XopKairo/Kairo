@@ -10,10 +10,11 @@ const { protectUser } = require('../middleware/authMiddleware');
 // 1. Generate ZegoCloud Token
 router.post('/generate-token', protectUser, (req, res) => {
   const { userId, roomId } = req.body;
-  const appId = parseInt(process.env.ZEGO_APP_ID) || 1106955329;
+  const appId = parseInt(process.env.ZEGO_APP_ID);
   const serverSecret = process.env.ZEGO_SERVER_SECRET;
-  if (!serverSecret) {
-    return res.status(500).json({ success: false, message: 'ZEGO_SERVER_SECRET is not configured' });
+  
+  if (!appId || !serverSecret) {
+    return res.status(500).json({ success: false, message: 'ZEGO configuration is missing on server' });
   }
   
   res.json({

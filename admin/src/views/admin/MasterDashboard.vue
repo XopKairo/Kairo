@@ -325,7 +325,7 @@ const fetchData = async () => {
     const [usersRes, statsRes, verRes, analyticsRes] = await Promise.all([
       axios.get(`${API_BASE_URL}/api/admin/users`),
       axios.get(`${API_BASE_URL}/api/admin/dashboard/stats`),
-      axios.get(`${API_BASE_URL}/api/verification`),
+      axios.get(`${API_BASE_URL}/api/admin/verification`),
       axios.get(`${API_BASE_URL}/api/admin/dashboard/analytics`)
     ]);
     users.value = usersRes.data || [];
@@ -345,7 +345,7 @@ const fetchData = async () => {
 
 const updateVerificationStatus = async (id: string, status: string) => {
   try {
-    await axios.post(`${API_BASE_URL}/api/verification/${id}/status`, { status });
+    await axios.post(`${API_BASE_URL}/api/admin/verification/${id}/status`, { status });
     showSnackbar(`Verification ${status} successfully.`);
     fetchData();
   } catch (err) {
@@ -358,7 +358,7 @@ const requestAdminWithdraw = async () => {
   withdrawing.value = true;
   try {
     const adminData = JSON.parse(localStorage.getItem('user') || '{}');
-    await axios.post(`${API_BASE_URL}/api/wallet/withdraw`, {
+    await axios.post(`${API_BASE_URL}/api/admin/wallet/withdraw`, {
       userId: adminData._id,
       amountCoins: Number(withdrawAmount.value) * 10,
       paymentDetails: paymentDetails.value,
@@ -398,7 +398,7 @@ const deleteUser = async (id: string) => {
 
 const updateAnalytics = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/calls/active`);
+    const response = await axios.get(`${API_BASE_URL}/api/admin/calls/active`);
     const activeCount = Array.isArray(response.data) ? response.data.length : 0;
     activeSessions.value = activeCount;
 

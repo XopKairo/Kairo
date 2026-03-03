@@ -117,7 +117,7 @@ const getStatusColor = (status: string) => {
 const fetchRequests = async () => {
   loading.value = true;
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/verification`);
+    const response = await axios.get(`${API_BASE_URL}/api/admin/verification`);
     requests.value = response.data || [];
   } catch (error) {
     console.error('Error fetching verification requests:', error);
@@ -129,7 +129,7 @@ const fetchRequests = async () => {
 
 const updateStatus = async (id: string, status: string, userId?: string) => {
   try {
-    await axios.post(`${API_BASE_URL}/api/verification/${id}/status`, { status });
+    await axios.post(`${API_BASE_URL}/api/admin/verification/${id}/status`, { status });
     
     // If approved, also update User/Host verification status in DB
     if (status === 'approved' && userId) {

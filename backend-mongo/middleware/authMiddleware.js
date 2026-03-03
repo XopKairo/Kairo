@@ -58,4 +58,4 @@ const protectUser = async (req, res, next) => {
   }
 };
 
-module.exports = { protect, protectUser };
+module.exports = { protect, protectUser, protectAdmin };

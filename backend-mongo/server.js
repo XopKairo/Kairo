@@ -11,7 +11,6 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
-require('dotenv').config();
 
 const { errorHandler } = require('./middleware/errorMiddleware');
 const { protectUser, protectAdmin } = require('./middleware/authMiddleware');
@@ -40,15 +39,50 @@ const agencyRoutes = require('./routes/agencies');
 const ticketRoutes = require('./routes/tickets');
 const reportRoutes = require('./routes/reports');
 
+// STRICT SECURITY CHECK: Validate required environment variables
+const requiredEnvVars = [
+  'MONGO_URI',
+  'JWT_SECRET',
+  'ADMIN_EMAIL',
+  'ADMIN_PHONE',
+  'ADMIN_PASSWORD',
+  'ZEGO_APP_ID',
+  'ZEGO_SERVER_SECRET',
+  'FIREBASE_SERVICE_ACCOUNT',
+  'RAZORPAY_KEY_ID',
+  'RAZORPAY_KEY_SECRET'
+];
+
+requiredEnvVars.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.error(`CRITICAL ERROR: Environment variable ${varName} is missing.`);
+    process.exit(1);
+  }
+});
+
 const app = express();
 const server = http.createServer(app);
 const io = setupSockets(server); // initialize socket.io
 
+// HTTPS Enforcement Middleware
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(`https://${req.get('host')}${req.url}`);
+  }
+  next();
+});
+
 // Security Middleware
-app.use(helmet()); // Set security HTTP headers
-app.use(mongoSanitize()); // Sanitize data
-app.use(xss()); // Prevent XSS attacks
-app.use(hpp()); // Prevent HTTP Parameter Pollution
+app.use(helmet({
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+app.use(mongoSanitize());
+app.use(xss());
+app.use(hpp());
 app.use(compression());
 app.use(morgan('combined'));
 
@@ -71,7 +105,7 @@ const adminLoginLimiter = rateLimit({
 app.use('/api/', genericLimiter);
 app.use('/api/admin/login', adminLoginLimiter);
 
-// CORS configuration
+// CORS configuration - Reject all unknown origins
 const allowedOrigins = [
   process.env.ADMIN_URL,
   process.env.MOBILE_APP_URL,
@@ -80,11 +114,10 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+      console.warn(`Blocked CORS request from origin: ${origin}`);
+      return callback(new Error('Origin not allowed by CORS'), false);
     }
     return callback(null, true);
   },
@@ -112,32 +145,42 @@ app.post('/api/admin/login', authAdmin);
 app.post('/api/admin/verify-otp', verifyLoginOTP);
 app.use('/api/user/auth', userAuthRoutes);
 
-// Admin Routes (Protected)
-app.use('/api/admin/dashboard', protectAdmin, dashboardRoutes);
-app.use('/api/admin/settings', protectAdmin, settingsRoutes);
-app.use('/api/admin/users', protectAdmin, userRoutes);
-app.use('/api/admin/notifications', protectAdmin, notificationRoutes);
-app.use('/api/admin/wallet', protectAdmin, walletRoutes);
+// --- ADMIN ROUTES (Protected by protectAdmin) ---
+const adminBase = '/api/admin';
+app.use(`${adminBase}/dashboard`, protectAdmin, dashboardRoutes);
+app.use(`${adminBase}/settings`, protectAdmin, settingsRoutes);
+app.use(`${adminBase}/users`, protectAdmin, userRoutes);
+app.use(`${adminBase}/notifications`, protectAdmin, notificationRoutes);
+app.use(`${adminBase}/wallet`, protectAdmin, walletRoutes);
+app.use(`${adminBase}/marketing`, protectAdmin, marketingRoutes);
+app.use(`${adminBase}/monitoring`, protectAdmin, monitoringRoutes);
+app.use(`${adminBase}/verification`, protectAdmin, verificationRoutes);
+app.use(`${adminBase}/payouts`, protectAdmin, payoutRoutes);
+app.use(`${adminBase}/reports`, protectAdmin, reportRoutes);
+app.use(`${adminBase}/tickets`, protectAdmin, ticketRoutes);
+app.use(`${adminBase}/interests`, protectAdmin, interestRoutes);
+app.use(`${adminBase}/posts`, protectAdmin, postRoutes);
+app.use(`${adminBase}/chat`, protectAdmin, chatRoutes);
+app.use(`${adminBase}/calls`, protectAdmin, callRoutes);
+app.use(`${adminBase}/economy`, protectAdmin, economyRoutes);
+app.use(`${adminBase}/hosts`, protectAdmin, hostRoutes);
 
-// Standard Routes (User Protected)
-app.use('/api/dashboard', protectUser, dashboardRoutes);
-app.use('/api/settings', protectUser, settingsRoutes);
-app.use('/api/users', protectUser, userRoutes);
-app.use('/api/hosts', protectUser, hostRoutes);
-app.use('/api/economy', protectUser, economyRoutes);
-app.use('/api/calls', protectUser, callRoutes);
-app.use('/api/payouts', protectUser, payoutRoutes);
-app.use('/api/marketing', protectUser, marketingRoutes);
-app.use('/api/monitoring', protectUser, monitoringRoutes);
-app.use('/api/wallet', protectUser, walletRoutes);
-app.use('/api/verification', protectUser, verificationRoutes);
-app.use('/api/interests', protectUser, interestRoutes);
-app.use('/api/chat', protectUser, chatRoutes);
-app.use('/api/posts', protectUser, postRoutes);
-app.use('/api/notifications', protectUser, notificationRoutes);
-app.use('/api/agencies', protectUser, agencyRoutes);
-app.use('/api/tickets', protectUser, ticketRoutes);
-app.use('/api/reports', protectUser, reportRoutes);
+// --- USER ROUTES (Protected by protectUser) ---
+const userBase = '/api/user';
+app.use(`${userBase}/dashboard`, protectUser, dashboardRoutes);
+app.use(`${userBase}/settings`, protectUser, settingsRoutes);
+app.use(`${userBase}/users`, protectUser, userRoutes);
+app.use(`${userBase}/hosts`, protectUser, hostRoutes);
+app.use(`${userBase}/economy`, protectUser, economyRoutes);
+app.use(`${userBase}/calls`, protectUser, callRoutes);
+app.use(`${userBase}/wallet`, protectUser, walletRoutes);
+app.use(`${userBase}/interests`, protectUser, interestRoutes);
+app.use(`${userBase}/chat`, protectUser, chatRoutes);
+app.use(`${userBase}/posts`, protectUser, postRoutes);
+app.use(`${userBase}/notifications`, protectUser, notificationRoutes);
+app.use(`${userBase}/agencies`, protectUser, agencyRoutes);
+app.use(`${userBase}/tickets`, protectUser, ticketRoutes);
+app.use(`${userBase}/reports`, protectUser, reportRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
@@ -151,49 +194,27 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// STRICT SECURITY CHECK: Validate required environment variables
-const requiredEnvVars = [
-  'MONGO_URI',
-  'JWT_SECRET',
-  'ADMIN_PASSWORD',
-  'ZEGO_SERVER_SECRET',
-  'FIREBASE_SERVICE_ACCOUNT'
-];
-
-requiredEnvVars.forEach((varName) => {
-  if (!process.env[varName]) {
-    console.error(`CRITICAL ERROR: Environment variable ${varName} is missing.`);
-    process.exit(1);
-  }
-});
-
 const ensureAdmin = async () => {
   try {
     const Admin = require('./models/Admin');
-    console.log(`[DB] Admin model is using collection: ${Admin.collection.name}`);
-    const count = await Admin.countDocuments();
-    console.log(`[DB] Current Admin count: ${count}`);
-
-    const email = process.env.ADMIN_EMAIL || 'admin@kairo.com';
+    const email = process.env.ADMIN_EMAIL;
     const username = process.env.ADMIN_USERNAME || 'admin';
-    const password = process.env.ADMIN_PASSWORD; // No fallback
-    const phone = process.env.ADMIN_PHONE || '+910000000000';
+    const password = process.env.ADMIN_PASSWORD;
+    const phone = process.env.ADMIN_PHONE;
 
     let admin = await Admin.findOne({ $or: [{ email }, { username }] });
     if (!admin) {
-      console.log(`[DB] Admin not found. Creating default admin: ${username}`);
+      console.log(`[DB] Admin not found. Creating admin: ${username}`);
       admin = new Admin({ username, email, password, phone, role: 'admin' });
       await admin.save();
-      console.log('[DB] Default Admin Created Successfully');
+      console.log('[DB] Admin Created Successfully');
     } else {
-      console.log(`[DB] Admin record found: ${admin.username} (${admin.email})`);
       let modified = false;
       if (!admin.username) { admin.username = username; modified = true; }
       if (admin.role !== 'admin') { admin.role = 'admin'; modified = true; }
-
       if (modified) {
         await admin.save();
-        console.log('[DB] Admin record updated with missing username or role');
+        console.log('[DB] Admin record updated');
       }
     }
   } catch (err) {
@@ -201,17 +222,8 @@ const ensureAdmin = async () => {
   }
 };
 
-
 const connectDB = async (retryCount = 5) => {
   try {
-    console.log('--- Environment Configuration ---');
-    console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`MONGO_URI: ${process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) + '...' : 'MISSING'}`);
-    console.log(`JWT_SECRET: ${process.env.JWT_SECRET ? 'DEFINED' : 'MISSING'}`);
-    console.log(`PORT: ${process.env.PORT || 5000}`);
-    console.log(`APP_MODE: ${process.env.APP_MODE || 'Not set'}`);
-    console.log('---------------------------------');
-
     await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected successfully');
     await ensureAdmin();

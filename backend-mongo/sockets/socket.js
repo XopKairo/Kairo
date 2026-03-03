@@ -1,4 +1,5 @@
 const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
 const Message = require('../models/Message');
 const User = require('../models/User');
 const Call = require('../models/Call');
@@ -26,34 +27,50 @@ const setupSockets = (server) => {
     }
   });
 
+  // JWT Verification Middleware for Socket.io
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return next(new Error("Authentication error: No token provided"));
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) return next(new Error("Authentication error: Invalid token"));
+      socket.decoded = decoded;
+      next();
+    });
+  });
+
   const onlineUsers = new Map(); // userId -> Set of socketIds
   const liveCalls = new Map(); // callId -> { userId, hostId, interval }
 
   io.on("connection", (socket) => {
-    let currentUserId = null;
+    const currentUserId = socket.decoded.id;
+    console.log(`User ${currentUserId} connected with socket ${socket.id}`);
 
-    // Register user when they connect
-    socket.on('registerUser', async (userId) => {
-      currentUserId = userId;
-      
+    // Join user-specific room
+    socket.join(currentUserId);
+
+    // Register user status
+    const registerUser = async (userId) => {
       if (!onlineUsers.has(userId)) {
         onlineUsers.set(userId, new Set());
       }
       onlineUsers.get(userId).add(socket.id);
       
-      socket.join(userId);
-      console.log(`User ${userId} connected with socket ${socket.id}`);
-      
-      // Update status only if this is the first connection for this user
       if (onlineUsers.get(userId).size === 1) {
         io.emit('userStatusChanged', { userId, status: 'online' });
         await User.findByIdAndUpdate(userId, { status: 'online' }).catch(() => {});
       }
-    });
+    };
+
+    registerUser(currentUserId);
 
     // Handle private messages
     socket.on('sendMessage', async (data) => {
-      const { senderId, receiverId, content } = data;
+      const { receiverId, content } = data;
+      const senderId = currentUserId; // Security: use verified ID from token
+      
       try {
         const newMessage = new Message({ senderId, receiverId, content });
         await newMessage.save();
@@ -75,13 +92,14 @@ const setupSockets = (server) => {
 
     // Handle typing indicator
     socket.on('typing', (data) => {
-      const { senderId, receiverId, isTyping } = data;
-      io.to(receiverId).emit('userTyping', { senderId, isTyping });
+      const { receiverId, isTyping } = data;
+      io.to(receiverId).emit('userTyping', { senderId: currentUserId, isTyping });
     });
 
     // Handle Live Call Coin Deduction
     socket.on('callStarted', async (data) => {
-      const { callId, userId, hostId } = data;
+      const { callId, hostId } = data;
+      const userId = currentUserId; // Security: use verified ID
       
       if (liveCalls.has(callId)) return;
 
@@ -98,19 +116,26 @@ const setupSockets = (server) => {
             return;
           }
 
+          // Deduct 30 coins per minute
           user.coins -= 30;
           await user.save();
 
-          const hostShare = 30 * 0.7;
-          const adminShare = 30 * 0.3;
-          const adminShareINR = adminShare * 0.1;
-
-          if (host && host.gender === 'Female' && host.isGenderVerified) {
+          // EARNINGS SPLIT LOGIC: 70/30 for verified female hosts, 100% admin otherwise
+          const isVerifiedFemale = host && host.gender === 'Female' && host.isGenderVerified;
+          
+          if (isVerifiedFemale) {
+            const hostShare = 30 * 0.7;
+            const adminShare = 30 * 0.3;
+            // Admin share in INR (Conversion 1:0.1 for reporting)
+            const adminShareINR = Number((adminShare * 0.1).toFixed(2));
+            
             host.earnings += hostShare;
             await host.save();
             await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } });
           } else {
-            await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: 30 * 0.1 } });
+            // 100% to Admin
+            const totalINR = Number((30 * 0.1).toFixed(2));
+            await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: totalINR } });
           }
 
           await Call.findOneAndUpdate({ callId }, { $inc: { durationInMinutes: 1, coinsDeducted: 30 } });
@@ -132,10 +157,24 @@ const setupSockets = (server) => {
 
     // Admin room participation
     socket.on('joinAdminRoom', () => {
-      socket.join('admin-room');
+      // Ensure only admins can join if possible, but decoded.role can be checked
+      if (socket.decoded.role === 'admin') {
+        socket.join('admin-room');
+      }
     });
 
     socket.on("disconnect", async () => {
+      // Clear any active calls this user was part of
+      for (const [callId, callData] of liveCalls.entries()) {
+        if (callData.userId === currentUserId || callData.hostId === currentUserId) {
+          clearInterval(callData.interval);
+          liveCalls.delete(callId);
+          // Notify other party
+          const otherId = callData.userId === currentUserId ? callData.hostId : callData.userId;
+          io.to(otherId).emit('callTerminated', { reason: 'Partner disconnected' });
+        }
+      }
+
       if (currentUserId && onlineUsers.has(currentUserId)) {
         onlineUsers.get(currentUserId).delete(socket.id);
         

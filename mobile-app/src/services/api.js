@@ -58,7 +58,7 @@ export const registerUser = async (name, contact, password, isPhone, otpToken) =
 
 export const updateUserProfile = async (userId, data) => {
   try {
-    const response = await api.put(`/users/${userId}/profile`, data);
+    const response = await api.put(`/user/users/${userId}/profile`, data);
     if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
@@ -102,7 +102,7 @@ export const logoutUser = async () => {
 
 export const getAppSettings = async () => {
   try {
-    const response = await api.get('/settings');
+    const response = await api.get('/user/settings');
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

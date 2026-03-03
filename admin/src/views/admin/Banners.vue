@@ -14,7 +14,7 @@ const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const fetchBanners = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/marketing`);
+    const res = await axios.get(`${API_BASE_URL}/api/admin/marketing`);
     banners.value = res.data;
   } catch (err) {
     console.error("Failed to fetch banners", err);
@@ -37,7 +37,7 @@ const addBanner = async () => {
   formData.append('banner', fileInput.value);
 
   try {
-    await axios.post(`${API_BASE_URL}/api/marketing`, formData, {
+    await axios.post(`${API_BASE_URL}/api/admin/marketing`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     newTitle.value = '';
@@ -51,7 +51,7 @@ const addBanner = async () => {
 
 const toggleBanner = async (banner: any) => {
   try {
-    await axios.put(`${API_BASE_URL}/api/marketing/${banner._id}`, { 
+    await axios.put(`${API_BASE_URL}/api/admin/marketing/${banner._id}`, { 
       status: banner.status === 'Active' ? 'Inactive' : 'Active' 
     });
     fetchBanners();
@@ -63,7 +63,7 @@ const toggleBanner = async (banner: any) => {
 const deleteBanner = async (id: string) => {
   if (!confirm("Delete this banner?")) return;
   try {
-    await axios.delete(`${API_BASE_URL}/api/marketing/${id}`);
+    await axios.delete(`${API_BASE_URL}/api/admin/marketing/${id}`);
     fetchBanners();
   } catch (err) {
     console.error("Failed to delete banner", err);

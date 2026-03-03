@@ -20,7 +20,7 @@ const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const fetchActiveCalls = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/calls/active`);
+    const res = await axios.get(`${API_BASE_URL}/api/admin/calls/active`);
     activeCalls.value = res.data;
   } catch (err) {
     console.error("Failed to fetch active calls", err);
@@ -30,7 +30,7 @@ const fetchActiveCalls = async () => {
 const terminateCall = async (callId: string) => {
   if (confirm("Are you sure you want to terminate this call?")) {
     try {
-      await axios.post(`${API_BASE_URL}/api/monitoring/force-end/${callId}`);
+      await axios.post(`${API_BASE_URL}/api/admin/monitoring/force-end/${callId}`);
       fetchActiveCalls();
     } catch (err) {
       console.error("Failed to terminate call", err);
@@ -42,7 +42,10 @@ const watchStream = async (callId: string) => {
   watchingCallId.value = callId;
   await nextTick();
   
-  const appId = Number(import.meta.env.VITE_ZEGO_APP_ID) || 1106955329;
+  const appId = Number(import.meta.env.VITE_ZEGO_APP_ID);
+  if (!appId) {
+    console.error("VITE_ZEGO_APP_ID is missing in environment variables");
+  }
   const serverSecret = import.meta.env.VITE_ZEGO_SERVER_SECRET;
 if (!serverSecret) {
   console.error("ZEGO_SERVER_SECRET is missing in environment variables");
