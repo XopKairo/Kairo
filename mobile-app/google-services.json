@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "343792605839",
+    "project_id": "zora-official",
+    "storage_bucket": "zora-official.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:343792605839:android:766d7a5e16eda0a347aefa",
+        "android_client_info": {
+          "package_name": "com.zora.live"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAI3JHPwWcnL03ttiuou2BIAni-wI9IaCs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
