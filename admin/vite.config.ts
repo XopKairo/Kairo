@@ -5,6 +5,10 @@ import vuetify from 'vite-plugin-vuetify';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_BASE_URL': JSON.stringify(process.env.VITE_BASE_URL || 'https://kairo-b1i9.onrender.com'),
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'https://kairo-b1i9.onrender.com/api')
+  },
   plugins: [
     vue({
       template: {
