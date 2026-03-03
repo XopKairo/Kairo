@@ -109,8 +109,21 @@ router.post('/verify-otp', validateRequest(verifyOTPSchema), async (req, res) =>
 
 // User Registration - OTP deletion only on success
 router.post('/register', validateRequest(registerSchema), async (req, res) => {
-  const { name, email, phone, password, otp_verified_token, gender, verificationSelfie } = req.body;
+  const { name, email, phone, password, otp_verified_token } = req.body;
   
+  // Beta Mode Check
+  if (process.env.APP_MODE === 'beta') {
+    const whitelist = (process.env.BETA_WHITELIST || '').split(',').map(i => i.trim());
+    const isWhitelisted = whitelist.includes(email) || whitelist.includes(phone);
+    
+    if (!isWhitelisted) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Registration is currently limited to beta testers. Please contact support.' 
+      });
+    }
+  }
+
   if (!otp_verified_token) return res.status(403).json({ success: false, message: 'OTP verification token missing' });
 
   try {
@@ -133,8 +146,6 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
       password, 
       email: email ? email.trim() : undefined,
       phone: phone ? phone.trim() : undefined,
-      gender: gender || 'Male',
-      verificationSelfie: verificationSelfie || '',
       lastLoginDate: new Date(), 
       zoraPoints: 5,
       coins: 0
@@ -142,16 +153,6 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
 
     // Persistent OTP is only deleted AFTER successful registration
     await OTP.deleteOne({ contact: decodedContact });
-
-    if (user.gender === 'Female' && user.verificationSelfie) {
-      const VerificationRequest = require('../models/VerificationRequest');
-      await VerificationRequest.create({
-        userId: user._id,
-        photoUrl: user.verificationSelfie,
-        idUrl: 'Selfie Verification',
-        status: 'pending'
-      });
-    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '30d' });
     const badge = getUserBadge(user.zoraPoints);

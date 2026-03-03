@@ -8,3 +8,5 @@ mobile-app/.env
 dist
 build
 .expo
+*.apk
+google-services.json

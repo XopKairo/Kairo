@@ -14,7 +14,6 @@ const UserRegisterScreen = ({ navigation }) => {
   const [contact, setContact] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
-  const [gender, setGender] = useState('Male'); 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -105,8 +104,6 @@ const UserRegisterScreen = ({ navigation }) => {
           formattedContact, 
           String(password), 
           true, 
-          gender, 
-          '', 
           verifyRes.otp_verified_token
         );
         
@@ -158,20 +155,6 @@ const UserRegisterScreen = ({ navigation }) => {
                 {/* <Icon name="account-outline" size={20} color="#8A2BE2" style={styles.inputIcon} /> */}
                 <View style={{width:20,height:20,marginRight:10}}/>
                 <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#666" value={name} onChangeText={setName} />
-              </View>
-
-              <Text style={styles.label}>Identify as:</Text>
-              <View style={styles.genderContainer}>
-                <TouchableOpacity style={[styles.genderBtn, gender === 'Female' && styles.activeGender]} onPress={() => setGender('Female')}>
-                  {/* <Icon name="gender-female" size={20} color={gender === 'Female' ? '#fff' : '#8A2BE2'} /> */}
-                  <View style={{width:20,height:20}}/>
-                  <Text style={[styles.genderText, gender === 'Female' && styles.activeGenderText]}>Female</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.genderBtn, gender === 'Male' && styles.activeGender]} onPress={() => setGender('Male')}>
-                  {/* <Icon name="gender-male" size={20} color={gender === 'Male' ? '#fff' : '#8A2BE2'} /> */}
-                  <View style={{width:20,height:20}}/>
-                  <Text style={[styles.genderText, gender === 'Male' && styles.activeGenderText]}>Male</Text>
-                </TouchableOpacity>
               </View>
 
               <View style={styles.contactRow}>

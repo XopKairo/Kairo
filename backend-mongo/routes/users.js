@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { getUserBadge } = require('../utils/badgeSystem');
+const { protectUser } = require('../middleware/authMiddleware');
 
 // GET /otps - Fetch active OTPs for Admin verification and debugging
 router.get('/otps', async (req, res) => {
@@ -117,6 +118,63 @@ router.put('/:id/interests', async (req, res) => {
     res.json({ message: 'Interests updated successfully', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// PUT to update user profile (gender, selfie, etc)
+router.put('/:id/profile', protectUser, async (req, res) => {
+  try {
+    // Ensure user is updating their own profile
+    if (req.user._id.toString() !== req.params.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized to update this profile' });
+    }
+
+    const { name, nickname, location, gender, verificationSelfie } = req.body;
+    
+    // Whitelist allowed fields to prevent restricted field updates
+    const updateData = {};
+    if (name) updateData.name = String(name).trim().substring(0, 50);
+    if (nickname) updateData.nickname = String(nickname).trim().substring(0, 30);
+    if (location) updateData.location = String(location).trim().substring(0, 100);
+    if (gender && ['Male', 'Female', 'Other'].includes(gender)) {
+      updateData.gender = gender;
+    }
+    if (verificationSelfie) {
+      // Basic URL validation
+      if (typeof verificationSelfie === 'string' && verificationSelfie.startsWith('http')) {
+        updateData.verificationSelfie = verificationSelfie;
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid fields provided for update' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Handle female verification request
+    if (gender === 'Female' && verificationSelfie && !user.isGenderVerified) {
+      const VerificationRequest = require('../models/VerificationRequest');
+      const existingRequest = await VerificationRequest.findOne({ userId: user._id, status: 'pending' });
+      if (!existingRequest) {
+        await VerificationRequest.create({
+          userId: user._id,
+          photoUrl: verificationSelfie,
+          idUrl: 'Selfie Verification',
+          status: 'pending'
+        });
+      }
+    }
+
+    res.json({ success: true, message: 'Profile updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

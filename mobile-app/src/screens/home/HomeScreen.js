@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
 import { Text, Card, Avatar, Searchbar, ActivityIndicator } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
@@ -88,7 +89,12 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.container}>
       <LinearGradient colors={['#8A2BE2', '#4B0082']} style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Zora Premium</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={styles.headerTitle}>Zora Premium</Text>
+            <View style={styles.betaBadge}>
+              <Text style={styles.betaText}>BETA</Text>
+            </View>
+          </View>
           <Searchbar
             placeholder="Search hosts..."
             onChangeText={setSearchQuery}
@@ -100,6 +106,21 @@ const HomeScreen = ({ navigation }) => {
       </LinearGradient>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Profile Completion Banner */}
+        {currentUser && (!currentUser.gender || !currentUser.verificationSelfie) && (
+          <TouchableOpacity 
+            style={styles.completeProfileBanner} 
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Icon name="alert-circle" size={24} color="#FFF" />
+            <View style={{ marginLeft: 10, flex: 1 }}>
+              <Text style={styles.bannerText}>Complete your profile</Text>
+              <Text style={styles.bannerSubtext}>Add gender and verification selfie</Text>
+            </View>
+            <Icon name="chevron-right" size={24} color="#FFF" />
+          </TouchableOpacity>
+        )}
+
         {/* Banners */}
         <FlatList
           data={banners.filter(b => b.isActive)}
@@ -238,6 +259,36 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     color: '#666',
+  },
+  betaBadge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  betaText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  completeProfileBanner: {
+    backgroundColor: '#FF8C00',
+    margin: 20,
+    padding: 15,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  bannerText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  bannerSubtext: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
   },
 });
 

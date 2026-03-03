@@ -9,10 +9,10 @@ const UserProfileScreen = ({ navigation }) => {
 
   const fetchUserData = async () => {
     try {
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        const response = await api.get(`/users/${parsedUser._id}`);
+      const storedUserStr = await AsyncStorage.getItem('userData');
+      if (storedUserStr) {
+        const storedUser = JSON.parse(storedUserStr);
+        const response = await api.get(`/users/${storedUser._id || storedUser.id}`);
         setUser(response.data);
       }
     } catch (error) {
@@ -46,7 +46,7 @@ const UserProfileScreen = ({ navigation }) => {
           </View>
           <Paragraph style={styles.conversionInfo}>10 Coins = 1 INR</Paragraph>
         </Card.Content>
-        <Card.Actions>
+        <Card.Actions style={{ flexDirection: 'column', gap: 10 }}>
           <Button 
             mode="contained" 
             style={styles.walletBtn}
@@ -54,6 +54,15 @@ const UserProfileScreen = ({ navigation }) => {
           >
             Manage Wallet & Withdraw
           </Button>
+          {(!user?.gender || (user?.gender === 'Female' && !user?.isGenderVerified)) && (
+            <Button 
+              mode="outlined" 
+              style={[styles.walletBtn, { borderColor: '#8A2BE2' }]}
+              onPress={() => navigation.navigate('EditProfile')}
+            >
+              Complete Profile / Verify
+            </Button>
+          )}
         </Card.Actions>
       </Card>
 
@@ -61,7 +70,7 @@ const UserProfileScreen = ({ navigation }) => {
         <List.Item
           title="Account Settings"
           left={props => <List.Icon {...props} icon="cog" />}
-          onPress={() => navigation.navigate('Settings')}
+          onPress={() => navigation.navigate('EditProfile')}
         />
         <List.Item
           title="Account Status"

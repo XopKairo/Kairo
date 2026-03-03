@@ -16,8 +16,8 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   profilePicture: { type: String, default: '' },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Male' },
-  verificationSelfie: { type: String, default: '' },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false },
+  verificationSelfie: { type: String, required: false, default: '' },
   isGenderVerified: { type: Boolean, default: false },
   paymentMethods: {
     upiId: { type: String },

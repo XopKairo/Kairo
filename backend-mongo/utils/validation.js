@@ -5,7 +5,6 @@ const registerSchema = Joi.object({
   email: Joi.string().email(),
   phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/),
   password: Joi.string().min(6).required(),
-  gender: Joi.string().valid('Male', 'Female', 'Other'),
   nickname: Joi.string().allow(''),
   location: Joi.string().allow('')
 }).or('email', 'phone');

@@ -35,13 +35,11 @@ export const loginUser = async (contact, password) => {
   }
 };
 
-export const registerUser = async (name, contact, password, isPhone, gender, selfie, otpToken) => {
+export const registerUser = async (name, contact, password, isPhone, otpToken) => {
   try {
     const payload = { 
       name, 
       password, 
-      gender, 
-      verificationSelfie: selfie,
       otp_verified_token: otpToken
     };
     if (isPhone) payload.phone = contact;
@@ -50,6 +48,18 @@ export const registerUser = async (name, contact, password, isPhone, gender, sel
     const response = await api.post('/user/auth/register', payload);
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
+export const updateUserProfile = async (userId, data) => {
+  try {
+    const response = await api.put(`/users/${userId}/profile`, data);
+    if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
     return response.data;

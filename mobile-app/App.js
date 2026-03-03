@@ -16,6 +16,7 @@ import FeedScreen from './src/screens/home/FeedScreen';
 import DiscoveryScreen from './src/screens/home/DiscoveryScreen';
 import UserProfileScreen from './src/screens/profile/UserProfileScreen';
 import VerificationScreen from './src/screens/profile/VerificationScreen';
+import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
 import WalletScreen from './src/screens/wallet/WalletScreen';
 import ChatScreen from './src/screens/call/ChatScreen';
@@ -90,6 +91,7 @@ export default function App() {
             )}
           </Stack.Screen>
           <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Complete Profile' }} />
           <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
           <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
           <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
