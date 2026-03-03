@@ -75,7 +75,7 @@ function validate() {
       variant="outlined"
       color="primary"
       hide-details="auto"
-      :append-icon="show1 ? '$eye' : '$eyeOff'"
+      :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
       :type="show1 ? 'text' : 'password'"
       @click:append="show1 = !show1"
       class="pwdInput"

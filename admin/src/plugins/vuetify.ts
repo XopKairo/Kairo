@@ -1,7 +1,6 @@
 import { createVuetify } from 'vuetify';
 import '@mdi/font/css/materialdesignicons.css';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
-import { icons } from './mdi-icon'; // Import icons from separate file
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { PurpleTheme } from '@/theme/LightTheme';
@@ -11,10 +10,7 @@ export default createVuetify({
   directives,
   icons: {
     defaultSet: 'mdi',
-    aliases: {
-      ...aliases,
-      ...icons
-    },
+    aliases,
     sets: {
       mdi
     }
