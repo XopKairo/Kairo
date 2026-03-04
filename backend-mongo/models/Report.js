@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const reportSchema = new mongoose.Schema({
-  reporterId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  reportedId: { type: mongoose.Schema.Types.ObjectId, required: true },
+const reportSchema = new Schema({
+  reporterId: { type: Schema.Types.ObjectId, required: true },
+  reportedId: { type: Schema.Types.ObjectId, required: true },
   reason: { type: String, required: true },
   status: { type: String, enum: ['Open', 'Resolved', 'Dismissed'], default: 'Open' }
 }, { timestamps: true });
 
-export default mongoose.model('Report', reportSchema);
+export default model('Report', reportSchema);

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const agencySchema = new mongoose.Schema({
+const agencySchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   ownerName: { type: String, required: true },
@@ -10,4 +11,4 @@ const agencySchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
-export default mongoose.model('Agency', agencySchema);
+export default model('Agency', agencySchema);

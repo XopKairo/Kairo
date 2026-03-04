@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const liveCallSchema = new mongoose.Schema({
+const liveCallSchema = new Schema({
   callId: { type: String, required: true, unique: true },
   userId: { type: String, required: true },
   hostId: { type: String, required: true },
@@ -15,4 +16,4 @@ const liveCallSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // TTL Index to clean up old MISSED/ENDED calls if needed, but not critical for 100 users.
-export default mongoose.model('LiveCall', liveCallSchema);
+export default model('LiveCall', liveCallSchema);

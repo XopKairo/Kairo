@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const hostSchema = new mongoose.Schema({
+const hostSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   status: { type: String, enum: ['Online', 'Busy', 'Offline'], default: 'Offline' },
@@ -10,5 +11,5 @@ const hostSchema = new mongoose.Schema({
   callRatePerMinute: { type: Number, default: 30 }
 }, { timestamps: true });
 
-const Host = mongoose.model('Host', hostSchema);
+const Host = model('Host', hostSchema);
 export default Host;

@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const postSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const postSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   mediaUrl: { type: String, default: '' },
   mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
   caption: { type: String, default: '' },
@@ -12,4 +13,4 @@ const postSchema = new mongoose.Schema({
 // TTL index to automatically delete the document when expiresAt is reached
 postSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export default mongoose.model('Post', postSchema);
+export default model('Post', postSchema);

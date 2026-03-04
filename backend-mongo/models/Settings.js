@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const settingsSchema = new mongoose.Schema({
+const settingsSchema = new Schema({
   // Revenue Control
   callRate: { type: Number, default: 30 },
   commission: { type: Number, default: 30 },
@@ -16,4 +17,4 @@ const settingsSchema = new mongoose.Schema({
   interstitialId: { type: String, default: '' }
 }, { timestamps: true });
 
-export default mongoose.model('Settings', settingsSchema);
+export default model('Settings', settingsSchema);

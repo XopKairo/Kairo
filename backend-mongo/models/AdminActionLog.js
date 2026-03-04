@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const adminActionLogSchema = new mongoose.Schema({
+const adminActionLogSchema = new Schema({
   adminId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'Admin',
     required: true
   },
@@ -12,7 +13,7 @@ const adminActionLogSchema = new mongoose.Schema({
     enum: ['BAN_USER', 'UNBAN_USER', 'DELETE_USER', 'PAYMENT_OVERRIDE', 'SETTINGS_UPDATE']
   },
   targetId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     required: false
   },
   details: {
@@ -24,4 +25,4 @@ const adminActionLogSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-export default mongoose.model('AdminActionLog', adminActionLogSchema);
+export default model('AdminActionLog', adminActionLogSchema);

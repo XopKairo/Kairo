@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
+const { Schema, model } = mongoose;
 
-const ticketSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const ticketSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   subject: { type: String, required: true },
   message: { type: String, required: true },
   priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
@@ -9,4 +10,4 @@ const ticketSchema = new mongoose.Schema({
   adminResponse: { type: String, default: '' }
 }, { timestamps: true });
 
-export default mongoose.model('Ticket', ticketSchema);
+export default model('Ticket', ticketSchema);
