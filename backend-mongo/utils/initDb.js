@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import 'dotenv/config';
-import Admin from './models/Admin.js';
-import logger from './utils/logger.js';
+import Admin from '../models/Admin.js';
+import logger from '../utils/logger.js';
 
 export const seedAdmin = async () => {
   try {
