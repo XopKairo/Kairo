@@ -14,6 +14,7 @@ import { Server } from 'socket.io';
 
 // Internal Modules
 import { errorHandler } from './middleware/errorMiddleware.js';
+import { checkMaintenance } from './middleware/maintenanceMiddleware.js';
 import { protectAdmin } from './middleware/authMiddleware.js';
 import setupSockets from './sockets/socket.js';
 
@@ -63,6 +64,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(express.json({ limit: '10mb' }));
+
+// Maintenance Mode Middleware
+app.use(checkMaintenance);
 
 // Attach IO to request
 app.use((req, res, next) => {
