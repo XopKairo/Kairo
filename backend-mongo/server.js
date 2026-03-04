@@ -11,7 +11,6 @@ import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import hpp from 'hpp';
 import { Server } from 'socket.io';
-import { createClient } from 'redis';
 
 // Internal Modules
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -30,13 +29,6 @@ import settingsRoutes from './routes/settings.js';
 
 const app = express();
 const server = http.createServer(app);
-
-// Redis Client Initialization
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-await redisClient.connect().catch(console.error);
 
 // Socket.io initialization
 const allowedOrigins = [
@@ -71,10 +63,9 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(express.json({ limit: '10mb' }));
 
-// Attach IO and Redis to request
+// Attach IO to request
 app.use((req, res, next) => {
   req.io = io;
-  req.redis = redisClient;
   next();
 });
 
