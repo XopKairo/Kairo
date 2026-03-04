@@ -60,6 +60,9 @@ export default {
         {
           "android": {
             "kotlinVersion": "1.9.24",
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0",
             "newArchEnabled": false
           }
         }
