@@ -63,8 +63,26 @@ export default {
             "compileSdkVersion": 34,
             "targetSdkVersion": 34,
             "buildToolsVersion": "34.0.0",
-            "newArchEnabled": false
+            "newArchEnabled": false,
+            "enableProguardInReleaseBuilds": true,
+            "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }",
+            "packagingOptions": {
+              "pickFirst": [
+                "**/libc++_shared.so"
+              ],
+              "exclude": [
+                "**/libjsse.so",
+                "**/libicuuc.so",
+                "**/libicui18n.so"
+              ]
+            }
           }
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": []
         }
       ],
       [
