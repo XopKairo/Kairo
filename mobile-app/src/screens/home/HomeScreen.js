@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, FlatList, Image, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, Card, Avatar, Searchbar, ActivityIndicator } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { 
+  View, 
+  StyleSheet, 
+  FlatList, 
+  Image, 
+  Dimensions, 
+  TouchableOpacity, 
+  ScrollView,
+  SafeAreaView,
+  StatusBar
+} from 'react-native';
+import { Text, Card, Avatar, ActivityIndicator } from 'react-native-paper';
+import { Search, Bell, ShieldCheck, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -12,7 +23,6 @@ const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
   const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [appSettings, setAppSettings] = useState({ callRate: 30 });
 
@@ -23,43 +33,38 @@ const HomeScreen = ({ navigation }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      // Get real user data from local storage
       const userDataStr = await AsyncStorage.getItem('userData');
-      if (userDataStr) {
-        setCurrentUser(JSON.parse(userDataStr));
-      }
+      if (userDataStr) setCurrentUser(JSON.parse(userDataStr));
 
       const [bannerRes, hostRes, settingsRes] = await Promise.all([
-        api.get('/marketing/banners'),
-        api.get('/hosts'),
-        api.get('/settings')
+        api.get('/marketing/banners').catch(() => ({ data: [] })),
+        api.get('/hosts').catch(() => ({ data: [] })),
+        api.get('/settings').catch(() => ({ data: { callRate: 30 } }))
       ]);
       setBanners(bannerRes.data);
       setHosts(hostRes.data);
-      if (settingsRes.data) {
-        setAppSettings(settingsRes.data);
-      }
+      if (settingsRes.data) setAppSettings(settingsRes.data);
     } catch (error) {
-      console.error("Error fetching home data:", error);
+      console.error("Home Data Fetch Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const renderBanner = ({ item }) => (
-    <Card style={styles.bannerCard}>
+    <View style={styles.bannerContainer}>
       <Image 
         source={{ uri: `https://kairo-b1i9.onrender.com${item.imageUrl}` }} 
         style={styles.bannerImage} 
         resizeMode="cover"
       />
-    </Card>
+    </View>
   );
 
   const renderHost = ({ item }) => (
     <TouchableOpacity 
       style={styles.hostCard}
+      activeOpacity={0.9}
       onPress={() => {
         if (!currentUser) return;
         navigation.navigate('VideoCall', {
@@ -73,51 +78,53 @@ const HomeScreen = ({ navigation }) => {
       }}
     >
       <View style={styles.hostImageContainer}>
-        <Avatar.Image size={100} source={{ uri: item.profilePicture || 'https://via.placeholder.com/100' }} />
-        <View style={[styles.statusDot, { backgroundColor: item.status === 'Online' ? '#4CAF50' : '#F44336' }]} />
+        <Avatar.Image size={120} source={{ uri: item.profilePicture || 'https://via.placeholder.com/120' }} />
+        <View style={[styles.statusDot, { backgroundColor: item.status === 'Online' ? COLORS.success : COLORS.error }]} />
+        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.hostOverlay}>
+           <View style={styles.ratingBadge}>
+              <Star size={10} fill="#FFD700" color="#FFD700" />
+              <Text style={styles.ratingText}>{item.rating || '4.8'}</Text>
+           </View>
+        </LinearGradient>
       </View>
-      <Text style={styles.hostName}>{item.name}</Text>
-      <View style={styles.ratingContainer}>
-        <Text style={styles.ratingText}>⭐ {item.rating || '4.5'}</Text>
+      <View style={styles.hostInfo}>
+        <Text style={styles.hostName}>{item.name}</Text>
+        <Text style={styles.hostPrice}>{appSettings.callRate || 30} coins/min</Text>
       </View>
     </TouchableOpacity>
   );
 
-  if (loading) return <View style={styles.center}><ActivityIndicator animating={true} color="#8A2BE2" /></View>;
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={COLORS.primary} size="large" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={['#8A2BE2', '#4B0082']} style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={styles.headerTitle}>Zora Premium</Text>
-            <View style={styles.betaBadge}>
-              <Text style={styles.betaText}>BETA</Text>
-            </View>
-          </View>
-          <Searchbar
-            placeholder="Search hosts..."
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={styles.searchBar}
-            inputStyle={{ minHeight: 0 }}
-          />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hello, {currentUser?.name?.split(' ')[0] || 'Member'}</Text>
+          <Text style={styles.headerTitle}>ZORA PREMIUM</Text>
         </View>
-      </LinearGradient>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.iconBtn}><Search color={COLORS.textWhite} size={22} /></TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn}><Bell color={COLORS.textWhite} size={22} /></TouchableOpacity>
+        </View>
+      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profile Completion Banner */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* Profile Completion */}
         {currentUser && (!currentUser.gender || !currentUser.verificationSelfie) && (
           <TouchableOpacity 
-            style={styles.completeProfileBanner} 
+            style={styles.alertBanner} 
             onPress={() => navigation.navigate('EditProfile')}
           >
-            <Icon name="alert-circle" size={24} color="#FFF" />
-            <View style={{ marginLeft: 10, flex: 1 }}>
-              <Text style={styles.bannerText}>Complete your profile</Text>
-              <Text style={styles.bannerSubtext}>Add gender and verification selfie</Text>
-            </View>
-            <Icon name="chevron-right" size={24} color="#FFF" />
+            <ShieldCheck color="#FFF" size={20} />
+            <Text style={styles.alertText}>Verify your profile to unlock full features</Text>
           </TouchableOpacity>
         )}
 
@@ -132,14 +139,15 @@ const HomeScreen = ({ navigation }) => {
           style={styles.bannerList}
         />
 
-        {/* Hosts Section */}
+        {/* Section Header */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Active Hosts</Text>
+          <Text style={styles.sectionTitle}>Featured Hosts</Text>
           <TouchableOpacity><Text style={styles.viewAll}>View All</Text></TouchableOpacity>
         </View>
 
+        {/* Hosts Grid */}
         <FlatList
-          data={hosts.filter(h => h.name.toLowerCase().includes(searchQuery.toLowerCase()))}
+          data={hosts}
           renderItem={renderHost}
           keyExtractor={item => item._id}
           numColumns={2}
@@ -147,50 +155,77 @@ const HomeScreen = ({ navigation }) => {
           contentContainerStyle={styles.hostList}
         />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORS.backgroundDark,
   },
-  center: {
+  loadingContainer: {
     flex: 1,
+    backgroundColor: COLORS.backgroundDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
   header: {
-    paddingTop: 50,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  headerContent: {
-    paddingHorizontal: 20,
+  greeting: {
+    color: COLORS.textGray,
+    fontSize: 14,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 15,
+    color: COLORS.textWhite,
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
-  searchBar: {
-    elevation: 4,
-    borderRadius: 15,
-    backgroundColor: '#FFF',
+  headerActions: {
+    flexDirection: 'row',
+  },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.cardBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: SPACING.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(159, 103, 255, 0.1)',
+  },
+  alertBanner: {
+    backgroundColor: COLORS.primary,
+    margin: SPACING.lg,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  alertText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 13,
   },
   bannerList: {
-    marginTop: 20,
+    marginTop: 10,
   },
-  bannerCard: {
-    width: width - 40,
-    height: 180,
-    marginHorizontal: 20,
-    borderRadius: 20,
+  bannerContainer: {
+    width: width - (SPACING.lg * 2),
+    height: 160,
+    marginHorizontal: SPACING.lg,
+    borderRadius: 24,
     overflow: 'hidden',
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(159, 103, 255, 0.2)',
   },
   bannerImage: {
     width: '100%',
@@ -200,96 +235,85 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 25,
+    paddingHorizontal: SPACING.lg,
+    marginTop: 30,
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textWhite,
+    fontSize: 18,
+    fontWeight: '800',
   },
   viewAll: {
-    color: '#8A2BE2',
+    color: COLORS.accentGlow,
+    fontSize: 14,
     fontWeight: '600',
   },
   hostList: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    paddingHorizontal: SPACING.sm,
   },
   hostCard: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.cardBackground,
     margin: 8,
-    borderRadius: 20,
-    padding: 15,
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 24,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(159, 103, 255, 0.1)',
   },
   hostImageContainer: {
-    position: 'relative',
-    marginBottom: 10,
+    borderRadius: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
   },
   statusDot: {
     position: 'absolute',
-    right: 5,
-    bottom: 5,
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
+    right: 15,
+    top: 15,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#FFF',
+    borderColor: COLORS.cardBackground,
   },
-  hostName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+  hostOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    justifyContent: 'flex-end',
+    padding: 8,
   },
-  ratingContainer: {
-    marginTop: 5,
-    backgroundColor: '#F1F1F1',
-    paddingHorizontal: 10,
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
+    alignSelf: 'flex-start',
+    gap: 4,
   },
   ratingText: {
-    fontSize: 12,
-    color: '#666',
-  },
-  betaBadge: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  betaText: {
-    color: '#000',
+    color: '#FFD700',
     fontSize: 10,
     fontWeight: 'bold',
   },
-  completeProfileBanner: {
-    backgroundColor: '#FF8C00',
-    margin: 20,
-    padding: 15,
-    borderRadius: 15,
-    flexDirection: 'row',
+  hostInfo: {
+    marginTop: 10,
     alignItems: 'center',
-    elevation: 5,
   },
-  bannerText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 14,
+  hostName: {
+    color: COLORS.textWhite,
+    fontSize: 15,
+    fontWeight: '700',
   },
-  bannerSubtext: {
-    color: 'rgba(255,255,255,0.8)',
+  hostPrice: {
+    color: COLORS.accentGlow,
     fontSize: 12,
-  },
+    marginTop: 2,
+  }
 });
 
 export default HomeScreen;

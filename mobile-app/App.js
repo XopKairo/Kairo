@@ -24,7 +24,7 @@ import VerificationScreen from './src/screens/profile/VerificationScreen';
 import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
 import WalletScreen from './src/screens/wallet/WalletScreen';
-import ChatScreen from './src/screens/call/ChatScreen';
+import ChatScreen from './src/screens/chat/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
 import NetworkBanner from './src/components/NetworkBanner';
