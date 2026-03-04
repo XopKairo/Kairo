@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Sidebar } from './Sidebar';
-import { Navbar } from './Navbar';
+import { Topbar } from './Topbar';
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <Sidebar isOpen={isMobileMenuOpen} setIsOpen={setIsMobileMenuOpen} />
+    <div className="flex h-screen bg-surface-50 dark:bg-surface-950 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200 overflow-hidden">
+      <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Navbar onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+        <Topbar />
+        <main className="flex-1 overflow-auto p-6 md:p-8 relative scroll-smooth">
+          <div className="mx-auto max-w-7xl">
             {children}
           </div>
         </main>

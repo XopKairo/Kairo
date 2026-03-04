@@ -1,4 +1,6 @@
-import React, { createContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createContext, useState, useEffect, type ReactNode } from 'react';
 
 interface User {
   id: string;
@@ -10,27 +12,32 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (_credentials: any) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setUser({ id: '1', name: 'Alex Zora', role: 'ADMIN', email: 'admin@zora.com' });
-    }
-    setLoading(false);
+    let isMounted = true;
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token && isMounted) {
+        setUser({ id: '1', name: 'Franklin Jr.', role: 'ADMIN', email: 'admin@kleon.com' });
+      }
+      if (isMounted) setLoading(false);
+    };
+    initAuth();
+    return () => { isMounted = false; };
   }, []);
 
-  const login = async (_credentials: any) => {
+  const login = async () => {
     localStorage.setItem('token', 'dummy-jwt-token');
-    setUser({ id: '1', name: 'Alex Zora', role: 'ADMIN', email: 'admin@zora.com' });
+    setUser({ id: '1', name: 'Franklin Jr.', role: 'ADMIN', email: 'admin@kleon.com' });
   };
 
   const logout = () => {

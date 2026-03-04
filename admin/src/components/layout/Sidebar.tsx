@@ -1,90 +1,73 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../utils/cn';
-import { 
-  LayoutDashboard, Users, ShoppingBag, 
-  CreditCard, BarChart3, Settings, 
-  LogOut, X 
-} from 'lucide-react';
 
-const menuItems = [
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Mail, MessageSquare, Trello, Users, CalendarDays, Receipt, Settings, ChevronRight } from 'lucide-react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Users, label: 'Users', path: '/users' },
-  { icon: ShoppingBag, label: 'Listings', path: '/listings' },
-  { icon: CreditCard, label: 'Payments', path: '/payments' },
-  { icon: BarChart3, label: 'Analytics', path: '/analytics' },
+  { icon: Mail, label: 'Email', path: '/email' },
+  { icon: MessageSquare, label: 'Chat', path: '/chat' },
+  { icon: Trello, label: 'Kanban', path: '/kanban' },
+  { icon: Users, label: 'Contact', path: '/contact' },
+  { icon: CalendarDays, label: 'Calendar', path: '/calendar' },
+  { icon: Receipt, label: 'Invoices', path: '/invoices' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
-interface SidebarProps {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  const sidebarVariants = {
-    open: { x: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } },
-    closed: { x: '-100%', transition: { type: 'spring', stiffness: 300, damping: 30 } }
-  } as const;
-
+export const Sidebar = () => {
   return (
-    <>
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
+    <aside className="w-64 h-screen bg-white dark:bg-surface-900 border-r border-gray-100 dark:border-gray-800 flex flex-col transition-colors duration-200">
+      <div className="p-6 flex items-center space-x-3">
+        <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+          K
+        </div>
+        <span className="text-2xl font-bold text-gray-900 dark:text-white">Kleon</span>
+      </div>
 
-      <motion.aside 
-        variants={sidebarVariants}
-        animate={isOpen ? 'open' : 'closed'}
-        initial="closed"
-        className={cn(
-          "fixed inset-y-0 left-0 w-72 bg-slate-950 text-slate-300 z-50 lg:static lg:translate-x-0 flex flex-col shadow-2xl shadow-brand-500/10",
-          "lg:block" 
-        )}
-      >
-        <div className="p-8 flex items-center justify-between border-b border-white/5">
-          <span className="text-2xl font-bold text-white tracking-tight">ZORA<span className="text-brand-500">.</span></span>
-          <button onClick={() => setIsOpen(false)} className="lg:hidden p-2 hover:bg-white/5 rounded-lg">
-            <X size={20} />
+      <div className="px-6 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        Main Menu
+      </div>
+
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => cn(
+              "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+              isActive 
+                ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-500 font-medium" 
+                : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white"
+            )}
+          >
+            {({ isActive }) => (
+              <>
+                <item.icon className={cn(
+                  "w-5 h-5 transition-colors",
+                  isActive ? "text-brand-600 dark:text-brand-500" : "text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300"
+                )} />
+                <span className="flex-1">{item.label}</span>
+                {isActive && <ChevronRight className="w-4 h-4 text-brand-600 dark:text-brand-500" />}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="p-4 m-4 bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl text-white relative overflow-hidden shadow-soft">
+        <div className="relative z-10">
+          <h4 className="font-semibold mb-1 text-sm">Increase your work with kanban</h4>
+          <p className="text-brand-100 text-xs mb-3">Organize projects clearly.</p>
+          <button className="bg-white text-brand-600 text-sm font-medium py-2 px-4 rounded-lg w-full hover:bg-brand-50 transition-colors">
+            Try Now
           </button>
         </div>
-
-        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => (
-            <NavLink 
-              key={item.label} 
-              to={item.path} 
-              onClick={() => setIsOpen(false)}
-              className={({ isActive }) => cn(
-                "flex items-center p-3.5 rounded-xl transition-all duration-200 group relative",
-                isActive 
-                  ? "bg-brand-500 text-white shadow-lg shadow-brand-500/25 font-semibold" 
-                  : "hover:bg-white/5 hover:text-white"
-              )}
-            >
-              <item.icon size={22} className="min-w-[22px]" />
-              <span className="ml-4">{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-6 border-t border-white/5">
-          <button className="flex items-center w-full p-3.5 text-red-400 hover:bg-red-500/10 rounded-xl transition-all font-medium group">
-            <LogOut size={22} className="group-hover:translate-x-1 transition-transform" />
-            <span className="ml-4">Logout</span>
-          </button>
-        </div>
-      </motion.aside>
-    </>
+      </div>
+    </aside>
   );
 };
