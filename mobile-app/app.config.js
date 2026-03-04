@@ -54,11 +54,12 @@ export default {
       "expo-image-picker",
       "expo-asset",
       "expo-font",
+      "expo-device",
       [
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "1.9.25",
+            "kotlinVersion": "2.0.21",
             "newArchEnabled": false
           }
         }
