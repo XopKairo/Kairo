@@ -23,4 +23,4 @@ const processTransfer = async (payoutData) => {
   }
 };
 
-module.exports = { processTransfer };
+export default { processTransfer };

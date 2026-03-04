@@ -1,5 +1,5 @@
-const cloudinary = require('cloudinary').v2;
-const multerStorageCloudinary = require('multer-storage-cloudinary');
+import cloudinary from 'cloudinary'.v2;
+import multerStorageCloudinary from 'multer-storage-cloudinary';
 
 // Handle different import versions safely
 const CloudinaryStorage = multerStorageCloudinary.CloudinaryStorage || multerStorageCloudinary;
@@ -34,4 +34,4 @@ const getStorage = (folderName, type = 'image') => {
   }
 };
 
-module.exports = { cloudinary, getStorage };
+export default { cloudinary, getStorage };

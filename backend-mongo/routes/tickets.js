@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Ticket = require('../models/Ticket');
+import Ticket from '../models/Ticket.js';
 
 // GET all tickets
 router.get('/', async (req, res) => {
@@ -22,4 +22,4 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

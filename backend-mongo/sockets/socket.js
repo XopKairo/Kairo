@@ -1,8 +1,9 @@
 import { logCallStart, logCallEnd } from '../routes/monitoring.js';
-import LiveCall from '../models/LiveCall.js';
+import LiveCall from '../models/LiveCall.js.js';
+import Message from '../models/Message.js.js';
+import Conversation from '../models/Conversation.js.js';
 
 const setupSockets = (io) => {
-  // Store active timeouts to clear them if call is accepted
   const ringingTimeouts = new Map();
 
   io.on('connection', (socket) => {
@@ -11,27 +12,52 @@ const setupSockets = (io) => {
     socket.on('registerUser', (userId) => {
       if (userId) {
         socket.join(userId);
-        socket.userId = userId; // Store on socket for cleanup
+        socket.userId = userId;
         console.log(`👤 User registered: ${userId}`);
       }
     });
 
-    socket.on('joinAdminRoom', () => {
-      socket.join('admin-room');
+    // --- Private Messaging Events ---
+    
+    socket.on('privateMessage', async (data) => {
+      const { recipientId, text, conversationId, type = 'text' } = data;
+      
+      try {
+        // Emit to recipient if online
+        io.to(recipientId).emit('newMessage', {
+          ...data,
+          sender: socket.userId,
+          createdAt: new Date(),
+          status: 'sent'
+        });
+
+        // Backend logic for persistence is handled via REST, 
+        // but we emit for instant UI feedback.
+      } catch (err) {
+        console.error('Socket Message Error:', err);
+      }
     });
 
+    socket.on('typing', (data) => {
+      const { recipientId, conversationId } = data;
+      io.to(recipientId).emit('userTyping', { conversationId, userId: socket.userId });
+    });
+
+    socket.on('stopTyping', (data) => {
+      const { recipientId, conversationId } = data;
+      io.to(recipientId).emit('userStoppedTyping', { conversationId, userId: socket.userId });
+    });
+
+    // --- Call Signaling ---
+    
     socket.on('callStarted', async (data) => {
       const { callId, userId, hostId, receiverId } = data;
       const targetId = receiverId || hostId;
       
       if (targetId) {
         io.to(targetId).emit('incomingCall', data);
-        console.log(`📞 Call RINGING: ${callId}`);
-        
-        // Initial DB log as RINGING
         await logCallStart({ ...data, status: 'RINGING' });
 
-        // Phase 3: 45s Timeout
         const timeout = setTimeout(async () => {
           const call = await LiveCall.findOne({ callId, status: 'RINGING' });
           if (call) {
@@ -39,7 +65,6 @@ const setupSockets = (io) => {
             await call.save();
             io.to(userId).emit('callTimeout', { callId });
             io.to(targetId).emit('callTimeout', { callId });
-            console.log(`⏰ Call TIMEOUT: ${callId}`);
           }
           ringingTimeouts.delete(callId);
         }, 45000);
@@ -49,14 +74,11 @@ const setupSockets = (io) => {
     });
 
     socket.on('callAccepted', async (callId) => {
-      // Clear ringing timeout
       if (ringingTimeouts.has(callId)) {
         clearTimeout(ringingTimeouts.get(callId));
         ringingTimeouts.delete(callId);
       }
-      
       await LiveCall.findOneAndUpdate({ callId }, { status: 'ACTIVE', startedAt: new Date() });
-      console.log(`✅ Call ACTIVE: ${callId}`);
     });
 
     socket.on('callEnded', async (callId) => {
@@ -68,9 +90,6 @@ const setupSockets = (io) => {
     });
 
     socket.on('disconnect', async () => {
-      console.log('🔌 Socket Disconnected:', socket.id);
-      
-      // Cleanup any active calls this user was part of
       if (socket.userId) {
         const activeCalls = await LiveCall.find({
           $or: [{ userId: socket.userId }, { hostId: socket.userId }],
@@ -85,7 +104,6 @@ const setupSockets = (io) => {
           call.status = 'ENDED';
           call.endedAt = new Date();
           await call.save();
-          console.log(`🧹 Cleanup: Call ${call.callId} ended on disconnect`);
         }
       }
     });

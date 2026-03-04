@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const InterestTag = require('../models/InterestTag');
+import InterestTag from '../models/InterestTag.js';
 
 // GET all active interest tags (for Mobile App)
 router.get('/active', async (req, res) => {
@@ -64,4 +64,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
-const axios = require('axios');
-const crypto = require('crypto');
+import axios from 'axios';
+import crypto from 'crypto';
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
@@ -70,4 +70,4 @@ const getCashfreeOrderStatus = async (orderId) => {
       }
 }
 
-module.exports = { createCashfreeOrder, verifyCashfreeSignature, getCashfreeOrderStatus };
+export default { createCashfreeOrder, verifyCashfreeSignature, getCashfreeOrderStatus };

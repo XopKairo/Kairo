@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const { getStorage } = require('../config/cloudinaryConfig');
-const Post = require('../models/Post');
-const { postUploadSchema, validateRequest } = require('../utils/validation');
+import multer from 'multer';
+import { getStorage } from '../config/cloudinaryConfig.js';
+import Post from '../models/Post.js';
+import { postUploadSchema, validateRequest } from '../utils/validation.js';
 
 // Configure Multer for Cloudinary
 const imageStorage = getStorage('posts', 'image');
@@ -108,4 +108,4 @@ router.put('/:id/feature', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

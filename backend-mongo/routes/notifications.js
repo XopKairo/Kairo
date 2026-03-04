@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { admin } = require('../utils/pushNotification');
-const Notification = require('../models/Notification');
-const User = require('../models/User');
+import { admin } from '../utils/pushNotification.js';
+import Notification from '../models/Notification.js';
+import User from '../models/User.js';
 
 // Initialize Firebase Admin removed - now in utils/pushNotification.js
 
@@ -77,4 +77,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

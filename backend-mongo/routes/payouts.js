@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Payout = require('../models/Payout');
-const User = require('../models/User');
-const { processTransfer } = require('../utils/payoutProvider');
+import Payout from '../models/Payout.js';
+import User from '../models/User.js';
+import { processTransfer } from '../utils/payoutProvider.js';
 
 // Get all payouts
 router.get('/', async (req, res) => {
@@ -69,4 +69,4 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

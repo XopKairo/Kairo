@@ -13,8 +13,8 @@ import hpp from 'hpp';
 import { Server } from 'socket.io';
 
 // Internal Modules
-import { errorHandler } from './middleware/errorMiddleware.js';
-import { protectAdmin } from './middleware/authMiddleware.js';
+import { errorHandler } from './middleware/errorMiddleware.js.js';
+import { protectAdmin } from './middleware/authMiddleware.js.js';
 import setupSockets from './sockets/socket.js';
 
 // Route Imports
@@ -26,6 +26,7 @@ import economyRoutes from './routes/economy.js';
 import reportsRoutes from './routes/reports.js';
 import monitoringRoutes from './routes/monitoring.js';
 import settingsRoutes from './routes/settings.js';
+import chatRoutes from './routes/chat.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -105,6 +106,7 @@ app.use('/api/settings', settingsRoutes);
 
 // Shared / User Routes
 app.use('/api/wallet', walletRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

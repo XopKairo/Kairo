@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Agency = require('../models/Agency');
+import Agency from '../models/Agency.js';
 
 // GET all agencies
 router.get('/', async (req, res) => {
@@ -32,4 +32,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

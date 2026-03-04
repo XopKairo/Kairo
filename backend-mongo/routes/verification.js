@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const { getStorage } = require('../config/cloudinaryConfig');
-const VerificationRequest = require('../models/VerificationRequest');
-const User = require('../models/User');
+import multer from 'multer';
+import { getStorage } from '../config/cloudinaryConfig.js';
+import VerificationRequest from '../models/VerificationRequest.js';
+import User from '../models/User.js';
+import Host from '../models/Host.js';
 
 // Configure Multer for Cloudinary
 const upload = multer({ storage: getStorage('verification') });
@@ -74,7 +75,6 @@ router.post('/:id/status', async (req, res) => {
       });
       
       // Also update Host if exists
-      const Host = require('../models/Host');
       await Host.findOneAndUpdate({ email: user.email }, { isGenderVerified: true, isVerified: true });
     } else {
       await User.findByIdAndUpdate(request.userId, { isGenderVerified: false });
@@ -86,4 +86,4 @@ router.post('/:id/status', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

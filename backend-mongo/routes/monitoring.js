@@ -1,5 +1,5 @@
 import express from 'express';
-import LiveCall from '../models/LiveCall.js';
+import LiveCall from '../models/LiveCall.js.js';
 
 const router = express.Router();
 

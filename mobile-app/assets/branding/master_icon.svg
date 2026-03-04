@@ -1,0 +1,24 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="zora_grad" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7B2FF7"/>
+      <stop offset="100%" stop-color="#4C1D95"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="20" stdDeviation="25" flood-opacity="0.4" />
+    </filter>
+  </defs>
+  
+  <!-- Centered Safe Area Container -->
+  <g filter="url(#shadow)">
+    <!-- Bottom Bubble -->
+    <path d="M300 400C300 344.772 344.772 300 400 300H700C755.228 300 800 344.772 800 400V600C800 655.228 755.228 700 700 700H450L300 850V400Z" fill="url(#zora_grad)" opacity="0.8" />
+    
+    <!-- Top Bubble (Overlapping) -->
+    <path d="M224 250C224 194.772 268.772 150 324 150H624C679.228 150 724 194.772 724 250V450C724 505.228 679.228 550 624 550H374L224 700V250Z" fill="url(#zora_grad)" filter="url(#glow)" />
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 process.chdir(__dirname);
-require('dotenv').config();
-const { admin } = require('./utils/pushNotification');
+import 'dotenv/config';
+import { admin } from './utils/pushNotification.js';
 
 async function runVerification() {
     console.log('--- KAIRO PRODUCTION SCAN ---');
@@ -34,7 +34,7 @@ async function runVerification() {
     }
 
     try {
-        const { getStorage } = require('./config/cloudinaryConfig');
+        import { getStorage } from './config/cloudinaryConfig.js';
         const storage = getStorage('test');
         if (storage) console.log('✅ Cloudinary Storage ready');
     } catch (e) {

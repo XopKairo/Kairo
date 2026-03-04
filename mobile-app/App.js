@@ -8,8 +8,13 @@ import { View, ActivityIndicator, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
 
-import ZoraSplashScreen from './src/screens/auth/ZoraSplashScreen';
-import UserLoginScreen from './src/screens/auth/UserLoginScreen';
+// Context
+import { AuthProvider } from './src/context/AuthContext';
+
+// Screens
+import SplashScreen from './src/screens/SplashScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import LoginScreen from './src/screens/auth/LoginScreen';
 import UserRegisterScreen from './src/screens/auth/UserRegisterScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
 import FeedScreen from './src/screens/home/FeedScreen';
@@ -24,7 +29,7 @@ import NotificationsScreen from './src/screens/notifications/NotificationsScreen
 import SettingsScreen from './src/screens/settings/SettingsScreen';
 import NetworkBanner from './src/components/NetworkBanner';
 
-// Lazy load the heavy VideoCallScreen
+// Lazy load heavy screens
 const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'));
 
 const Tab = createBottomTabNavigator();
@@ -43,8 +48,16 @@ function MainTabs() {
           else if (route.name === 'Profile') iconName = 'account';
           return <Icon name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#8A2BE2',
+        tabBarActiveTintColor: '#6C2BD9',
         tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          backgroundColor: '#0F0A19',
+          borderTopColor: 'rgba(159, 103, 255, 0.1)',
+        },
+        headerStyle: {
+          backgroundColor: '#0F0A19',
+        },
+        headerTintColor: '#F5F3FF',
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -64,42 +77,43 @@ export default function App() {
           await NavigationBar.setVisibilityAsync('hidden');
           await NavigationBar.setBehaviorAsync('inset-touch');
           await SystemUI.setBackgroundColorAsync('transparent');
-        } catch (e) {
-          // Fallback for non-supported environments
-        }
+        } catch (e) {}
       }
     }
     lockImmersiveMode();
   }, []);
 
   return (
-    <PaperProvider>
-      <NetworkBanner />
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Splash">
-          <Stack.Screen name="Splash" component={ZoraSplashScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Login" component={UserLoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
-          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-          <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
-            {(props) => (
-              <Suspense fallback={
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
-                  <ActivityIndicator size="large" color="#fff" />
-                </View>
-              }>
-                <VideoCallScreen {...props} />
-              </Suspense>
-            )}
-          </Stack.Screen>
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Complete Profile' }} />
-          <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
-          <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
-          <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
-          <Stack.Screen name="Chat" component={ChatScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </PaperProvider>
+    <AuthProvider>
+      <PaperProvider>
+        <NetworkBanner />
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Splash">
+            <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+            <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
+              {(props) => (
+                <Suspense fallback={
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+                    <ActivityIndicator size="large" color="#6C2BD9" />
+                  </View>
+                }>
+                  <VideoCallScreen {...props} />
+                </Suspense>
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerStyle: { backgroundColor: '#0F0A19' }, headerTintColor: '#fff' }} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Complete Profile' }} />
+            <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
+            <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
+            <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
+            <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PaperProvider>
+    </AuthProvider>
   );
 }

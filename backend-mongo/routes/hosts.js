@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Host = require('../models/Host');
+import Host from '../models/Host.js';
 
 // GET all hosts
 router.get('/', async (req, res) => {
@@ -47,4 +47,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

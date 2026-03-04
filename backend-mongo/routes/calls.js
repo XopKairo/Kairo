@@ -1,11 +1,13 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const crypto = require('crypto');
-const mongoose = require('mongoose');
-const Call = require('../models/Call');
-const User = require('../models/User');
-const Host = require('../models/Host');
-const { protectUser } = require('../middleware/authMiddleware');
+import crypto from 'crypto';
+import mongoose from 'mongoose';
+import Call from '../models/Call.js';
+import User from '../models/User.js';
+import Host from '../models/Host.js';
+import Settings from '../models/Settings.js';
+import Admin from '../models/Admin.js';
+import { protectUser } from '../middleware/authMiddleware.js';
 
 // 1. Generate ZegoCloud Token
 router.post('/generate-token', protectUser, (req, res) => {
@@ -74,11 +76,10 @@ router.post('/end', async (req, res) => {
     if (!host) throw new Error('Host not found');
 
     // Fetch Global Settings
-    const Settings = require('../models/Settings');
     let settings = await Settings.findOne().session(session);
     if (!settings) settings = { callRate: 30, commission: 30 }; // Fallback
 
-    const callRatePerMinute = settings.callRate; // Using global setting instead of host-specific for consistency if required
+    const callRatePerMinute = settings.callRate; 
 
     // Calculate Coins
     const totalCoinsDeducted = durationInMinutes * callRatePerMinute;
@@ -95,7 +96,6 @@ router.post('/end', async (req, res) => {
     await user.save({ session });
 
     // --- SENIOR SECURITY ARCHITECT ENFORCEMENT ---
-    // Update Host Earnings (STRICT: Only if Female AND Gender Verified by Admin)
     const isEarningEligible = host && host.gender === 'Female' && host.isGenderVerified;
 
     if (isEarningEligible) {
@@ -103,20 +103,15 @@ router.post('/end', async (req, res) => {
       host.status = 'Online';
       await host.save({ session });
       
-      // System gets 30% commission (Converted to INR)
       const adminShareINR = Number((adminShare * 0.1).toFixed(2));
-      const Admin = require('../models/Admin');
       await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } }).session(session);
     } else if (host) {
       host.status = 'Online';
       await host.save({ session });
       
-      // 100% OF TRANSACTION FLOWS TO SYSTEM REVENUE (Converted to INR)
       const totalAmountINR = Number((totalCoinsDeducted * 0.1).toFixed(2));
-      const Admin = require('../models/Admin');
       await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: totalAmountINR } }).session(session);
     }
-    // --- END ENFORCEMENT ---
 
     // Save Call Record
     call.status = 'Completed';
@@ -161,4 +156,4 @@ router.get('/active', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

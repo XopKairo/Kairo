@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { protectUser } = require('../middleware/authMiddleware');
-const { createCashfreeOrder, getCashfreeOrderStatus } = require('../utils/cashfree');
-const User = require('../models/User');
-const Transaction = require('../models/Transaction');
+import { protectUser } from '../middleware/authMiddleware.js';
+import { createCashfreeOrder, getCashfreeOrderStatus } from '../utils/cashfree.js';
+import User from '../models/User.js';
+import Transaction from '../models/Transaction.js';
 
 // @desc    Create Cashfree Order
 // @route   POST /api/user/payments/create-order
@@ -103,4 +103,4 @@ router.post('/verify', protectUser, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
 
 // Initialize Firebase Admin with FIREBASE_SERVICE_ACCOUNT env var
 let serviceAccount;
@@ -81,4 +81,4 @@ const sendPushNotification = async (pushToken, title, body, data = {}) => {
   }
 };
 
-module.exports = { admin, sendPushNotification };
+export default { admin, sendPushNotification };
