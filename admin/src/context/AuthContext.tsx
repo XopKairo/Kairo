@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
 interface User {
   id: string;
@@ -10,7 +10,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: any) => Promise<void>;
+  login: (_credentials: any) => Promise<void>;
   logout: () => void;
 }
 
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
-  const login = async (credentials: any) => {
+  const login = async (_credentials: any) => {
     localStorage.setItem('token', 'dummy-jwt-token');
     setUser({ id: '1', name: 'Alex Zora', role: 'ADMIN', email: 'admin@zora.com' });
   };
