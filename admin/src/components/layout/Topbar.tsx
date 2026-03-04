@@ -1,14 +1,17 @@
 
-import { Bell, MessageSquare, Search, Sun, Moon, ChevronDown } from 'lucide-react';
+import { Bell, MessageSquare, Search, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
-export const Topbar = () => {
+export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="h-20 bg-white dark:bg-surface-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-8 transition-colors duration-200">
-      <div className="flex items-center flex-1 max-w-2xl">
-        <div className="relative w-full max-w-md">
+    <header className="h-20 bg-white dark:bg-surface-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 sm:px-8 transition-colors duration-200">
+      <div className="flex items-center flex-1 max-w-2xl gap-4">
+        <button onClick={onMenuClick} className="md:hidden p-2 text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400 rounded-xl hover:bg-gray-50 dark:hover:bg-surface-100 transition-colors">
+          <Menu className="w-6 h-6" />
+        </button>
+        <div className="relative w-full max-w-md hidden sm:block">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"

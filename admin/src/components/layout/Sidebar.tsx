@@ -18,9 +18,19 @@ const navItems = [
   { icon: Settings, label: 'App Settings', path: '/settings' },
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (val: boolean) => void }) => {
   return (
-    <aside className="w-64 h-screen bg-white dark:bg-surface-900 border-r border-gray-100 dark:border-gray-800 flex flex-col transition-colors duration-200">
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-900/50 dark:bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      <aside className={cn(
+        "fixed md:static inset-y-0 left-0 z-50 w-64 h-screen bg-white dark:bg-surface-900 border-r border-gray-100 dark:border-gray-800 flex flex-col transition-transform duration-300 md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
       <div className="p-6 flex items-center space-x-3">
         <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
           Z
@@ -37,6 +47,7 @@ export const Sidebar = () => {
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={() => setIsOpen(false)}
             className={({ isActive }) => cn(
               "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group",
               isActive 
@@ -68,5 +79,6 @@ export const Sidebar = () => {
         </div>
       </div>
     </aside>
+    </>
   );
 };

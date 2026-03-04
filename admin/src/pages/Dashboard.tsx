@@ -5,6 +5,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import apiClient from '../api/apiClient';
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsersToday: 0,
@@ -31,8 +34,11 @@ export default function Dashboard() {
         ]);
         setStats(statsRes.data);
         setAnalytics(analyticsRes.data);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Check backend connection.');
+      } finally {
+        setLoading(false);
       }
     };
     fetchDashboardData();
@@ -47,6 +53,9 @@ export default function Dashboard() {
     name: label,
     revenue: analytics.revenueData[index] || 0
   }));
+
+  if (loading) return <div className="p-8 text-gray-500 font-medium text-lg">Loading dashboard metrics...</div>;
+  if (error) return <div className="p-8 text-red-500 font-medium text-lg">{error}</div>;
 
   return (
     <div className="space-y-6">
