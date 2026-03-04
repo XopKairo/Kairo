@@ -13,9 +13,9 @@ export const seedAdmin = async () => {
       return;
     }
 
-    const adminExists = await Admin.findOne({ email: adminEmail });
+    const anyAdminExists = await Admin.findOne({ role: 'admin' });
 
-    if (!adminExists) {
+    if (!anyAdminExists) {
       const admin = new Admin({
         username: 'admin',
         email: adminEmail,
@@ -25,7 +25,7 @@ export const seedAdmin = async () => {
       await admin.save();
       logger.info(`✅ Initial admin user created successfully for: ${adminEmail}`);
     } else {
-      logger.info(`ℹ️ Admin user already exists for: ${adminEmail}`);
+      logger.info(`ℹ️ Admin user already exists. Skipping auto-seed.`);
     }
   } catch (error) {
     logger.error(`❌ Admin seeding failed: ${error.message}`);
