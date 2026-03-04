@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, MoreHorizontal, ShieldBan } from 'lucide-react';
+import apiClient from '../../api/apiClient';
 
 interface User {
-  id: string;
-  name: string;
-  email: string;
-  status: string;
-  registeredAt: string;
-  role: string;
+  id?: string;
+  _id?: string;
+  name?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  isBanned?: boolean;
+  createdAt?: string;
+  registeredAt?: string;
+  role?: string;
 }
 
 export default function Users() {
@@ -17,11 +22,8 @@ export default function Users() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Mock data until API is fully connected
-        setUsers([
-          { id: '1', name: 'John Doe', email: 'john@example.com', status: 'Active', registeredAt: '2023-10-12', role: 'User' },
-          { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'Active', registeredAt: '2023-10-15', role: 'Host' },
-        ]);
+        const response = await apiClient.get('/admin/users');
+        setUsers(response.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -72,16 +74,20 @@ export default function Users() {
               {loading ? (
                 <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
               ) : users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{user.name}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{user.email}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{user.role}</td>
+                <tr key={user._id || user.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
+                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{user.name || user.username || 'Unknown'}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{user.email || user.phone}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{user.role || 'User'}</td>
                   <td className="py-4 px-6">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400">
-                      {user.status}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.isBanned ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
+                      {user.isBanned ? 'Banned' : 'Active'}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{user.registeredAt}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">
+                    {user.createdAt || user.registeredAt 
+                      ? new Date(user.createdAt || user.registeredAt || '').toLocaleDateString() 
+                      : 'Unknown'}
+                  </td>
                   <td className="py-4 px-6 text-right flex justify-end gap-2">
                     <button className="text-gray-400 hover:text-red-500 transition-colors" title="Ban User">
                       <ShieldBan className="w-5 h-5" />

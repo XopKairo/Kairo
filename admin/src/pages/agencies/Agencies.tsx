@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Search, MoreHorizontal, Plus } from 'lucide-react';
+import apiClient from '../../api/apiClient';
 
 interface Agency {
-  id: string;
-  name: string;
-  code: string;
-  hosts: number;
-  revenue: string;
-  status: string;
+  id?: string;
+  _id?: string;
+  name?: string;
+  code?: string;
+  hosts?: number;
+  revenue?: string;
+  status?: string;
 }
 
 export default function Agencies() {
@@ -17,10 +19,8 @@ export default function Agencies() {
   useEffect(() => {
     const fetchAgencies = async () => {
       try {
-        setAgencies([
-          { id: '1', name: 'Star Agency', code: 'STAR', hosts: 45, revenue: '$12,500', status: 'Active' },
-          { id: '2', name: 'Moonlight Models', code: 'MOON', hosts: 12, revenue: '$3,200', status: 'Active' },
-        ]);
+        const response = await apiClient.get('/admin/agencies');
+        setAgencies(response.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching agencies:', error);
@@ -71,14 +71,14 @@ export default function Agencies() {
               {loading ? (
                 <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
               ) : agencies.map((agency) => (
-                <tr key={agency.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{agency.name}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300 font-mono">{agency.code}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.hosts}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.revenue}</td>
+                <tr key={agency._id || agency.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
+                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{agency.name || 'Unknown'}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300 font-mono">{agency.code || 'N/A'}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.hosts || 0}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.revenue || '$0'}</td>
                   <td className="py-4 px-6">
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400">
-                      {agency.status}
+                      {agency.status || 'Active'}
                     </span>
                   </td>
                   <td className="py-4 px-6 text-right">

@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, MoreHorizontal, CheckCircle, XCircle } from 'lucide-react';
+import apiClient from '../../api/apiClient';
 
 interface Host {
-  id: string;
-  name: string;
-  agency: string;
-  status: string;
-  calls: number;
-  revenue: string;
+  id?: string;
+  _id?: string;
+  name?: string;
+  agency?: string;
+  status?: string;
+  isVerified?: boolean;
+  calls?: number;
+  revenue?: string;
 }
 
 export default function Hosts() {
@@ -17,10 +20,8 @@ export default function Hosts() {
   useEffect(() => {
     const fetchHosts = async () => {
       try {
-        setHosts([
-          { id: '1', name: 'Alice Wonderland', agency: 'Star Agency', status: 'Pending Verification', calls: 0, revenue: '$0' },
-          { id: '2', name: 'Bob Builder', agency: 'None', status: 'Verified', calls: 120, revenue: '$1,200' },
-        ]);
+        const response = await apiClient.get('/admin/hosts');
+        setHosts(response.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching hosts:', error);
@@ -71,18 +72,18 @@ export default function Hosts() {
               {loading ? (
                 <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
               ) : hosts.map((host) => (
-                <tr key={host.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{host.name}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.agency}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.calls}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.revenue}</td>
+                <tr key={host._id || host.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
+                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{host.name || 'Unknown'}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.agency || 'None'}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.calls || 0}</td>
+                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.revenue || '$0'}</td>
                   <td className="py-4 px-6">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${host.status === 'Verified' ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400'}`}>
-                      {host.status}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${host.isVerified ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400'}`}>
+                      {host.isVerified ? 'Verified' : (host.status || 'Pending')}
                     </span>
                   </td>
                   <td className="py-4 px-6 text-right flex justify-end gap-2">
-                    {host.status === 'Pending Verification' && (
+                    {!host.isVerified && (
                       <>
                         <button className="text-green-500 hover:text-green-600 transition-colors" title="Approve">
                           <CheckCircle className="w-5 h-5" />
