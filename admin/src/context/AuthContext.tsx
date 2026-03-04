@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
       if (token && isMounted) {
-        setUser({ id: '1', name: 'Franklin Jr.', role: 'ADMIN', email: 'admin@kleon.com' });
+        setUser({ id: '1', name: 'Admin', role: 'ADMIN', email: 'admin@zora.com' });
       }
       if (isMounted) setLoading(false);
     };
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async () => {
     localStorage.setItem('token', 'dummy-jwt-token');
-    setUser({ id: '1', name: 'Franklin Jr.', role: 'ADMIN', email: 'admin@kleon.com' });
+    setUser({ id: '1', name: 'Admin', role: 'ADMIN', email: 'admin@zora.com' });
   };
 
   const logout = () => {

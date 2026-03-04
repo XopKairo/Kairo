@@ -44,11 +44,11 @@ export const Topbar = () => {
 
         <button className="flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-surface-100 p-2 rounded-xl transition-colors">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Franklin Jr.</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Admin</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Super Admin</p>
           </div>
           <img
-            src="https://ui-avatars.com/api/?name=Franklin+Jr&background=7C3AED&color=fff&rounded=true"
+            src="https://ui-avatars.com/api/?name=Admin&background=7C3AED&color=fff&rounded=true"
             alt="Profile"
             className="w-10 h-10 rounded-xl object-cover"
           />

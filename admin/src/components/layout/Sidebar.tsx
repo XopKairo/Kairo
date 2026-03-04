@@ -24,9 +24,9 @@ export const Sidebar = () => {
     <aside className="w-64 h-screen bg-white dark:bg-surface-900 border-r border-gray-100 dark:border-gray-800 flex flex-col transition-colors duration-200">
       <div className="p-6 flex items-center space-x-3">
         <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
-          K
+          Z
         </div>
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">Kleon</span>
+        <span className="text-2xl font-bold text-gray-900 dark:text-white">Zora</span>
       </div>
 
       <div className="px-6 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">

@@ -12,13 +12,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('kleon-theme');
+    const saved = localStorage.getItem('zora-theme');
     if (saved === 'light' || saved === 'dark') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
-    localStorage.setItem('kleon-theme', theme);
+    localStorage.setItem('zora-theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

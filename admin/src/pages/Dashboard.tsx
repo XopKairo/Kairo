@@ -27,7 +27,7 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, Franklin! Here's your overview.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, Admin! Here's your overview.</p>
         </div>
         <div className="flex gap-3">
           <button className="px-4 py-2 bg-white dark:bg-surface-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-800 transition-colors shadow-sm">
