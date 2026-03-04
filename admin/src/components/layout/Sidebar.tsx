@@ -1,6 +1,6 @@
 
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -15,6 +15,7 @@ const navItems = [
   { icon: Building2, label: 'Agencies', path: '/agencies' },
   { icon: Wallet, label: 'Economy', path: '/economy' },
   { icon: Flag, label: 'Reports', path: '/reports' },
+  { icon: Image, label: 'Banners', path: '/banners' },
   { icon: Settings, label: 'App Settings', path: '/settings' },
 ];
 
@@ -68,16 +69,6 @@ export const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
           </NavLink>
         ))}
       </nav>
-
-      <div className="p-4 m-4 bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl text-white relative overflow-hidden shadow-soft">
-        <div className="relative z-10">
-          <h4 className="font-semibold mb-1 text-sm">Increase your work with kanban</h4>
-          <p className="text-brand-100 text-xs mb-3">Organize projects clearly.</p>
-          <button className="bg-white text-brand-600 text-sm font-medium py-2 px-4 rounded-lg w-full hover:bg-brand-50 transition-colors">
-            Try Now
-          </button>
-        </div>
-      </div>
     </aside>
     </>
   );

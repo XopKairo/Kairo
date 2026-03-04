@@ -1,9 +1,18 @@
 
 import { Bell, MessageSquare, Search, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useState } from 'react';
 
 export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const { theme, toggleTheme } = useTheme();
+  const [lang, setLang] = useState(localStorage.getItem('zora-lang') || 'ENG');
+
+  const toggleLanguage = () => {
+    const newLang = lang === 'ENG' ? 'MAL' : 'ENG';
+    setLang(newLang);
+    localStorage.setItem('zora-lang', newLang);
+    window.location.reload();
+  };
 
   return (
     <header className="h-20 bg-white dark:bg-surface-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 sm:px-8 transition-colors duration-200">
@@ -21,9 +30,9 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-6">
-        <button className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-          ENG
+      <div className="flex items-center space-x-4 sm:space-x-6">
+        <button onClick={toggleLanguage} className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+          {lang}
         </button>
 
         <button 
@@ -33,17 +42,17 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
           {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
 
-        <button className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors relative rounded-lg hover:bg-gray-50 dark:hover:bg-surface-100">
+        <button className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors relative rounded-lg hover:bg-gray-50 dark:hover:bg-surface-100 hidden sm:block">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-pink-500 rounded-full border-2 border-white dark:border-surface-900"></span>
         </button>
 
-        <button className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors relative rounded-lg hover:bg-gray-50 dark:hover:bg-surface-100">
+        <button className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors relative rounded-lg hover:bg-gray-50 dark:hover:bg-surface-100 hidden sm:block">
           <MessageSquare className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-500 rounded-full border-2 border-white dark:border-surface-900"></span>
         </button>
 
-        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+        <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden sm:block"></div>
 
         <button className="flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-surface-100 p-2 rounded-xl transition-colors">
           <div className="text-right hidden sm:block">
@@ -55,7 +64,7 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
             alt="Profile"
             className="w-10 h-10 rounded-xl object-cover"
           />
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="w-4 h-4 text-gray-400 hidden sm:block" />
         </button>
       </div>
     </header>

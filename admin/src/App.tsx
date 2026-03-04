@@ -13,6 +13,7 @@ import Agencies from './pages/agencies/Agencies';
 import Economy from './pages/economy/Economy';
 import Reports from './pages/reports/Reports';
 import Settings from './pages/settings/Settings';
+import Banners from './pages/banners/Banners';
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const authContext = useContext(AuthContext);
@@ -38,6 +39,7 @@ function App() {
             <Route path="/agencies" element={<ProtectedRoute><Layout><Agencies /></Layout></ProtectedRoute>} />
             <Route path="/economy" element={<ProtectedRoute><Layout><Economy /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
+            <Route path="/banners" element={<ProtectedRoute><Layout><Banners /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
             
             {/* Fallback route */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, MoreHorizontal, CheckCircle, XCircle } from 'lucide-react';
+import { Search, MoreHorizontal, CheckCircle, XCircle, Trash2, Edit } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Host {
@@ -16,20 +16,34 @@ interface Host {
 export default function Hosts() {
   const [hosts, setHosts] = useState<Host[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHosts = async () => {
       try {
         const response = await apiClient.get('/admin/hosts');
         setHosts(response.data);
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching hosts:', error);
+      } finally {
         setLoading(false);
       }
     };
     fetchHosts();
   }, []);
+
+  const toggleMenu = (id: string) => {
+    if (activeMenu === id) {
+      setActiveMenu(null);
+    } else {
+      setActiveMenu(id);
+    }
+  };
+
+  const handleAction = (action: string, id: string) => {
+    alert(`Action: ${action} on Host ID: ${id}`);
+    setActiveMenu(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -50,13 +64,9 @@ export default function Hosts() {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-surface-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-shadow dark:text-white border-transparent"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-surface-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-surface-700 transition-colors">
-            <Filter className="w-4 h-4" />
-            Filter
-          </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 dark:text-gray-400 text-sm font-medium">
@@ -68,11 +78,15 @@ export default function Hosts() {
                 <th className="py-4 px-6 font-medium text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm relative">
               {loading ? (
-                <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
-              ) : hosts.map((host) => (
-                <tr key={host._id || host.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
+                <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading hosts...</td></tr>
+              ) : hosts.length === 0 ? (
+                <tr><td colSpan={6} className="py-8 text-center text-gray-500">No hosts found.</td></tr>
+              ) : hosts.map((host) => {
+                const rowId = host._id || host.id || Math.random().toString();
+                return (
+                <tr key={rowId} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
                   <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{host.name || 'Unknown'}</td>
                   <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.agency || 'None'}</td>
                   <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{host.calls || 0}</td>
@@ -82,7 +96,7 @@ export default function Hosts() {
                       {host.isVerified ? 'Verified' : (host.status || 'Pending')}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-right flex justify-end gap-2">
+                  <td className="py-4 px-6 text-right flex justify-end gap-2 relative">
                     {!host.isVerified && (
                       <>
                         <button className="text-green-500 hover:text-green-600 transition-colors" title="Approve">
@@ -93,12 +107,25 @@ export default function Hosts() {
                         </button>
                       </>
                     )}
-                    <button className="text-gray-400 hover:text-brand-500 transition-colors">
+                    <button onClick={() => toggleMenu(rowId)} className="text-gray-400 hover:text-brand-500 transition-colors p-1 relative z-10">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
+                    {activeMenu === rowId && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)}></div>
+                        <div className="absolute right-8 top-10 w-40 bg-white dark:bg-surface-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-2 z-20 overflow-hidden">
+                          <button onClick={() => handleAction('Edit', rowId)} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-surface-700 flex items-center gap-2">
+                            <Edit className="w-4 h-4" /> Edit Profile
+                          </button>
+                          <button onClick={() => handleAction('Delete', rowId)} className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2">
+                            <Trash2 className="w-4 h-4" /> Delete Host
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

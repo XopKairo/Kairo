@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Settings as SettingsIcon, Smartphone, Shield, Key } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Key } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import { AuthContext } from '../../context/AuthContext';
 
@@ -111,14 +111,6 @@ export default function Settings() {
 
       <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 p-6 mb-6">
          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-brand-500" /> App Banners
-              </h3>
-              <div className="space-y-4">
-                 <button className="px-4 py-2 bg-gray-50 dark:bg-surface-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium w-full text-left hover:bg-gray-100 dark:hover:bg-surface-700 transition-colors">Manage Home Banners</button>
-              </div>
-            </div>
             <div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <SettingsIcon className="w-5 h-5 text-brand-500" /> Global Configuration
