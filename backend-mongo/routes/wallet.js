@@ -156,4 +156,14 @@ router.post('/earn-ad', async (req, res) => {
   }
 });
 
+// GET active coin packages for store
+router.get('/coin-packages', async (req, res) => {
+  try {
+    const packages = await CoinPackage.find({ isActive: true }).sort({ coins: 1 });
+    res.json(packages);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

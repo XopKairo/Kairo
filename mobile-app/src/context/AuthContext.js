@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loginUser, registerUser } from '../services/api';
+import api, { loginUser, registerUser } from '../services/api';
 import socketService from '../services/socketService';
 
 const AuthContext = createContext({});
@@ -8,10 +8,36 @@ const AuthContext = createContext({});
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   useEffect(() => {
-    loadStorageData();
+    async function init() {
+      await Promise.all([
+        loadStorageData(),
+        checkMaintenance()
+      ]);
+    }
+    init();
+    
+    // Periodically check for maintenance mode (every 5 minutes)
+    const interval = setInterval(checkMaintenance, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
+
+  async function checkMaintenance() {
+    try {
+      const res = await api.get('/settings');
+      if (res.data && res.data.maintenance) {
+        setIsMaintenance(true);
+      } else {
+        setIsMaintenance(false);
+      }
+    } catch (error) {
+      if (error.status === 503) {
+        setIsMaintenance(true);
+      }
+    }
+  }
 
   async function loadStorageData() {
     try {
@@ -52,7 +78,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isMaintenance, signIn, signUp, signOut, checkMaintenance }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Production API URL
 export const API_URL = 'https://kairo-b1i9.onrender.com/api';
+export const BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 // Create an axios instance
 const api = axios.create({
@@ -18,6 +20,18 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Global response interceptor for Maintenance Mode and Other status codes
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // If backend returns 503 Service Unavailable with maintenance flag
+    if (error.response && error.response.status === 503) {
+       // Handled in AuthContext polling
+    }
     return Promise.reject(error);
   }
 );

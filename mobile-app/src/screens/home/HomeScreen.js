@@ -14,7 +14,7 @@ import { Text, Card, Avatar, ActivityIndicator } from 'react-native-paper';
 import { Search, Bell, ShieldCheck, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../../services/api';
+import api, { BASE_URL } from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 
 const { width } = Dimensions.get('window');
@@ -37,11 +37,20 @@ const HomeScreen = ({ navigation }) => {
       if (userDataStr) setCurrentUser(JSON.parse(userDataStr));
 
       const [bannerRes, hostRes, settingsRes] = await Promise.all([
-        api.get('/marketing/banners').catch(() => ({ data: [] })),
+        api.get('/settings/app').catch(() => ({ data: { banners: [] } })), // Fetching from unified settings/app
         api.get('/hosts').catch(() => ({ data: [] })),
         api.get('/settings').catch(() => ({ data: { callRate: 30 } }))
       ]);
-      setBanners(bannerRes.data);
+      
+      // Handle banners if they are in settingsRes or dedicated res
+      if (bannerRes.data && bannerRes.data.banners) {
+        setBanners(bannerRes.data.banners);
+      } else {
+        // Fallback to dedicated marketing banners if exists
+        const marketingRes = await api.get('/marketing/banners').catch(() => ({ data: [] }));
+        setBanners(marketingRes.data);
+      }
+
       setHosts(hostRes.data);
       if (settingsRes.data) setAppSettings(settingsRes.data);
     } catch (error) {
@@ -53,7 +62,7 @@ const HomeScreen = ({ navigation }) => {
   const renderBanner = ({ item }) => (
     <View style={styles.bannerContainer}>
       <Image 
-        source={{ uri: `https://kairo-b1i9.onrender.com${item.imageUrl}` }} 
+        source={{ uri: item.imageUrl.startsWith('http') ? item.imageUrl : `${BASE_URL}/${item.imageUrl}` }} 
         style={styles.bannerImage} 
         resizeMode="cover"
       />
@@ -129,9 +138,9 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Banners */}
         <FlatList
-          data={banners.filter(b => b.isActive)}
+          data={banners.filter(b => b.status === 'Active')}
           renderItem={renderBanner}
-          keyExtractor={item => item._id}
+          keyExtractor={item => item._id || item.id}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}

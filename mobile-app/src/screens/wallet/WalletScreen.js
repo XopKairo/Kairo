@@ -12,6 +12,7 @@ const COIN_TO_INR_RATE = 0.1;
 
 const WalletScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
+  const [packages, setPackages] = useState([]);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [paymentType, setPaymentType] = useState('upi'); 
   const [upiId, setUpiId] = useState('');
@@ -20,6 +21,7 @@ const WalletScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchUserData();
+    fetchPackages();
     const cleanupAds = initRewardedAd(
       () => setAdLoading(false),
       async (rewardAmount) => {
@@ -42,6 +44,13 @@ const WalletScreen = ({ navigation }) => {
       const response = await api.get(`/users/${parsedUser.id || parsedUser._id}`);
       setUser(response.data);
       if (response.data.paymentMethods?.upiId) setUpiId(response.data.paymentMethods.upiId);
+    } catch (error) {}
+  };
+
+  const fetchPackages = async () => {
+    try {
+      const res = await api.get('/wallet/coin-packages');
+      setPackages(res.data);
     } catch (error) {}
   };
 
@@ -100,6 +109,26 @@ const WalletScreen = ({ navigation }) => {
           </View>
           {adLoading ? <ActivityIndicator color={COLORS.accentGlow} /> : <ArrowUpRight color={COLORS.accentGlow} size={24} />}
         </TouchableOpacity>
+
+        {/* Coin Store */}
+        <View style={styles.storeSection}>
+           <Text style={styles.sectionTitle}>Coin Store</Text>
+           <View style={styles.packageGrid}>
+              {packages.map((pkg) => (
+                <TouchableOpacity 
+                  key={pkg._id} 
+                  style={styles.packageCard}
+                  onPress={() => Alert.alert('Purchase', `Would you like to buy ${pkg.coins} coins for ₹${pkg.priceINR}?`)}
+                >
+                   <Text style={styles.pkgCoins}>{pkg.coins}</Text>
+                   <Text style={styles.pkgLabel}>Coins</Text>
+                   <View style={styles.pkgPriceBox}>
+                      <Text style={styles.pkgPrice}>₹{pkg.priceINR}</Text>
+                   </View>
+                </TouchableOpacity>
+              ))}
+           </View>
+        </View>
 
         <View style={styles.withdrawSection}>
            <Text style={styles.sectionTitle}>Withdraw Funds</Text>
@@ -164,6 +193,13 @@ const styles = StyleSheet.create({
   playBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   adTitle: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700' },
   adSubtitle: { color: COLORS.textGray, fontSize: 12, marginTop: 2 },
+  storeSection: { marginBottom: 30 },
+  packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  packageCard: { width: '30%', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  pkgCoins: { color: COLORS.textWhite, fontSize: 18, fontWeight: '900' },
+  pkgLabel: { color: COLORS.textGray, fontSize: 10, marginBottom: 10 },
+  pkgPriceBox: { backgroundColor: COLORS.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  pkgPrice: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
   withdrawSection: { backgroundColor: COLORS.cardBackground, padding: 25, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
   sectionTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '800', marginBottom: 20 },
   calcBox: { flexDirection: 'row', justifyContent: 'space-between', padding: 15, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 15, marginBottom: 20 },

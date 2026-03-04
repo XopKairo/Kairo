@@ -27,7 +27,9 @@ import WalletScreen from './src/screens/wallet/WalletScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
+import MaintenanceScreen from './src/screens/system/MaintenanceScreen';
 import NetworkBanner from './src/components/NetworkBanner';
+import { useAuth } from './src/context/AuthContext';
 
 // Lazy load heavy screens
 const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'));
@@ -35,37 +37,40 @@ const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'))
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function MainTabs() {
+function NavigationStack() {
+  const { isMaintenance, checkMaintenance } = useAuth();
+
+  if (isMaintenance) {
+    return <MaintenanceScreen onRefresh={checkMaintenance} />;
+  }
+
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-          if (route.name === 'Home') iconName = 'home';
-          else if (route.name === 'Feed') iconName = 'post';
-          else if (route.name === 'Discovery') iconName = 'compass';
-          else if (route.name === 'Notifications') iconName = 'bell';
-          else if (route.name === 'Profile') iconName = 'account';
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#6C2BD9',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          backgroundColor: '#0F0A19',
-          borderTopColor: 'rgba(159, 103, 255, 0.1)',
-        },
-        headerStyle: {
-          backgroundColor: '#0F0A19',
-        },
-        headerTintColor: '#F5F3FF',
-      })}
-    >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Feed" component={FeedScreen} />
-      <Tab.Screen name="Discovery" component={DiscoveryScreen} />
-      <Tab.Screen name="Notifications" component={NotificationsScreen} />
-      <Tab.Screen name="Profile" component={UserProfileScreen} />
-    </Tab.Navigator>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Splash">
+        <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
+          {(props) => (
+            <Suspense fallback={
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+                <ActivityIndicator size="large" color="#6C2BD9" />
+              </View>
+            }>
+              <VideoCallScreen {...props} />
+            </Suspense>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerStyle: { backgroundColor: '#0F0A19' }, headerTintColor: '#fff' }} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Complete Profile' }} />
+        <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
+        <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
+        <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
+        <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
@@ -87,32 +92,7 @@ export default function App() {
     <AuthProvider>
       <PaperProvider>
         <NetworkBanner />
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Splash">
-            <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-            <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
-              {(props) => (
-                <Suspense fallback={
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
-                    <ActivityIndicator size="large" color="#6C2BD9" />
-                  </View>
-                }>
-                  <VideoCallScreen {...props} />
-                </Suspense>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerStyle: { backgroundColor: '#0F0A19' }, headerTintColor: '#fff' }} />
-            <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Complete Profile' }} />
-            <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
-            <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
-            <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
-            <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <NavigationStack />
       </PaperProvider>
     </AuthProvider>
   );
