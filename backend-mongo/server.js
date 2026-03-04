@@ -28,6 +28,9 @@ import reportsRoutes from './routes/reports.js';
 import monitoringRoutes from './routes/monitoring.js';
 import settingsRoutes from './routes/settings.js';
 import chatRoutes from './routes/chat.js';
+import adminUsersRoutes from './routes/users.js';
+import adminHostsRoutes from './routes/hosts.js';
+import adminAgenciesRoutes from './routes/agencies.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -104,6 +107,9 @@ app.use('/api/admin/economy', protectAdmin, economyRoutes);
 app.use('/api/admin/reports', protectAdmin, reportsRoutes);
 app.use('/api/admin/monitoring', protectAdmin, monitoringRoutes);
 app.use('/api/admin/settings', protectAdmin, settingsRoutes);
+app.use('/api/admin/users', protectAdmin, adminUsersRoutes);
+app.use('/api/admin/hosts', protectAdmin, adminHostsRoutes);
+app.use('/api/admin/agencies', protectAdmin, adminAgenciesRoutes);
 
 // Public Settings for Mobile App
 app.use('/api/settings', settingsRoutes);
