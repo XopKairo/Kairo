@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -19,39 +19,18 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false },
   verificationSelfie: { type: String, required: false, default: '' },
   isGenderVerified: { type: Boolean, default: false },
-  paymentMethods: {
-    upiId: { type: String },
-    bankDetails: {
-      accountHolder: { type: String },
-      accountNumber: { type: String },
-      ifscCode: { type: String },
-      bankName: { type: String }
-    }
-  },
   status: { type: String, default: 'offline' },
   pushToken: { type: String, default: '' }
 }, { timestamps: true });
 
-// Add text index for search
-userSchema.index({ name: 'text', email: 'text' });
-
-// Ensure either email or phone is provided
-userSchema.pre('validate', function() {
-  if (!this.email && !this.phone) {
-    throw new Error('Either email or phone must be provided.');
-  }
-});
-
-// Hash password before saving
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
-// Match password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+export default User;

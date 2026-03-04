@@ -1,95 +1,52 @@
-const Admin = require('../models/Admin');
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
+import Admin from '../models/Admin.js';
+import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
-// Admin Login - No OTP Required, strict async/await, direct res.json
-const authAdmin = async (req, res) => {
-  let { username, email, password } = req.body;
+// Token Generation Helpers
+const generateAccessToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '15m' });
+};
+
+const generateRefreshToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+};
+
+export const authAdmin = async (req, res) => {
+  const { username, password } = req.body;
 
   try {
-    if (username) username = username.trim();
-    if (email) email = email.trim();
-
-    console.log(`[AUTH] Admin login attempt. Body:`, JSON.stringify({ 
-      username: username || 'not provided', 
-      email: email || 'not provided', 
-      password: password ? '********' : 'missing' 
-    }));
-
-    const query = [];
-    if (username) query.push({ username });
-    if (email) query.push({ email });
-
-    if (query.length === 0) {
-      console.log(`[AUTH] Login failed: No username or email provided.`);
-      return res.status(400).json({ success: false, message: 'Username or Email required' });
+    const admin = await Admin.findOne({ username });
+    if (!admin || !(await admin.matchPassword(password))) {
+      logger.warn(`Failed login attempt for admin: ${username}`);
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    console.log(`[AUTH] Executing Admin.findOne with query:`, JSON.stringify({ $or: query }));
-    const admin = await Admin.findOne({ $or: query });
+    const accessToken = generateAccessToken(admin._id, 'admin');
+    const refreshToken = generateRefreshToken(admin._id, 'admin');
 
-    if (!admin) {
-      console.log(`[AUTH] Admin not found for query:`, JSON.stringify(query));
-      return res.status(401).json({ success: false, message: 'Invalid Username or Password' });
-    }
-
-    console.log(`[AUTH] Admin user found: ${admin.username}. Comparing password...`);
-
-    const isMatch = await admin.matchPassword(password);
-    if (!isMatch) {
-      console.log(`[AUTH] Password mismatch for admin: ${admin.username}`);
-      return res.status(401).json({ success: false, message: 'Invalid Username or Password' });
-    }
-
-    if (admin.role !== 'admin') {
-      console.log(`[AUTH] Invalid role for user: ${admin.username}, role: ${admin.role}`);
-      return res.status(403).json({ success: false, message: 'Access Denied: Admin role required' });
-    }
-
-    const expiry = process.env.ADMIN_JWT_EXPIRY || '8h';
-    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: expiry });
-    return res.status(200).json({
+    logger.info(`Admin logged in: ${username}`);
+    res.json({
       success: true,
-      _id: admin._id,
-      username: admin.username,
-      email: admin.email,
-      role: admin.role,
-      token: token,
+      user: { id: admin._id, username: admin.username, role: 'admin' },
+      accessToken,
+      refreshToken
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    logger.error(`Admin Auth Error: ${error.message}`);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// Verify OTP - Backward compatibility or specific admin flows
-const verifyLoginOTP = async (req, res) => {
-  const { email, otp } = req.body;
+export const refreshTokens = async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return res.status(401).json({ message: 'No refresh token' });
 
   try {
-    const admin = await Admin.findOne({
-      email,
-      loginOTP: otp,
-      loginOTPExpires: { $gt: Date.now() }
-    });
-
-    if (!admin) {
-      return res.status(401).json({ success: false, message: 'Invalid or expired OTP' });
-    }
-
-    admin.loginOTP = undefined;
-    admin.loginOTPExpires = undefined;
-    await admin.save();
-
-    const token = jwt.sign({ id: admin._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-    return res.status(200).json({
-      success: true,
-      _id: admin._id,
-      email: admin.email,
-      token: token,
-    });
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const newAccessToken = generateAccessToken(decoded.id, decoded.role);
+    res.json({ accessToken: newAccessToken });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    res.status(403).json({ message: 'Invalid refresh token' });
   }
 };
-
-module.exports = { authAdmin, verifyLoginOTP };
