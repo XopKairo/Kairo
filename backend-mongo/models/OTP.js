@@ -1,4 +1,4 @@
-const mongoose = import('mongoose');
+import mongoose from 'mongoose';
 
 const otpSchema = new mongoose.Schema({
   contact: { type: String, required: true },

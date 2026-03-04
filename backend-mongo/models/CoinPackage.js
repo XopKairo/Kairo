@@ -1,4 +1,4 @@
-const mongoose = import('mongoose');
+import mongoose from 'mongoose';
 
 const coinPackageSchema = new mongoose.Schema({
   coins: { type: Number, required: true },

@@ -1,4 +1,4 @@
-const mongoose = import('mongoose');
+import mongoose from 'mongoose';
 
 const adminActionLogSchema = new mongoose.Schema({
   adminId: {

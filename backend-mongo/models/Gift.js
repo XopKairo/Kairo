@@ -1,4 +1,4 @@
-const mongoose = import('mongoose');
+import mongoose from 'mongoose';
 
 const giftSchema = new mongoose.Schema({
   name: { type: String, required: true },

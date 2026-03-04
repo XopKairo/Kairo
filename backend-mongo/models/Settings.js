@@ -1,4 +1,4 @@
-const mongoose = import('mongoose');
+import mongoose from 'mongoose';
 
 const settingsSchema = new mongoose.Schema({
   // Revenue Control

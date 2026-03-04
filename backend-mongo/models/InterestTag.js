@@ -1,4 +1,4 @@
-const mongoose = import('mongoose');
+import mongoose from 'mongoose';
 
 const interestTagSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
