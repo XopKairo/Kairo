@@ -1,29 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, ActivityIndicator, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import api from '../../services/api';
+import { Search, UserPlus, MapPin, ShieldCheck } from 'lucide-react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 
-
-
-const DiscoveryScreen = ({ navigation }) => {
+const DiscoveryScreen = () => {
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!query.trim()) {
-      fetchAllUsers();
-    } else {
-      const delayDebounceFn = setTimeout(() => {
-        searchUsers();
-      }, 500);
-      return () => clearTimeout(delayDebounceFn);
-    }
-  }, [query]);
+    fetchAllUsers();
+  }, []);
 
   const fetchAllUsers = async () => {
     setLoading(true);
     try {
-      // Fetch general list of users (showing active ones first)
       const response = await api.get('/users');
       setUsers(response.data || []);
     } catch (error) {
@@ -33,196 +25,75 @@ const DiscoveryScreen = ({ navigation }) => {
     }
   };
 
-  const searchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const renderUser = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.userCard}
-      onPress={() => {
-        // Placeholder: Navigate to detail or start chat
-        // navigation.navigate('Chat', { recipientId: item._id, recipientName: item.name });
-      }}
-    >
-      <View style={[styles.avatarPlaceholder, { backgroundColor: item.gender === 'Female' ? '#FF69B4' : '#007BFF' }]}>
-        <Text style={styles.avatarText}>{item.name ? item.name.charAt(0).toUpperCase() : '?'}</Text>
-        <View style={[styles.statusDot, { backgroundColor: item.status === 'online' ? '#4CAF50' : '#CCC' }]} />
+    <View style={styles.userCard}>
+      <View style={[styles.avatar, { backgroundColor: item.gender === 'Female' ? '#E91E63' : '#6C2BD9' }]}>
+        <Text style={styles.avatarText}>{item.name?.charAt(0).toUpperCase()}</Text>
+        <View style={[styles.statusDot, { backgroundColor: item.status === 'online' ? COLORS.success : '#555' }]} />
       </View>
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>
-          {item.name}
-          {item.isVerified && <Text style={styles.blueTick}> ✓</Text>}
-        </Text>
-        <Text style={styles.userStatus}>{item.status === 'online' ? 'Active Now' : 'Offline'}</Text>
-        {item.location ? <Text style={styles.userDetail}>📍 {item.location}</Text> : null}
+        <Text style={styles.userName}>{item.name} {item.isVerified && <ShieldCheck size={14} color={COLORS.accentGlow} />}</Text>
+        <View style={styles.detailRow}>
+           <MapPin size={12} color={COLORS.textGray} />
+           <Text style={styles.userDetail}>{item.location || 'Global'}</Text>
+        </View>
       </View>
-      <TouchableOpacity 
-        style={styles.connectButton}
-        onPress={() => {
-           // Direct to video call or chat
-        }}
-      >
-        <Text style={styles.connectText}>Connect</Text>
+      <TouchableOpacity style={styles.connectBtn}>
+        <UserPlus color={COLORS.textWhite} size={18} />
       </TouchableOpacity>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Discovery</Text>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by nickname, location, or interests..."
-          value={query}
-          onChangeText={setQuery}
-          placeholderTextColor="#999"
-        />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <Text style={styles.title}>DISCOVERY</Text>
+        <View style={styles.searchBar}>
+          <Search color={COLORS.textGray} size={20} />
+          <TextInput
+            style={styles.input}
+            placeholder="Search elite members..."
+            placeholderTextColor="#6B7280"
+            value={query}
+            onChangeText={setQuery}
+          />
+        </View>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
+        <View style={styles.center}><ActivityIndicator color={COLORS.primary} /></View>
       ) : (
         <FlatList
           data={users}
-          keyExtractor={(item) => item._id}
+          keyExtractor={item => item._id}
           renderItem={renderUser}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={
-            query.trim() !== '' ? (
-              <Text style={styles.emptyText}>No users found. Try a different term.</Text>
-            ) : (
-              <Text style={styles.emptyText}>Start typing to discover people.</Text>
-            )
-          }
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-  },
-  searchInput: {
-    backgroundColor: '#FFF',
-    height: 50,
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    fontSize: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    color: '#333',
-  },
-  loader: {
-    marginTop: 40,
-  },
-  listContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  avatarPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#007BFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-    position: 'relative',
-  },
-  statusDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
-  avatarText: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 2,
-  },
-  userStatus: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 4,
-  },
-  blueTick: {
-    color: '#007BFF',
-  },
-  userDetail: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 2,
-  },
-  connectButton: {
-    backgroundColor: '#F0F0F0',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-  },
-  connectText: {
-    color: '#007BFF',
-    fontWeight: '600',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    marginTop: 50,
-    fontSize: 16,
-  }
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  center: { flex: 1, justifyContent: 'center' },
+  header: { padding: SPACING.lg },
+  title: { fontSize: 24, fontWeight: '900', color: COLORS.textWhite, letterSpacing: 2, marginBottom: 20 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBackground, paddingHorizontal: 15, height: 50, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  input: { flex: 1, marginLeft: 10, color: COLORS.textWhite, fontSize: 15 },
+  list: { paddingHorizontal: SPACING.lg },
+  userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
+  avatar: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  avatarText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  statusDot: { position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: COLORS.cardBackground },
+  userInfo: { flex: 1, marginLeft: 15 },
+  userName: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700' },
+  detailRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 },
+  userDetail: { color: COLORS.textGray, fontSize: 12 },
+  connectBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { textAlign: 'center', marginTop: 50, color: COLORS.textGray }
 });
 
 export default DiscoveryScreen;

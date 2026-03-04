@@ -1,214 +1,113 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
-
-
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
+import ZoraButton from '../../components/ZoraButton';
+import { CheckCircle2, ChevronLeft, Heart } from 'lucide-react-native';
 
 const SelectInterestsScreen = ({ navigation }) => {
-  const [availableTags, setAvailableTags] = useState([]);
-  const [selectedInterests, setSelectedInterests] = useState([]);
+  const [interests, setInterests] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchTagsAndUserInterests();
+    fetchInterests();
   }, []);
 
-  const fetchTagsAndUserInterests = async () => {
+  const fetchInterests = async () => {
     try {
-      // Fetch global active tags
-      const tagsRes = await api.get(`/interests/active`);
-      setAvailableTags(tagsRes.data || []);
-
-      // Fetch user's current interests
-      const userStr = await AsyncStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user && user.id) {
-            // Getting user details might require a GET endpoint, 
-            // for now, let's assume we just load from AsyncStorage if stored,
-            // or just start empty if not. (In a real app, fetch full user profile)
-            if (user.interests) {
-                setSelectedInterests(user.interests);
-            }
-        }
-      }
+      const [allRes, userRes] = await Promise.all([
+        api.get('/interests'),
+        AsyncStorage.getItem('userData').then(async (data) => {
+           const u = JSON.parse(data);
+           return api.get(`/users/${u.id || u._id}`);
+        })
+      ]);
+      setInterests(allRes.data || []);
+      setSelected(userRes.data?.interests || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      // Fallback tags if API fails
-      if(availableTags.length === 0) {
-          setAvailableTags([
-              { _id: '1', name: 'Music', icon: '🎵' },
-              { _id: '2', name: 'Gaming', icon: '🎮' },
-              { _id: '3', name: 'Travel', icon: '✈️' },
-              { _id: '4', name: 'Fitness', icon: '💪' },
-              { _id: '5', name: 'Movies', icon: '🎬' },
-              { _id: '6', name: 'Photography', icon: '📸' }
-          ]);
-      }
+      console.error('Fetch interests error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleInterest = (tagName) => {
-    if (selectedInterests.includes(tagName)) {
-      setSelectedInterests(selectedInterests.filter(i => i !== tagName));
+  const toggleInterest = (id) => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter(i => i !== id));
     } else {
-      if (selectedInterests.length >= 5) {
-        Alert.alert('Limit Reached', 'You can select up to 5 interests.');
-        return;
-      }
-      setSelectedInterests([...selectedInterests, tagName]);
+      setSelected([...selected, id]);
     }
   };
 
-  const saveInterests = async () => {
+  const handleSave = async () => {
     setSaving(true);
     try {
-      const userStr = await AsyncStorage.getItem('user');
-      const token = await AsyncStorage.getItem('userToken');
-      const user = userStr ? JSON.parse(userStr) : null;
-
-      if (!user || !user.id) {
-        Alert.alert('Error', 'User not found. Please log in again.');
-        return;
-      }
-
-      await api.put(`/users/${user.id}/interests`, {
-        interests: selectedInterests
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      // Update local storage
-      user.interests = selectedInterests;
-      await AsyncStorage.setItem('user', JSON.stringify(user));
-
-      Alert.alert('Success', 'Interests updated successfully!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      const userDataStr = await AsyncStorage.getItem('userData');
+      const u = JSON.parse(userDataStr);
+      await api.put(`/users/${u.id || u._id}/profile`, { interests: selected });
+      Alert.alert('Success', 'Interests updated!');
+      navigation.goBack();
     } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Error', 'Failed to save interests.');
+      Alert.alert('Error', 'Failed to save interests');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#8A2BE2" />
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>What are you into?</Text>
-      <Text style={styles.subtitle}>Select up to 5 interests to help us find the best matches for you.</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}><ChevronLeft color={COLORS.textWhite} size={28} /></TouchableOpacity>
+        <Text style={styles.headerTitle}>INTERESTS</Text>
+        <View style={{ width: 28 }} />
+      </View>
 
-      <ScrollView contentContainerStyle={styles.chipsContainer}>
-        {availableTags.map((tag) => {
-          const isSelected = selectedInterests.includes(tag.name);
-          return (
-            <TouchableOpacity
-              key={tag._id}
-              style={[styles.chip, isSelected && styles.chipSelected]}
-              onPress={() => toggleInterest(tag.name)}
+      <View style={styles.intro}>
+         <Heart color={COLORS.accentGlow} size={40} fill={COLORS.accentGlow} />
+         <Text style={styles.title}>What do you like?</Text>
+         <Text style={styles.subtitle}>Select topics to personalize your experience.</Text>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 50 }} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.chipContainer} showsVerticalScrollIndicator={false}>
+          {interests.map((item) => (
+            <TouchableOpacity 
+              key={item._id} 
+              style={[styles.chip, selected.includes(item.name) && styles.activeChip]} 
+              onPress={() => toggleInterest(item.name)}
             >
-              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                {tag.icon} {tag.name}
-              </Text>
+              <Text style={[styles.chipText, selected.includes(item.name) && { color: '#FFF' }]}>{item.name}</Text>
+              {selected.includes(item.name) && <CheckCircle2 size={14} color="#FFF" style={{ marginLeft: 8 }} />}
             </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+          ))}
+        </ScrollView>
+      )}
 
-      <TouchableOpacity 
-        style={[styles.saveButton, saving && styles.saveButtonDisabled]} 
-        onPress={saveInterests}
-        disabled={saving}
-      >
-        {saving ? (
-          <ActivityIndicator color="#FFF" />
-        ) : (
-          <Text style={styles.saveText}>Save Interests</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+      <View style={styles.footer}>
+        <ZoraButton title="Save Interests" onPress={handleSave} loading={saving} />
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    padding: 20,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 25,
-    lineHeight: 22,
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-  },
-  chip: {
-    backgroundColor: '#F0F0F0',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    marginRight: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  chipSelected: {
-    backgroundColor: '#8A2BE2',
-    borderColor: '#8A2BE2',
-  },
-  chipText: {
-    color: '#555',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  chipTextSelected: {
-    color: '#FFF',
-  },
-  saveButton: {
-    backgroundColor: '#8A2BE2',
-    padding: 16,
-    borderRadius: 25,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#B57EDC',
-  },
-  saveText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  }
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg },
+  headerTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  intro: { alignItems: 'center', marginTop: 20, marginBottom: 30 },
+  title: { color: COLORS.textWhite, fontSize: 24, fontWeight: '900', marginTop: 15 },
+  subtitle: { color: COLORS.textGray, fontSize: 14, textAlign: 'center', marginTop: 8, paddingHorizontal: 40 },
+  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', padding: SPACING.lg, justifyContent: 'center', gap: 12 },
+  chip: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBackground, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  activeChip: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipText: { color: COLORS.textGray, fontWeight: 'bold', fontSize: 14 },
+  footer: { padding: SPACING.xl }
 });
 
 export default SelectInterestsScreen;

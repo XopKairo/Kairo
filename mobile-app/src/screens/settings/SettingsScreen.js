@@ -1,61 +1,77 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { List, Switch, Divider } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text, Switch, TouchableOpacity, SafeAreaView, StatusBar, ScrollView, Alert } from 'react-native';
+import { Bell, Shield, LogOut, ChevronRight, Moon, UserCircle, MessageSquare } from 'lucide-react-native';
+import { COLORS, SPACING } from '../../theme/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SettingsScreen = () => {
-  const [isNotificationsEnabled, setIsNotificationsEnabled] = React.useState(true);
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+const SettingsScreen = ({ navigation }) => {
+  const [notifs, setNotifs] = useState(true);
+  const [isDark, setIsDark] = useState(true);
+
+  const SettingItem = ({ icon: Icon, title, right, onPress, color = COLORS.textWhite }) => (
+    <TouchableOpacity style={styles.item} onPress={onPress} disabled={!onPress}>
+      <View style={styles.left}>
+        <View style={styles.iconBox}><Icon color={color} size={20} /></View>
+        <Text style={styles.itemTitle}>{title}</Text>
+      </View>
+      {right ? right : <ChevronRight color={COLORS.textGray} size={18} />}
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={styles.container}>
-      <List.Section>
-        <List.Subheader>General</List.Subheader>
-        <List.Item
-          title="Push Notifications"
-          left={() => <List.Icon icon="bell" />}
-          right={() => (
-            <Switch
-              value={isNotificationsEnabled}
-              onValueChange={() => setIsNotificationsEnabled(!isNotificationsEnabled)}
-            />
-          )}
-        />
-        <Divider />
-        <List.Item
-          title="Dark Mode"
-          left={() => <List.Icon icon="theme-light-dark" />}
-          right={() => (
-            <Switch
-              value={isDarkMode}
-              onValueChange={() => setIsDarkMode(!isDarkMode)}
-            />
-          )}
-        />
-      </List.Section>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>SETTINGS</Text>
+      </View>
 
-      <List.Section>
-        <List.Subheader>Account</List.Subheader>
-        <List.Item
-          title="Privacy Policy"
-          left={() => <List.Icon icon="shield-account" />}
-          onPress={() => {}}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <Text style={styles.sectionLabel}>PREFERENCES</Text>
+        <SettingItem 
+          icon={Bell} 
+          title="Push Notifications" 
+          right={<Switch value={notifs} onValueChange={setNotifs} trackColor={{ false: '#333', true: COLORS.primary }} />} 
         />
-        <List.Item
-          title="Logout"
-          left={() => <List.Icon icon="logout" color="red" />}
-          onPress={() => console.log('Logout')}
-          titleStyle={{ color: 'red' }}
+        <SettingItem 
+          icon={Moon} 
+          title="Dark Mode" 
+          right={<Switch value={isDark} onValueChange={setIsDark} trackColor={{ false: '#333', true: COLORS.primary }} />} 
         />
-      </List.Section>
-    </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 30 }]}>SECURITY & SUPPORT</Text>
+        <SettingItem icon={Shield} title="Privacy Policy" onPress={() => {}} />
+        <SettingItem icon={MessageSquare} title="Support Chat" onPress={() => {}} />
+        <SettingItem icon={UserCircle} title="Account Deletion" onPress={() => {
+           Alert.alert('Delete Account', 'This action is permanent. Are you sure?', [{ text: 'Cancel' }, { text: 'Delete', style: 'destructive' }]);
+        }} color={COLORS.error} />
+
+        <TouchableOpacity 
+          style={[styles.item, { marginTop: 40, borderColor: 'rgba(255,75,75,0.2)' }]} 
+          onPress={async () => {
+            await AsyncStorage.clear();
+            navigation.replace('Login');
+          }}
+        >
+          <View style={styles.left}>
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(255,75,75,0.05)' }]}><LogOut color={COLORS.error} size={20} /></View>
+            <Text style={[styles.itemTitle, { color: COLORS.error }]}>Log Out</Text>
+          </View>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  header: { padding: SPACING.lg },
+  headerTitle: { fontSize: 22, fontWeight: '900', color: COLORS.textWhite, letterSpacing: 2 },
+  content: { padding: SPACING.lg },
+  sectionLabel: { color: COLORS.textGray, fontSize: 12, fontWeight: '900', marginBottom: 15, marginLeft: 10, letterSpacing: 1 },
+  item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.cardBackground, padding: 16, borderRadius: 18, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
+  left: { flexDirection: 'row', alignItems: 'center' },
+  iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  itemTitle: { color: COLORS.textWhite, fontSize: 15, fontWeight: '600' }
 });
 
 export default SettingsScreen;

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { updateUserProfile, API_URL } from '../../services/api';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Camera, ChevronLeft, CheckCircle2 } from 'lucide-react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
+import ZoraButton from '../../components/ZoraButton';
+import ZoraInput from '../../components/ZoraInput';
 
 const EditProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -25,15 +27,13 @@ const EditProfileScreen = ({ navigation }) => {
         setUser(userData);
         setGender(userData.gender || '');
       }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
+    } catch (error) {}
   };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to upload a selfie!');
+      Alert.alert('Permission Denied', 'Camera roll access is required.');
       return;
     }
 
@@ -50,69 +50,39 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   const handleUpdate = async () => {
-    if (!gender) {
-      Alert.alert('Error', 'Please select your gender');
-      return;
-    }
+    if (!gender) return Alert.alert('Error', 'Select your gender');
 
     setLoading(true);
     try {
       const userId = user._id || user.id;
-      let verificationSelfieUrl = user.verificationSelfie || '';
-
-      // If a new selfie is picked, upload it first (simulated or real depending on backend support)
-      // For this requirement, we'll send the URI if it's a local path, 
-      // but usually we'd upload to Cloudinary and get a URL.
-      // Since our backend PUT /profile expects a string URL, let's handle multipart if needed.
-      // But for simplicity and based on user request, we'll assume the backend can handle the update.
-      
-      // Note: In a real app, you'd use a separate upload endpoint or multipart for the selfie.
-      // We'll use the existing /verification/submit logic if a selfie is provided and gender is female.
-      
       const updateData = { gender };
       
       if (selfie) {
-        // Upload selfie to Cloudinary first
         setUploading(true);
         const formData = new FormData();
         const selfieName = selfie.uri.split('/').pop();
-        const selfieMatch = /\.(\w+)$/.exec(selfieName);
-        const selfieType = selfieMatch ? `image/${selfieMatch[1]}` : `image`;
-        
         formData.append('image', {
           uri: selfie.uri,
           name: selfieName,
-          type: selfieType,
+          type: `image/${selfieName.split('.').pop()}`,
         });
         formData.append('userId', userId);
-        formData.append('mediaType', 'image');
 
-        // We use the posts endpoint for a generic upload if no dedicated upload endpoint exists
-        // or we can just pass the base64/uri if the backend is updated.
-        // Let's assume we need to upload to get a URL.
         const uploadRes = await fetch(`${API_URL}/posts`, {
           method: 'POST',
           body: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         const uploadData = await uploadRes.json();
-        if (uploadData.mediaUrl) {
-            updateData.verificationSelfie = uploadData.mediaUrl;
-        }
+        if (uploadData.mediaUrl) updateData.verificationSelfie = uploadData.mediaUrl;
         setUploading(false);
       }
 
-      const response = await updateUserProfile(userId, updateData);
-      
-      if (response.user) {
-        Alert.alert('Success', 'Profile updated successfully!');
-        navigation.goBack();
-      }
+      await updateUserProfile(userId, updateData);
+      Alert.alert('Success', 'Profile updated!');
+      navigation.goBack();
     } catch (error) {
-      console.error('Update error:', error);
-      Alert.alert('Error', error.message || 'Failed to update profile');
+      Alert.alert('Update Failed', 'Try again later.');
     } finally {
       setLoading(false);
       setUploading(false);
@@ -120,77 +90,63 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>Identify as:</Text>
-      <View style={styles.genderContainer}>
-        {['Male', 'Female', 'Other'].map((g) => (
-          <TouchableOpacity 
-            key={g}
-            style={[styles.genderBtn, gender === g && styles.activeGender]} 
-            onPress={() => setGender(g)}
-          >
-            <Text style={[styles.genderText, gender === g && styles.activeGenderText]}>{g}</Text>
-          </TouchableOpacity>
-        ))}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <ChevronLeft color={COLORS.textWhite} size={28} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>EDIT PROFILE</Text>
+        <View style={{ width: 28 }} />
       </View>
 
-      <Text style={styles.label}>Verification Selfie:</Text>
-      <Text style={styles.hint}>Upload a clear photo for gender verification (Required for Female Hosts)</Text>
-      
-      <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-        {selfie ? (
-          <Image source={{ uri: selfie.uri }} style={styles.image} />
-        ) : user?.verificationSelfie ? (
-          <Image source={{ uri: user.verificationSelfie }} style={styles.image} />
-        ) : (
-          <View style={styles.placeholder}>
-            <Icon name="camera-plus" size={40} color="#8A2BE2" />
-            <Text style={styles.uploadText}>Upload Selfie</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.label}>Identity</Text>
+        <View style={styles.genderRow}>
+          {['Male', 'Female', 'Other'].map((g) => (
+            <TouchableOpacity 
+              key={g}
+              style={[styles.genderBtn, gender === g && styles.activeGender]} 
+              onPress={() => setGender(g)}
+            >
+              {gender === g && <CheckCircle2 size={14} color="#FFF" style={{marginRight: 6}} />}
+              <Text style={[styles.genderText, gender === g && { color: '#FFF' }]}>{g}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <TouchableOpacity 
-        style={[styles.saveBtn, loading && styles.disabledBtn]} 
-        onPress={handleUpdate}
-        disabled={loading}
-      >
-        <LinearGradient colors={['#8A2BE2', '#6a11cb']} style={styles.btnGradient}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>SAVE CHANGES</Text>}
-        </LinearGradient>
-      </TouchableOpacity>
-      
-      {uploading && <Text style={styles.uploadingText}>Uploading photo...</Text>}
-    </ScrollView>
+        <Text style={styles.label}>Verification Selfie</Text>
+        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+          {selfie || user?.verificationSelfie ? (
+            <Image source={{ uri: selfie?.uri || user?.verificationSelfie }} style={styles.image} />
+          ) : (
+            <View style={styles.placeholder}>
+              <Camera color={COLORS.primary} size={40} />
+              <Text style={styles.uploadText}>Update Selfie</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <ZoraButton title="Save Profile" onPress={handleUpdate} loading={loading || uploading} />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 25 },
-  label: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 15, marginTop: 10 },
-  hint: { fontSize: 13, color: '#666', marginBottom: 15, marginTop: -10 },
-  genderContainer: { flexDirection: 'row', gap: 10, marginBottom: 25 },
-  genderBtn: { 
-    flex: 1, height: 45, borderRadius: 10, borderWidth: 1, borderColor: '#8A2BE2',
-    justifyContent: 'center', alignItems: 'center'
-  },
-  activeGender: { backgroundColor: '#8A2BE2' },
-  genderText: { color: '#8A2BE2', fontWeight: 'bold' },
-  activeGenderText: { color: '#fff' },
-  uploadBox: {
-    width: '100%', height: 200, backgroundColor: '#f5f5f5', borderRadius: 20,
-    borderWidth: 2, borderColor: '#8A2BE2', borderStyle: 'dashed',
-    justifyContent: 'center', alignItems: 'center', overflow: 'hidden', marginBottom: 30
-  },
-  image: { width: '100%', height: '100%', resizeMode: 'cover' },
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg },
+  headerTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  content: { padding: SPACING.lg },
+  label: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700', marginBottom: 15, marginTop: 10 },
+  genderRow: { flexDirection: 'row', gap: 10, marginBottom: 30 },
+  genderBtn: { flex: 1, height: 50, borderRadius: 15, backgroundColor: COLORS.cardBackground, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)', flexDirection: 'row' },
+  activeGender: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  genderText: { color: COLORS.textGray, fontWeight: 'bold' },
+  uploadBox: { width: '100%', height: 250, backgroundColor: COLORS.cardBackground, borderRadius: 24, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', marginBottom: 40, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  image: { width: '100%', height: '100%' },
   placeholder: { alignItems: 'center' },
-  uploadText: { color: '#8A2BE2', marginTop: 10, fontWeight: '600' },
-  saveBtn: { height: 55, borderRadius: 15, overflow: 'hidden', elevation: 5, marginTop: 10 },
-  btnGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  disabledBtn: { opacity: 0.7 },
-  uploadingText: { textAlign: 'center', marginTop: 10, color: '#8A2BE2', fontWeight: 'bold' }
+  uploadText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' }
 });
 
 export default EditProfileScreen;

@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 3.8.0"
+    "version": ">= 3.8.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -10,24 +11,13 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease"
-      }
-    },
-    "premium-apk": {
-      "distribution": "internal",
-      "android": {
         "buildType": "apk"
-      },
-      "channel": "production"
+      }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
       }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }

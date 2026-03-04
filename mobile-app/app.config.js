@@ -1,8 +1,9 @@
 export default {
   "expo": {
     "name": "Zora",
+    "owner": "omalloorajil",
     "slug": "zora",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -76,7 +77,7 @@ export default {
     },
     "extra": {
       "eas": {
-        "projectId": "e60fc663-b454-4068-a3ab-9ee38551aff4"
+        "projectId": "0a5a5301-5383-43ce-89df-b8869ca083aa"
       }
     }
   }

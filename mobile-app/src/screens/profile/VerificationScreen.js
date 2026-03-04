@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../../services/api';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { ShieldCheck, Camera, FileText, Info, ChevronLeft } from 'lucide-react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
+import ZoraButton from '../../components/ZoraButton';
 
 const VerificationScreen = ({ navigation }) => {
   const [selfie, setSelfie] = useState(null);
@@ -12,10 +14,7 @@ const VerificationScreen = ({ navigation }) => {
 
   const pickImage = async (type) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need camera roll permissions to make this work!');
-      return;
-    }
+    if (status !== 'granted') return Alert.alert('Permission Denied', 'Camera roll access required.');
 
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -31,10 +30,7 @@ const VerificationScreen = ({ navigation }) => {
   };
 
   const submitVerification = async () => {
-    if (!selfie || !idProof) {
-      Alert.alert('Error', 'Please upload both your selfie and ID photo.');
-      return;
-    }
+    if (!selfie || !idProof) return Alert.alert('Error', 'Please upload both images.');
 
     setLoading(true);
     try {
@@ -42,163 +38,81 @@ const VerificationScreen = ({ navigation }) => {
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       const userId = userData?._id || userData?.id;
 
-      if (!userId) {
-        Alert.alert('Error', 'User not found. Please log in again.');
-        return;
-      }
-
-      // Prepare FormData for upload
       const formData = new FormData();
       formData.append('userId', userId);
       
-      // Add Selfie
       const selfieName = selfie.uri.split('/').pop();
-      const selfieMatch = /\.(\w+)$/.exec(selfieName);
-      const selfieType = selfieMatch ? `image/${selfieMatch[1]}` : `image`;
-      formData.append('selfie', {
-        uri: selfie.uri,
-        name: selfieName,
-        type: selfieType,
-      });
+      formData.append('selfie', { uri: selfie.uri, name: selfieName, type: `image/${selfieName.split('.').pop()}` });
 
-      // Add ID Proof
       const idName = idProof.uri.split('/').pop();
-      const idMatch = /\.(\w+)$/.exec(idName);
-      const idType = idMatch ? `image/${idMatch[1]}` : `image`;
-      formData.append('idProof', {
-        uri: idProof.uri,
-        name: idName,
-        type: idType,
-      });
+      formData.append('idProof', { uri: idProof.uri, name: idName, type: `image/${idName.split('.').pop()}` });
 
-      await api.post(`/verification/submit`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await api.post(`/verification/submit`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
-      Alert.alert('Success', 'Verification request submitted successfully. Our team will review it within 24-48 hours.', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      Alert.alert('Success', 'Verification pending review.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (error) {
-      console.error('Verification error:', error);
-      const msg = error.response?.data?.message || 'Failed to submit verification request.';
-      Alert.alert('Error', msg);
+      Alert.alert('Error', 'Failed to submit request.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.headerContainer}>
-        <Icon name="shield-check" size={60} color="#8A2BE2" />
-        <Text style={styles.title}>Host Verification</Text>
-        <Text style={styles.subtitle}>Complete verification to unlock earnings and withdrawal features.</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}><ChevronLeft color={COLORS.textWhite} size={28} /></TouchableOpacity>
+        <Text style={styles.headerTitle}>VERIFICATION</Text>
+        <View style={{ width: 28 }} />
       </View>
 
-      <View style={styles.uploadSection}>
-        <View style={styles.sectionHeader}>
-            <Icon name="account-circle" size={24} color="#333" />
-            <Text style={styles.label}>1. Live Selfie</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.intro}>
+          <ShieldCheck color={COLORS.accentGlow} size={60} />
+          <Text style={styles.title}>Elite Host Verification</Text>
+          <Text style={styles.subtitle}>Unlock earnings and premium profile status.</Text>
         </View>
-        <Text style={styles.instructions}>Please upload a clear, front-facing selfie of yourself.</Text>
+
+        <Text style={styles.label}>1. Live Selfie</Text>
         <TouchableOpacity style={styles.uploadBox} onPress={() => pickImage('selfie')}>
-          {selfie ? (
-            <Image source={{ uri: selfie.uri }} style={styles.image} />
-          ) : (
-            <View style={styles.placeholder}>
-                <Icon name="camera" size={30} color="#888" />
-                <Text style={styles.uploadText}>Upload Selfie</Text>
-            </View>
+          {selfie ? <Image source={{ uri: selfie.uri }} style={styles.image} /> : (
+            <View style={styles.placeholder}><Camera color={COLORS.primary} size={32} /><Text style={styles.uploadText}>Upload Selfie</Text></View>
           )}
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.uploadSection}>
-        <View style={styles.sectionHeader}>
-            <Icon name="card-account-details" size={24} color="#333" />
-            <Text style={styles.label}>2. Government ID</Text>
-        </View>
-        <Text style={styles.instructions}>Aadhaar Card, PAN Card, or Driving License.</Text>
+        <Text style={styles.label}>2. Government ID</Text>
         <TouchableOpacity style={styles.uploadBox} onPress={() => pickImage('id')}>
-          {idProof ? (
-            <Image source={{ uri: idProof.uri }} style={styles.image} />
-          ) : (
-            <View style={styles.placeholder}>
-                <Icon name="file-document" size={30} color="#888" />
-                <Text style={styles.uploadText}>Upload ID Proof</Text>
-            </View>
+          {idProof ? <Image source={{ uri: idProof.uri }} style={styles.image} /> : (
+            <View style={styles.placeholder}><FileText color={COLORS.primary} size={32} /><Text style={styles.uploadText}>Upload ID Proof</Text></View>
           )}
         </TouchableOpacity>
-      </View>
 
-      <TouchableOpacity 
-        style={[styles.submitButton, (loading || !selfie || !idProof) && styles.submitButtonDisabled]} 
-        onPress={submitVerification}
-        disabled={loading || !selfie || !idProof}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFF" />
-        ) : (
-          <Text style={styles.submitText}>Submit for Verification</Text>
-        )}
-      </TouchableOpacity>
-      
-      <View style={styles.infoBox}>
-          <Icon name="information-outline" size={20} color="#666" />
-          <Text style={styles.infoText}>Your data is stored securely and only used for identity verification.</Text>
-      </View>
-    </ScrollView>
+        <ZoraButton title="Submit for Review" onPress={submitVerification} loading={loading} style={{ marginTop: 20 }} />
+        
+        <View style={styles.infoBox}>
+          <Info color={COLORS.textGray} size={16} />
+          <Text style={styles.infoText}>Data is encrypted and used only for ID verification.</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA', padding: 20 },
-  headerContainer: { alignItems: 'center', marginBottom: 30, marginTop: 10 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#333', marginTop: 10 },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginTop: 5, paddingHorizontal: 10 },
-  uploadSection: {
-    backgroundColor: '#FFF',
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-  },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-  label: { fontSize: 18, fontWeight: 'bold', color: '#333', marginLeft: 10 },
-  instructions: { fontSize: 14, color: '#777', marginBottom: 15 },
-  uploadBox: {
-    height: 160,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg },
+  headerTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  content: { padding: SPACING.lg },
+  intro: { alignItems: 'center', marginBottom: 40 },
+  title: { color: COLORS.textWhite, fontSize: 24, fontWeight: '900', marginTop: 15 },
+  subtitle: { color: COLORS.textGray, fontSize: 14, textAlign: 'center', marginTop: 8 },
+  label: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700', marginBottom: 15, marginTop: 20 },
+  uploadBox: { height: 180, backgroundColor: COLORS.cardBackground, borderRadius: 24, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  image: { width: '100%', height: '100%' },
   placeholder: { alignItems: 'center' },
-  uploadText: { fontSize: 14, color: '#888', marginTop: 5, fontWeight: '500' },
-  image: { width: '100%', height: '100%', resizeMode: 'cover' },
-  submitButton: {
-    backgroundColor: '#8A2BE2',
-    padding: 18,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-    elevation: 4,
-  },
-  submitButtonDisabled: { backgroundColor: '#C084FC' },
-  submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
-  infoBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 40, paddingHorizontal: 10 },
-  infoText: { fontSize: 12, color: '#666', marginLeft: 5, textAlign: 'center' }
+  uploadText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' },
+  infoBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30, gap: 8 },
+  infoText: { color: COLORS.textGray, fontSize: 11 }
 });
 
 export default VerificationScreen;

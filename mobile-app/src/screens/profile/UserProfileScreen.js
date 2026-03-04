@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Avatar, Button, Card, Title, Paragraph, List } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { Avatar } from 'react-native-paper';
+import { Settings, Wallet, ShieldCheck, Heart, LogOut, ChevronRight, User as UserIcon } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
+import ZoraButton from '../../components/ZoraButton';
 
 const UserProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -27,140 +30,119 @@ const UserProfileScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Avatar.Image 
-          size={100} 
-          source={user?.profilePicture ? { uri: user.profilePicture } : require('../../../assets/icon.png')} 
-        />
-        <Title style={styles.name}>{user?.name || 'Loading...'}</Title>
-        <Paragraph style={styles.email}>{user?.email || user?.phone || ''}</Paragraph>
+  const ProfileItem = ({ icon: Icon, title, value, onPress, color = COLORS.textWhite }) => (
+    <TouchableOpacity style={styles.item} onPress={onPress}>
+      <View style={styles.itemLeft}>
+        <View style={styles.iconBox}><Icon color={color} size={20} /></View>
+        <View>
+          <Text style={styles.itemTitle}>{title}</Text>
+          {value && <Text style={styles.itemValue}>{value}</Text>}
+        </View>
       </View>
+      <ChevronRight color={COLORS.textGray} size={18} />
+    </TouchableOpacity>
+  );
 
-      <Card style={styles.card} elevation={2}>
-        <Card.Content>
-          <View style={styles.walletHeader}>
-            <Title>My Wallet</Title>
-            <Text style={styles.coinText}>{user?.coins || 0} Coins</Text>
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <Avatar.Image 
+              size={100} 
+              source={user?.profilePicture ? { uri: user.profilePicture } : require('../../../assets/icon.png')} 
+              style={{ backgroundColor: COLORS.cardBackground }}
+            />
+            <View style={styles.editBadge}>
+               <UserIcon color="#FFF" size={12} />
+            </View>
           </View>
-          <Paragraph style={styles.conversionInfo}>10 Coins = 1 INR</Paragraph>
-        </Card.Content>
-        <Card.Actions style={{ flexDirection: 'column', gap: 10 }}>
-          <Button 
-            mode="contained" 
-            style={styles.walletBtn}
-            onPress={() => navigation.navigate('Wallet')}
-          >
-            Manage Wallet & Withdraw
-          </Button>
-          {(!user?.gender || (user?.gender === 'Female' && !user?.isGenderVerified)) && (
-            <Button 
-              mode="outlined" 
-              style={[styles.walletBtn, { borderColor: '#8A2BE2' }]}
-              onPress={() => navigation.navigate('EditProfile')}
-            >
-              Complete Profile / Verify
-            </Button>
-          )}
-        </Card.Actions>
-      </Card>
+          <Text style={styles.name}>{user?.name || 'Loading...'}</Text>
+          <Text style={styles.id}>ID: {user?._id?.substring(0, 8).toUpperCase()}</Text>
+        </View>
 
-      <List.Section style={styles.listSection}>
-        <List.Item
-          title="Account Settings"
-          left={props => <List.Icon {...props} icon="cog" />}
-          onPress={() => navigation.navigate('EditProfile')}
-        />
-        <List.Item
-          title="Account Status"
-          description={user?.isGenderVerified ? 'Gender Verified Host' : (user?.gender === 'Female' ? 'Gender Verification Pending' : 'Standard User')}
-          left={props => <List.Icon {...props} icon={user?.isGenderVerified ? 'shield-check' : 'shield-alert'} color={user?.isGenderVerified ? '#4caf50' : '#ffa000'} />}
-        />
-        <List.Item
-          title="Withdrawal Eligibility"
-          description={user?.gender === 'Male' ? 'Not Eligible (Female Hosts Only)' : (user?.isGenderVerified ? 'Eligible' : 'Verify Gender to Unlock')}
-          left={props => <List.Icon {...props} icon="cash-multiple" color={user?.isGenderVerified ? '#4caf50' : '#ffa000'} />}
-        />
-        <List.Item
-          title="My Interests"
-          left={props => <List.Icon {...props} icon="heart" />}
-          onPress={() => navigation.navigate('SelectInterests')}
-        />
-      </List.Section>
+        <View style={styles.statsRow}>
+           <View style={styles.statBox}>
+              <Text style={styles.statValue}>{user?.coins || 0}</Text>
+              <Text style={styles.statLabel}>COINS</Text>
+           </View>
+           <View style={[styles.statBox, { borderLeftWidth: 1, borderRightWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }]}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>FOLLOWERS</Text>
+           </View>
+           <View style={styles.statBox}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>FOLLOWING</Text>
+           </View>
+        </View>
 
-      <Button 
-        mode="outlined" 
-        style={styles.logoutBtn} 
-        onPress={async () => {
-          await AsyncStorage.clear();
-          navigation.replace('Login');
-        }}
-      >
-        Logout
-      </Button>
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>FINANCE</Text>
+          <ProfileItem 
+            icon={Wallet} 
+            title="My Wallet" 
+            value={`Balance: ${user?.coins || 0} Coins`} 
+            onPress={() => navigation.navigate('Wallet')} 
+            color={COLORS.accentGlow}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>ACCOUNT</Text>
+          <ProfileItem 
+            icon={Settings} 
+            title="Account Settings" 
+            onPress={() => navigation.navigate('EditProfile')} 
+          />
+          <ProfileItem 
+            icon={ShieldCheck} 
+            title="Verification Status" 
+            value={user?.isGenderVerified ? 'Premium Verified' : 'Unverified'} 
+            onPress={() => navigation.navigate('Verification')} 
+            color={user?.isGenderVerified ? COLORS.success : COLORS.error}
+          />
+          <ProfileItem 
+            icon={Heart} 
+            title="My Interests" 
+            onPress={() => navigation.navigate('SelectInterests')} 
+          />
+        </View>
+
+        <ZoraButton 
+          title="Sign Out" 
+          variant="outline" 
+          style={styles.logoutBtn} 
+          onPress={async () => {
+            await AsyncStorage.clear();
+            navigation.replace('Login');
+          }}
+        />
+        <View style={{ height: 100 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    elevation: 2,
-    marginBottom: 20,
-  },
-  name: {
-    marginTop: 10,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  email: {
-    color: 'gray',
-  },
-  card: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-    borderRadius: 15,
-  },
-  walletHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  coinText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#8A2BE2',
-  },
-  conversionInfo: {
-    fontSize: 12,
-    color: 'gray',
-    marginTop: 5,
-  },
-  walletBtn: {
-    width: '100%',
-    backgroundColor: '#8A2BE2',
-  },
-  listSection: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    borderRadius: 15,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  logoutBtn: {
-    margin: 16,
-    borderColor: '#ff5252',
-    textColor: '#ff5252',
-  },
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  header: { alignItems: 'center', paddingVertical: 40 },
+  avatarContainer: { position: 'relative' },
+  editBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.primary, width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: COLORS.backgroundDark },
+  name: { color: COLORS.textWhite, fontSize: 24, fontWeight: '900', marginTop: 15 },
+  id: { color: COLORS.textGray, fontSize: 12, marginTop: 4, letterSpacing: 1 },
+  statsRow: { flexDirection: 'row', backgroundColor: COLORS.cardBackground, marginHorizontal: SPACING.lg, borderRadius: 20, paddingVertical: 20, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
+  statBox: { flex: 1, alignItems: 'center' },
+  statValue: { color: COLORS.textWhite, fontSize: 18, fontWeight: '800' },
+  statLabel: { color: COLORS.textGray, fontSize: 10, marginTop: 4, fontWeight: 'bold' },
+  section: { marginTop: 30, paddingHorizontal: SPACING.lg },
+  sectionLabel: { color: COLORS.textGray, fontSize: 12, fontWeight: '900', marginBottom: 15, marginLeft: 10, letterSpacing: 1 },
+  item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.cardBackground, padding: 16, borderRadius: 18, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
+  itemLeft: { flexDirection: 'row', alignItems: 'center' },
+  iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
+  itemTitle: { color: COLORS.textWhite, fontSize: 15, fontWeight: '600' },
+  itemValue: { color: COLORS.textGray, fontSize: 12, marginTop: 2 },
+  logoutBtn: { marginHorizontal: SPACING.lg, marginTop: 40, borderColor: 'rgba(255,75,75,0.3)' }
 });
 
 export default UserProfileScreen;
