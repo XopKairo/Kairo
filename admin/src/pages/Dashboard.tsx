@@ -1,118 +1,78 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { 
-  Users, 
-  PhoneCall, 
-  IndianRupee, 
-  TrendingUp, 
-  ShieldCheck 
-} from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Card } from '../components/common/Card';
+import { KPIGrid } from '../components/dashboard/KPIGrid';
+import { RevenueChart } from '../components/dashboard/RevenueChart';
+import { Table } from '../components/common/Table';
+import { Badge } from '../components/common/Badge';
+import { useAuth } from '../hooks/useAuth';
 
 const Dashboard: React.FC = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const API_URL = import.meta.env.VITE_API_URL || 'https://kairo-b1i9.onrender.com/api';
-        const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`${API_URL}/admin/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setStats(response.data);
-      } catch (error) {
-        console.error('Stats fetch error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
-  if (loading) return <div className="p-8">Loading Dashboard...</div>;
-
-  const StatCard = ({ title, value, icon: Icon, color }: any) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-      <div className={`p-4 rounded-lg ${color} mr-4 text-white`}>
-        <Icon className="w-6 h-6" />
-      </div>
-      <div>
-        <p className="text-sm text-gray-500 font-medium">{title}</p>
-        <p className="text-2xl font-bold text-gray-800">{value}</p>
-      </div>
-    </div>
-  );
+  const { user } = useAuth();
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard Overview</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <StatCard 
-          title="Total Users" 
-          value={stats?.totalUsers || 0} 
-          icon={Users} 
-          color="bg-blue-500" 
-        />
-        <StatCard 
-          title="Active Today" 
-          value={stats?.activeUsersToday || 0} 
-          icon={TrendingUp} 
-          color="bg-emerald-500" 
-        />
-        <StatCard 
-          title="Live Calls" 
-          value={stats?.totalCalls || 0} 
-          icon={PhoneCall} 
-          color="bg-purple-500" 
-        />
-        <StatCard 
-          title="Total Revenue" 
-          value={stats?.totalRevenue || '₹0'} 
-          icon={IndianRupee} 
-          color="bg-orange-500" 
-        />
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-8"
+    >
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            Hi, {user?.name?.split(' ')[0] || 'Admin'} <span className="wave">👋</span>
+          </h1>
+          <p className="text-slate-500 font-medium mt-1 text-lg">Zora business summary at a glance.</p>
+        </div>
+        <div className="flex space-x-3">
+          <button className="bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all">Download Report</button>
+          <button className="bg-brand-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition-all">+ New Listing</button>
+        </div>
+      </header>
+
+      <KPIGrid />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card title="Revenue Growth" className="lg:col-span-2 hover:shadow-xl hover:shadow-brand-500/5 transition-all">
+          <div className="h-[380px] w-full">
+            <RevenueChart />
+          </div>
+        </Card>
+
+        <Card title="System Activity" className="lg:col-span-1 overflow-hidden relative">
+          <div className="space-y-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <motion.div 
+                key={i} 
+                whileHover={{ x: 5 }}
+                className="flex items-center space-x-4 cursor-pointer"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-500 font-bold text-xs border border-brand-100">
+                  Z{i}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-900">New user verified</p>
+                  <p className="text-xs text-slate-500 font-medium">User #00{i} identity check success</p>
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Just now</span>
+              </motion.div>
+            ))}
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <ShieldCheck className="w-5 h-5 mr-2 text-blue-500" />
-            System Health
-          </h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Database Status</span>
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">STABLE</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Socket.io Server</span>
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">CONNECTED</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-600">Redis Cache</span>
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTIVE</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Pending Actions</h2>
-          <p className="text-gray-500 text-sm">Review withdrawal requests and reported content.</p>
-          <div className="mt-4 space-y-3">
-             <div className="p-3 border-l-4 border-orange-500 bg-orange-50 rounded-r-lg">
-                <p className="text-sm font-medium text-orange-800">{stats?.pendingPayouts || 0} Pending Payouts</p>
-                <p className="text-xs text-orange-600 mt-1">Require manual verification and approval.</p>
-             </div>
-             <div className="p-3 border-l-4 border-red-500 bg-red-50 rounded-r-lg">
-                <p className="text-sm font-medium text-red-800">12 Reported Users</p>
-                <p className="text-xs text-red-600 mt-1">Immediate action recommended.</p>
-             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <Card title="Real-time Transactions">
+        <Table 
+          headers={['Order ID', 'Customer', 'Status', 'Revenue']}
+          data={[
+            [<span className="font-bold text-slate-900">#9021</span>, 'Liam Neeson', <Badge variant="success">Paid</Badge>, <span className="font-semibold text-slate-900">$1,200</span>],
+            [<span className="font-bold text-slate-900">#9022</span>, 'Emma Watson', <Badge variant="warning">Pending</Badge>, <span className="font-semibold text-slate-900">$450</span>],
+            [<span className="font-bold text-slate-900">#9023</span>, 'Zoe Kravitz', <Badge variant="danger">Refunded</Badge>, <span className="font-semibold text-slate-900">$85</span>]
+          ]}
+        />
+      </Card>
+    </motion.div>
   );
 };
 

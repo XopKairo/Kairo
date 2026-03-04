@@ -1,50 +1,46 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MODERATOR';
+}
 
 interface AuthContextType {
-  isAdmin: boolean;
-  adminData: any;
-  login: (token: string, data: any) => void;
+  user: User | null;
+  loading: boolean;
+  login: (credentials: any) => Promise<void>;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminData, setAdminData] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    const data = localStorage.getItem('adminData');
-    if (token && data) {
-      setIsAdmin(true);
-      setAdminData(JSON.parse(data));
+    const token = localStorage.getItem('token');
+    if (token) {
+      setUser({ id: '1', name: 'Alex Zora', role: 'ADMIN', email: 'admin@zora.com' });
     }
+    setLoading(false);
   }, []);
 
-  const login = (token: string, data: any) => {
-    localStorage.setItem('adminToken', token);
-    localStorage.setItem('adminData', JSON.stringify(data));
-    setIsAdmin(true);
-    setAdminData(data);
+  const login = async (credentials: any) => {
+    localStorage.setItem('token', 'dummy-jwt-token');
+    setUser({ id: '1', name: 'Alex Zora', role: 'ADMIN', email: 'admin@zora.com' });
   };
 
   const logout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminData');
-    setIsAdmin(false);
-    setAdminData(null);
+    localStorage.removeItem('token');
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAdmin, adminData, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
 };
