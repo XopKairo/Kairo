@@ -45,7 +45,6 @@ const HomeScreen = ({ navigation }) => {
       setHosts(hostRes.data);
       if (settingsRes.data) setAppSettings(settingsRes.data);
     } catch (error) {
-      console.error("Home Data Fetch Error:", error);
     } finally {
       setLoading(false);
     }

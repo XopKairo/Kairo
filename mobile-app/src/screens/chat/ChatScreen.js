@@ -47,7 +47,6 @@ const ChatScreen = ({ route, navigation }) => {
       const response = await axios.get(`${API_URL}/chat/messages/${initialConvId}`);
       setMessages(response.data);
     } catch (error) {
-      console.error('Fetch Messages Error:', error);
     }
   };
 
@@ -69,7 +68,6 @@ const ChatScreen = ({ route, navigation }) => {
       setMessages(prev => [...prev, { ...messageData, sender: user.id, createdAt: new Date() }]);
       setInputText('');
     } catch (error) {
-      console.error('Send Message Error:', error);
     }
   };
 

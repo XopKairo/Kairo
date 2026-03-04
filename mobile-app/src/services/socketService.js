@@ -11,7 +11,6 @@ class SocketService {
     if (!this.socket) {
       this.socket = io(SOCKET_URL);
       this.socket.on('connect', () => {
-        console.log('Connected to socket server:', this.socket.id);
         if (userId) {
           // Both joinUserRoom and registerUser are used in backend
           this.socket.emit('registerUser', userId);

@@ -28,7 +28,6 @@ const SelectInterestsScreen = ({ navigation }) => {
       setInterests(allRes.data || []);
       setSelected(userRes.data?.interests || []);
     } catch (error) {
-      console.error('Fetch interests error:', error);
     } finally {
       setLoading(false);
     }

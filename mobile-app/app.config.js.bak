@@ -3,7 +3,7 @@ export default {
     "name": "Zora",
     "owner": "omalloorajil",
     "slug": "zora",
-    "version": "1.0.2",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -31,6 +31,7 @@ export default {
     },
     "android": {
       "package": "com.zora.live",
+      "versionCode": 1,
       "googleServicesFile": process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
       "enableProguardInReleaseBuilds": true,
       "enableGenerateArchitectureSpecificApks": true,
@@ -54,7 +55,6 @@ export default {
       "expo-image-picker",
       "expo-asset",
       "expo-font",
-      "expo-device",
       [
         "expo-build-properties",
         {

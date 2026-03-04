@@ -38,7 +38,6 @@ const FeedScreen = () => {
       const response = await api.get(`/posts`);
       setPosts(response.data);
     } catch (error) {
-      console.error('Error fetching feed:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);

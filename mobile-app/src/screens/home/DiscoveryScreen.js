@@ -19,7 +19,6 @@ const DiscoveryScreen = () => {
       const response = await api.get('/users');
       setUsers(response.data || []);
     } catch (error) {
-      console.error('Fetch users error:', error);
     } finally {
       setLoading(false);
     }

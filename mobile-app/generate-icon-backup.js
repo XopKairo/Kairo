@@ -13,18 +13,15 @@ const ICONS = [
 const BACKUP_DIR = '/storage/emulated/0/KAIRO_ICON_BACKUP/';
 
 async function runBackup() {
-  console.log('🚀 Starting KAIRO Icon Backup...');
 
   if (!fs.existsSync(BACKUP_DIR)) {
     try {
       fs.mkdirSync(BACKUP_DIR, { recursive: true });
-      console.log(`✅ Created directory: ${BACKUP_DIR}`);
     } catch (err) {
       console.error(`❌ Failed to create directory: ${err.message}`);
       // Fallback to local dir if SDCard is not writable
       const localDir = './KAIRO_ICON_BACKUP/';
       if (!fs.existsSync(localDir)) fs.mkdirSync(localDir);
-      console.log(`⚠️ Falling back to local directory: ${localDir}`);
     }
   }
 
@@ -42,13 +39,11 @@ async function runBackup() {
 
     try {
       fs.writeFileSync(filePath, svgContent);
-      console.log(`✅ Saved: ${fileName}`);
     } catch (err) {
       console.error(`❌ Failed to save ${fileName}: ${err.message}`);
     }
   }
 
-  console.log('
 ✨ Backup Complete! All icons are ready for branding use.');
 }
 

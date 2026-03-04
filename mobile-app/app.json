@@ -3,33 +3,11 @@
     "name": "Zora",
     "owner": "omalloorajil",
     "slug": "zora",
-    "version": "1.0.2",
+    "version": "1.0.0",
     "android": {
-      "package": "com.zora.live"
+      "package": "com.zora.live",
+      "versionCode": 1
     },
-    "plugins": [
-      "expo-notifications",
-      "expo-image-picker",
-      "expo-asset",
-      "expo-font",
-      "expo-device",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "kotlinVersion": "2.0.21"
-          }
-        }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
-          "android_app_id": "ca-app-pub-3940256099942544~3347511713",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
-        }
-      ]
-    ],
     "extra": {
       "eas": {
         "projectId": "0a5a5301-5383-43ce-89df-b8869ca083aa"

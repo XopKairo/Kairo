@@ -14,13 +14,11 @@ export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
     });
 
     const unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      console.log('Ad Loaded');
     });
 
     const unsubscribeEarned = rewardedAd.addAdEventListener(
       RewardedAdEventType.EARNED_REWARD,
       reward => {
-        console.log('User earned reward of ', reward);
         if (onRewardEarned) onRewardEarned(settings.rewardPerAd || 5);
       },
     );
@@ -28,7 +26,6 @@ export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
     const unsubscribeClosed = rewardedAd.addAdEventListener(
       RewardedAdEventType.CLOSED,
       () => {
-        console.log('Ad Closed');
         if (onAdDismissed) onAdDismissed();
         // Load the next ad
         rewardedAd.load();
@@ -43,7 +40,6 @@ export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
       unsubscribeClosed();
     };
   } catch (error) {
-    console.error('Ad Init Error:', error);
   }
 };
 
@@ -51,7 +47,6 @@ export const showRewardedAd = () => {
   if (rewardedAd && rewardedAd.loaded) {
     rewardedAd.show();
   } else {
-    console.log('Ad not loaded yet');
     if (rewardedAd) rewardedAd.load();
   }
 };
