@@ -126,6 +126,8 @@ app.get('/', (req, res) => {
 // Error Handling
 app.use(errorHandler);
 
+import { seedAdmin } from './utils/initDb.js';
+
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
@@ -134,8 +136,9 @@ mongoose.connect(MONGO_URI, {
   maxPoolSize: 100,
   serverSelectionTimeoutMS: 5000
 })
-  .then(() => {
+  .then(async () => {
     console.log('✅ MongoDB Connected with pool size 100');
+    await seedAdmin(); // Auto-seed admin user
     server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch(err => console.error('❌ Connection Error:', err));

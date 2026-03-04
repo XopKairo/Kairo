@@ -13,10 +13,14 @@ const generateRefreshToken = (id, role) => {
 };
 
 export const authAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body; // Actually receives either username or email in 'username' field
 
   try {
-    const admin = await Admin.findOne({ username });
+    // Check for admin by username OR email
+    const admin = await Admin.findOne({ 
+      $or: [{ username }, { email: username }] 
+    });
+    
     if (!admin || !(await admin.matchPassword(password))) {
       logger.warn(`Failed login attempt for admin: ${username}`);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
