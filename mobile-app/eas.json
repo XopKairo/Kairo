@@ -13,12 +13,18 @@
       "android": {
         "buildType": "apk",
         "image": "latest"
+      },
+      "env": {
+        "NODE_ENV": "production"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle",
         "image": "latest"
+      },
+      "env": {
+        "NODE_ENV": "production"
       }
     }
   }
