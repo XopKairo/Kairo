@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { getUserBadge } from '../utils/badgeSystem.js';
 import twilio from 'twilio';
 import nodemailer from 'nodemailer';
+import Post from '../models/Post.js'; // Moved to top level
 import { 
   registerSchema, 
   loginSchema, 
@@ -214,7 +215,6 @@ router.delete('/delete-account/:id', async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     
     // Clean up related data if necessary (posts, etc.)
-    import Post from '../models/Post.js';
     await Post.deleteMany({ userId: req.params.id });
 
     return res.status(200).json({ success: true, message: 'Account deleted successfully' });

@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose'; // Moved to top level
 import User from '../models/User.js';
 import Host from '../models/Host.js';
 import Payout from '../models/Payout.js';
@@ -72,7 +73,6 @@ router.get('/analytics', async (req, res) => {
     ]);
 
     // 2. Revenue Aggregation (using the ad-hoc collection)
-    import mongoose from 'mongoose';
     const revenueCollection = mongoose.connection.db.collection('admin_revenues');
     const revenueData = await revenueCollection.aggregate([
       { $match: { createdAt: { $gte: sixMonthsAgo } } },
