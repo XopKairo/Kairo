@@ -56,7 +56,21 @@ app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// Robust CORS Configuration
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(compression());
 
 // Production-Safe Logging
@@ -118,7 +132,23 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Health Check
+// Health Check Endpoint (Robust Debugging)
+app.get('/api/health', async (req, res) => {
+  try {
+    const adminCount = await mongoose.model('Admin').countDocuments();
+    res.json({
+      status: 'ok',
+      message: 'Kairo API is running',
+      environment: process.env.NODE_ENV,
+      adminSeeded: adminCount > 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Database connection failed', error: error.message });
+  }
+});
+
+// Root fallback Health Check
 app.get('/', (req, res) => {
   res.json({ message: 'Kairo Ultimate API is Live', status: 'Healthy' });
 });

@@ -21,11 +21,13 @@ export default function Login() {
     try {
       await login({ username, password });
       navigate('/');
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+    } catch (err: any) {
+      if (err.response) {
+        setError(`Server Error (${err.response.status}): ${err.response.data?.message || err.message}`);
+      } else if (err.request) {
+        setError('Network Error: Unable to reach the server. Check CORS or URL.');
       } else {
-        setError('Login failed');
+        setError(`Error: ${err.message}`);
       }
     } finally {
       setLoading(false);

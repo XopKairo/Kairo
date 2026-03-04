@@ -23,9 +23,19 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    if (error.response) {
+      // Server responded with a status outside 2xx
+      console.error(`[API Error] ${error.response.status} ${error.response.config.url}:`, error.response.data);
+      if (error.response.status === 401 && error.response.config.url !== '/auth/login') {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    } else if (error.request) {
+      // The request was made but no response was received (CORS, network failure)
+      console.error('[API Network/CORS Error] No response received:', error.message);
+    } else {
+      // Something happened in setting up the request
+      console.error('[API Setup Error]:', error.message);
     }
     return Promise.reject(error);
   }

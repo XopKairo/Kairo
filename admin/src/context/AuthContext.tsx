@@ -41,14 +41,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (credentials: any) => {
     try {
-      const response = await apiClient.post('/auth/login', credentials);
+      const response = await apiClient.post('/auth/admin/login', credentials);
       const { accessToken, user } = response.data;
       
       localStorage.setItem('token', accessToken);
       setUser(user);
     } catch (error) {
       console.error("Login failed", error);
-      throw new Error("Invalid admin credentials");
+      throw error; // Throw the exact axios error up to the component
     }
   };
 
