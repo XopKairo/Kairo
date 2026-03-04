@@ -1,10 +1,10 @@
 import express from 'express';
 import mongoose from 'mongoose'; // Moved to top level
-import User from '../models/User.js.js';
-import Host from '../models/Host.js.js';
-import Payout from '../models/Payout.js.js';
-import Call from '../models/Call.js.js';
-import Transaction from '../models/Transaction.js.js';
+import User from '../models/User.js';
+import Host from '../models/Host.js';
+import Payout from '../models/Payout.js';
+import Call from '../models/Call.js';
+import Transaction from '../models/Transaction.js';
 
 const router = express.Router();
 

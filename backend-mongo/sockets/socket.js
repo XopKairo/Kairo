@@ -1,7 +1,7 @@
 import { logCallStart, logCallEnd } from '../routes/monitoring.js';
-import LiveCall from '../models/LiveCall.js.js';
-import Message from '../models/Message.js.js';
-import Conversation from '../models/Conversation.js.js';
+import LiveCall from '../models/LiveCall.js';
+import Message from '../models/Message.js';
+import Conversation from '../models/Conversation.js';
 
 const setupSockets = (io) => {
   const ringingTimeouts = new Map();

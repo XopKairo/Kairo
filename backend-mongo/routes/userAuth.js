@@ -1,11 +1,11 @@
 import express from 'express';
-import User from '../models/User.js.js';
-import OTP from '../models/OTP.js.js';
+import User from '../models/User.js';
+import OTP from '../models/OTP.js';
 import jwt from 'jsonwebtoken';
 import { getUserBadge } from '../utils/badgeSystem.js';
 import twilio from 'twilio';
 import nodemailer from 'nodemailer';
-import Post from '../models/Post.js.js'; // Moved to top level
+import Post from '../models/Post.js'; // Moved to top level
 import { 
   registerSchema, 
   loginSchema, 

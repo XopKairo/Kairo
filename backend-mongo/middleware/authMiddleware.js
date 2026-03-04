@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import Admin from '../models/Admin.js.js';
-import User from '../models/User.js.js';
+import Admin from '../models/Admin.js';
+import User from '../models/User.js';
 
 // Protect Admin Middleware
 export const protect = async (req, res, next) => {

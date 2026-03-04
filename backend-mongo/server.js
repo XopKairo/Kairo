@@ -13,8 +13,8 @@ import hpp from 'hpp';
 import { Server } from 'socket.io';
 
 // Internal Modules
-import { errorHandler } from './middleware/errorMiddleware.js.js';
-import { protectAdmin } from './middleware/authMiddleware.js.js';
+import { errorHandler } from './middleware/errorMiddleware.js';
+import { protectAdmin } from './middleware/authMiddleware.js';
 import setupSockets from './sockets/socket.js';
 
 // Route Imports

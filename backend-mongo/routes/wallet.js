@@ -1,12 +1,12 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import User from '../models/User.js.js';
-import Payout from '../models/Payout.js.js';
-import Transaction from '../models/Transaction.js.js';
-import CoinPackage from '../models/CoinPackage.js.js';
-import AdminActionLog from '../models/AdminActionLog.js.js';
-import Admin from '../models/Admin.js.js';
-import Settings from '../models/Settings.js.js';
+import User from '../models/User.js';
+import Payout from '../models/Payout.js';
+import Transaction from '../models/Transaction.js';
+import CoinPackage from '../models/CoinPackage.js';
+import AdminActionLog from '../models/AdminActionLog.js';
+import Admin from '../models/Admin.js';
+import Settings from '../models/Settings.js';
 
 const router = express.Router();
 

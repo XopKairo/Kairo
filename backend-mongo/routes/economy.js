@@ -1,6 +1,6 @@
 import express from 'express';
-import CoinPackage from '../models/CoinPackage.js.js';
-import Gift from '../models/Gift.js.js';
+import CoinPackage from '../models/CoinPackage.js';
+import Gift from '../models/Gift.js';
 import multer from 'multer';
 import path from 'path';
 
