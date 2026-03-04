@@ -5,12 +5,12 @@ import { Layout } from './components/layout/Layout';
 
 // Pages
 import Dashboard from './pages/Dashboard';
-import Kanban from './pages/apps/Kanban';
-import Invoices from './pages/apps/Invoices';
-import Calendar from './pages/apps/Calendar';
-import EmailContact from './pages/apps/EmailContact';
-import Chat from './pages/apps/Chat';
-import Settings from './pages/apps/Settings';
+import Users from './pages/users/Users';
+import Hosts from './pages/hosts/Hosts';
+import Agencies from './pages/agencies/Agencies';
+import Economy from './pages/economy/Economy';
+import Reports from './pages/reports/Reports';
+import Settings from './pages/settings/Settings';
 
 function App() {
   return (
@@ -20,12 +20,11 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/kanban" element={<Kanban />} />
-              <Route path="/invoices" element={<Invoices />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/email" element={<EmailContact />} />
-              <Route path="/contact" element={<Navigate to="/email" replace />} />
-              <Route path="/chat" element={<Chat />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/hosts" element={<Hosts />} />
+              <Route path="/agencies" element={<Agencies />} />
+              <Route path="/economy" element={<Economy />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
               {/* Fallback route */}
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,6 +1,6 @@
 
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Mail, MessageSquare, Trello, Users, CalendarDays, Receipt, Settings, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -10,13 +10,12 @@ function cn(...inputs: ClassValue[]) {
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Mail, label: 'Email', path: '/email' },
-  { icon: MessageSquare, label: 'Chat', path: '/chat' },
-  { icon: Trello, label: 'Kanban', path: '/kanban' },
-  { icon: Users, label: 'Contact', path: '/contact' },
-  { icon: CalendarDays, label: 'Calendar', path: '/calendar' },
-  { icon: Receipt, label: 'Invoices', path: '/invoices' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: Users, label: 'Users', path: '/users' },
+  { icon: UserCheck, label: 'Hosts & Verification', path: '/hosts' },
+  { icon: Building2, label: 'Agencies', path: '/agencies' },
+  { icon: Wallet, label: 'Economy', path: '/economy' },
+  { icon: Flag, label: 'Reports', path: '/reports' },
+  { icon: Settings, label: 'App Settings', path: '/settings' },
 ];
 
 export const Sidebar = () => {
