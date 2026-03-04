@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const transactionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -11,4 +11,4 @@ const transactionSchema = new mongoose.Schema({
   coinsCredited: { type: Number, default: 0 }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+export default mongoose.model('Transaction', transactionSchema);

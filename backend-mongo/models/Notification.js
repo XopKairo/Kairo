@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -8,4 +8,4 @@ const notificationSchema = new mongoose.Schema({
   sentAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Notification', notificationSchema);
+export default mongoose.model('Notification', notificationSchema);

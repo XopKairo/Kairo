@@ -1,32 +1,67 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 
-// Simple Login Component
+const API_URL = import.meta.env.VITE_API_URL || 'https://kairo-b1i9.onrender.com/api';
+
 const Login = () => {
   const { login } = useAuth();
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [username, setUsername] = React.useState('admin');
+  const [password, setPassword] = React.useState('Ajil6304admin');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API Login
-    setTimeout(() => {
-      login('mock-jwt-token', { name: 'Admin', email: 'admin@kairo.com' });
+    setError('');
+    
+    try {
+      const response = await axios.post(`${API_URL}/auth/admin/login`, { username, password });
+      if (response.data.success) {
+        login(response.data.accessToken, response.data.user);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Authentication failed');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
       <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-2xl w-96">
         <h1 className="text-2xl font-bold text-center mb-6">Kairo Admin Access</h1>
+        {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm font-medium">{error}</div>}
         <div className="space-y-4">
-          <input type="email" placeholder="Email" defaultValue="admin@kairo.com" className="w-full p-3 border rounded-lg" required />
-          <input type="password" placeholder="Password" defaultValue="Ajil6304admin" className="w-full p-3 border rounded-lg" required />
-          <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-colors">
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase">Username</label>
+            <input 
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+              required 
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase">Password</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+              required 
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </div>

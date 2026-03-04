@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const reportSchema = new mongoose.Schema({
   reporterId: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -7,4 +7,4 @@ const reportSchema = new mongoose.Schema({
   status: { type: String, enum: ['Open', 'Resolved', 'Dismissed'], default: 'Open' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Report', reportSchema);
+export default mongoose.model('Report', reportSchema);

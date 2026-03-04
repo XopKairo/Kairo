@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const coinPackageSchema = new mongoose.Schema({
   coins: { type: Number, required: true },
@@ -7,4 +7,4 @@ const coinPackageSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('CoinPackage', coinPackageSchema);
+export default mongoose.model('CoinPackage', coinPackageSchema);

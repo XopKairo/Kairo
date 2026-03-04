@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const interestTagSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
@@ -6,4 +6,4 @@ const interestTagSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('InterestTag', interestTagSchema);
+export default mongoose.model('InterestTag', interestTagSchema);

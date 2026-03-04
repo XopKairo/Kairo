@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const reportedMessageSchema = new mongoose.Schema({
   reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -8,4 +8,4 @@ const reportedMessageSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'reviewed', 'dismissed'], default: 'pending' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('ReportedMessage', reportedMessageSchema);
+export default mongoose.model('ReportedMessage', reportedMessageSchema);

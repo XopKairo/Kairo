@@ -1,16 +1,18 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
-const OTP = require('../models/OTP');
-const jwt = require('jsonwebtoken');
-const { getUserBadge } = require('../utils/badgeSystem');
-const twilio = require('twilio');
-const { 
+import express from 'express';
+import User from '../models/User.js';
+import OTP from '../models/OTP.js';
+import jwt from 'jsonwebtoken';
+import { getUserBadge } from '../utils/badgeSystem.js';
+import twilio from 'twilio';
+import nodemailer from 'nodemailer';
+import { 
   registerSchema, 
   loginSchema, 
   verifyOTPSchema, 
   validateRequest 
-} = require('../utils/validation');
+} from '../utils/validation.js';
+
+const router = express.Router();
 
 // Initialize Twilio client
 const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
@@ -52,7 +54,6 @@ router.post('/send-otp', async (req, res) => {
     }
 
     if (contact.includes('@')) {
-       const nodemailer = require('nodemailer');
        const transporter = nodemailer.createTransport({
          service: 'gmail',
          auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
@@ -213,7 +214,7 @@ router.delete('/delete-account/:id', async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     
     // Clean up related data if necessary (posts, etc.)
-    const Post = require('../models/Post');
+    import Post from '../models/Post.js';
     await Post.deleteMany({ userId: req.params.id });
 
     return res.status(200).json({ success: true, message: 'Account deleted successfully' });
@@ -222,4 +223,4 @@ router.delete('/delete-account/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

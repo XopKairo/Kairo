@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import Report from '../models/Report.js';
+
 const router = express.Router();
-const Report = require('../models/Report');
 
 // GET all reports
 router.get('/', async (req, res) => {
@@ -22,4 +23,4 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

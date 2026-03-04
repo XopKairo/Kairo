@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const bannerSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -8,4 +8,4 @@ const bannerSchema = new mongoose.Schema({
   order: { type: Number, default: 0 }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Banner', bannerSchema);
+export default mongoose.model('Banner', bannerSchema);

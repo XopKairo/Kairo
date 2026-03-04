@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import User from '../models/User.js';
+import Host from '../models/Host.js';
+import Payout from '../models/Payout.js';
+import Call from '../models/Call.js';
+import Transaction from '../models/Transaction.js';
+
 const router = express.Router();
-const User = require('../models/User');
-const Host = require('../models/Host');
-const Payout = require('../models/Payout');
-const Call = require('../models/Call');
-const Transaction = require('../models/Transaction');
 
 // Real-time stats fetching from DB
 router.get('/stats', async (req, res) => {
@@ -71,7 +72,7 @@ router.get('/analytics', async (req, res) => {
     ]);
 
     // 2. Revenue Aggregation (using the ad-hoc collection)
-    const mongoose = require('mongoose');
+    import mongoose from 'mongoose';
     const revenueCollection = mongoose.connection.db.collection('admin_revenues');
     const revenueData = await revenueCollection.aggregate([
       { $match: { createdAt: { $gte: sixMonthsAgo } } },
@@ -116,4 +117,4 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

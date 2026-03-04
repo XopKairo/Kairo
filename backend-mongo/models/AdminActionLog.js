@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const adminActionLogSchema = new mongoose.Schema({
   adminId: {
@@ -24,4 +24,4 @@ const adminActionLogSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('AdminActionLog', adminActionLogSchema);
+export default mongoose.model('AdminActionLog', adminActionLogSchema);

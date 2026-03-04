@@ -102,7 +102,8 @@ export const logoutUser = async () => {
 
 export const getAppSettings = async () => {
   try {
-    const response = await api.get('/user/settings');
+    // Correcting to a public settings route
+    const response = await api.get('/settings');
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

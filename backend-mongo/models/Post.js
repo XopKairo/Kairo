@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const postSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -12,4 +12,4 @@ const postSchema = new mongoose.Schema({
 // TTL index to automatically delete the document when expiresAt is reached
 postSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-module.exports = mongoose.model('Post', postSchema);
+export default mongoose.model('Post', postSchema);

@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import LiveCall from '../models/LiveCall.js';
+
 const router = express.Router();
-const LiveCall = require('../models/LiveCall');
 
 // GET all active calls (Admin Monitoring)
 router.get('/active', async (req, res) => {
@@ -34,8 +35,7 @@ router.post('/force-end/:callId', async (req, res) => {
   }
 });
 
-// Internal helper for Socket logic (to be used when a call starts/ends naturally)
-router.logCallStart = async (data) => {
+export const logCallStart = async (data) => {
   try {
     const call = new LiveCall({
       callId: data.callId,
@@ -50,7 +50,7 @@ router.logCallStart = async (data) => {
   }
 };
 
-router.logCallEnd = async (callId) => {
+export const logCallEnd = async (callId) => {
   try {
     await LiveCall.findOneAndUpdate({ callId }, { status: 'Ended', endedAt: Date.now() });
   } catch (err) {
@@ -58,4 +58,4 @@ router.logCallEnd = async (callId) => {
   }
 };
 
-module.exports = router;
+export default router;

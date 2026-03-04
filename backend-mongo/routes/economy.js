@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import CoinPackage from '../models/CoinPackage.js';
+import Gift from '../models/Gift.js';
+import multer from 'multer';
+import path from 'path';
+
 const router = express.Router();
-const CoinPackage = require('../models/CoinPackage');
-const Gift = require('../models/Gift');
-const multer = require('multer');
-const path = require('path');
 
 // Configure multer for file uploads (Gifts)
 const storage = multer.diskStorage({
@@ -53,4 +54,4 @@ router.put('/gifts/:id', upload.single('icon'), async (req, res) => {
   res.json(gift);
 });
 
-module.exports = router;
+export default router;

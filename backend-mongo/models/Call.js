@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const callSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -15,4 +15,4 @@ const callSchema = new mongoose.Schema({
 
 callSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Call', callSchema);
+export default mongoose.model('Call', callSchema);

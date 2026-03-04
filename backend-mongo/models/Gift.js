@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const giftSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -7,4 +7,4 @@ const giftSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Gift', giftSchema);
+export default mongoose.model('Gift', giftSchema);

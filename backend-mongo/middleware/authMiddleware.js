@@ -1,9 +1,9 @@
-const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import Admin from '../models/Admin.js';
+import User from '../models/User.js';
 
 // Protect Admin Middleware
-const protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
@@ -27,10 +27,10 @@ const protect = async (req, res, next) => {
 };
 
 // Alias for clarity in server.js
-const protectAdmin = protect;
+export const protectAdmin = protect;
 
 // Protect User Middleware (Live Ban Sync)
-const protectUser = async (req, res, next) => {
+export const protectUser = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
@@ -57,5 +57,3 @@ const protectUser = async (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Not authorized, no token' });
   }
 };
-
-module.exports = { protect, protectUser, protectAdmin };

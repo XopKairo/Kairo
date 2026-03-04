@@ -1,12 +1,18 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const liveCallSchema = new mongoose.Schema({
   callId: { type: String, required: true, unique: true },
   userId: { type: String, required: true },
   hostId: { type: String, required: true },
-  status: { type: String, enum: ['Active', 'Ended'], default: 'Active' },
+  status: { 
+    type: String, 
+    enum: ['RINGING', 'ACTIVE', 'MISSED', 'ENDED'], 
+    default: 'RINGING' 
+  },
+  expiresAt: { type: Date, default: () => new Date(Date.now() + 45 * 1000) }, // 45s Ringing limit
   startedAt: { type: Date, default: Date.now },
   endedAt: { type: Date }
 }, { timestamps: true });
 
-module.exports = mongoose.model('LiveCall', liveCallSchema);
+// TTL Index to clean up old MISSED/ENDED calls if needed, but not critical for 100 users.
+export default mongoose.model('LiveCall', liveCallSchema);

@@ -15,8 +15,9 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        const API_URL = import.meta.env.VITE_API_URL || 'https://kairo-b1i9.onrender.com/api';
         const token = localStorage.getItem('adminToken');
-        const response = await axios.get('https://kairo-b1i9.onrender.com/api/admin/dashboard/stats', {
+        const response = await axios.get(`${API_URL}/admin/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setStats(response.data);

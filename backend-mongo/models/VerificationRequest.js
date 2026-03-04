@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const verificationRequestSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -8,4 +8,4 @@ const verificationRequestSchema = new mongoose.Schema({
   submittedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-module.exports = mongoose.model('VerificationRequest', verificationRequestSchema);
+export default mongoose.model('VerificationRequest', verificationRequestSchema);

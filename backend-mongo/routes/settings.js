@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import Settings from '../models/Settings.js';
+
 const router = express.Router();
-const Settings = require('../models/Settings');
 
 // Get All Settings
 router.get('/', async (req, res) => {
@@ -73,4 +74,4 @@ router.post('/ads', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

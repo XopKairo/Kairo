@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const settingsSchema = new mongoose.Schema({
   // Revenue Control
@@ -16,4 +16,4 @@ const settingsSchema = new mongoose.Schema({
   interstitialId: { type: String, default: '' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Settings', settingsSchema);
+export default mongoose.model('Settings', settingsSchema);

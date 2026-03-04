@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const ticketSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -9,4 +9,4 @@ const ticketSchema = new mongoose.Schema({
   adminResponse: { type: String, default: '' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Ticket', ticketSchema);
+export default mongoose.model('Ticket', ticketSchema);

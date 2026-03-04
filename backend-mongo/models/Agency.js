@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = import('mongoose');
 
 const agencySchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -10,4 +10,4 @@ const agencySchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Agency', agencySchema);
+export default mongoose.model('Agency', agencySchema);
