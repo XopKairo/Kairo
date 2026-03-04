@@ -7,40 +7,73 @@ import nodemailer from 'nodemailer';
 
 // Token Generation Helpers
 const generateAccessToken = (id, role) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('FATAL: JWT_SECRET environment variable is missing.');
+  }
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '15m' });
 };
 
 const generateRefreshToken = (id, role) => {
+  if (!process.env.JWT_REFRESH_SECRET) {
+    // Fallback to JWT_SECRET if refresh secret isn't explicitly set to prevent crash
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('FATAL: JWT_SECRET environment variable is missing.');
+    return jwt.sign({ id, role }, secret, { expiresIn: '7d' });
+  }
   return jwt.sign({ id, role }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 };
 
 export const authAdmin = async (req, res) => {
-  const { username, password } = req.body; // Actually receives either username or email in 'username' field
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Username and password are required' });
+  }
 
   try {
-    // Check for admin by username OR email
+    // 1. Find the admin
     const admin = await Admin.findOne({ 
-      $or: [{ username }, { email: username }] 
+      $or: [{ username: username }, { email: username }] 
     });
     
-    if (!admin || !(await admin.matchPassword(password))) {
-      logger.warn(`Failed login attempt for admin: ${username}`);
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (!admin) {
+      logger.warn(`Failed login: Admin not found for: ${username}`);
+      return res.status(401).json({ success: false, message: 'Invalid credentials (User not found)' });
     }
 
+    // 2. Verify password
+    let isMatch = false;
+    try {
+      isMatch = await admin.matchPassword(password);
+    } catch (bcryptErr) {
+      logger.error(`Bcrypt compare error: ${bcryptErr.message}`);
+      throw new Error('Password verification failed internally');
+    }
+
+    if (!isMatch) {
+      logger.warn(`Failed login: Incorrect password for: ${username}`);
+      return res.status(401).json({ success: false, message: 'Invalid credentials (Incorrect password)' });
+    }
+
+    // 3. Generate Tokens
     const accessToken = generateAccessToken(admin._id, 'admin');
     const refreshToken = generateRefreshToken(admin._id, 'admin');
 
-    logger.info(`Admin logged in: ${username}`);
-    res.json({
+    logger.info(`✅ Admin logged in successfully: ${username}`);
+    return res.status(200).json({
       success: true,
       user: { id: admin._id, username: admin.username, email: admin.email, role: 'admin' },
       accessToken,
       refreshToken
     });
+
   } catch (error) {
-    logger.error(`Admin Auth Error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Server error' });
+    logger.error(`❌ Admin Auth 500 Crash: ${error.message}\nStack: ${error.stack}`);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Internal Server Error during login', 
+      errorDetails: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
   }
 };
 
