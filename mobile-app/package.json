@@ -48,7 +48,8 @@
     "zego-zim-react-native": "^2.20.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2"
+    "@babel/core": "^7.25.2",
+    "@react-native/codegen": "0.76.9"
   },
   "expo": {
     "doctor": {

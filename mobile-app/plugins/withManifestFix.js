@@ -12,33 +12,29 @@ const withManifestFix = (config) => {
 
 const withMasterBuildFix = (config) => {
   return withProjectBuildGradle(config, (config) => {
-    // 1. Force Kotlin Version to 1.9.24
+    // Force Kotlin 2.0.21 at the root level
     if (config.modResults.contents.includes('kotlinVersion =')) {
       config.modResults.contents = config.modResults.contents.replace(
         /kotlinVersion = .*/g,
-        "kotlinVersion = '1.9.24'"
+        "kotlinVersion = '2.0.21'"
       );
     }
 
-    // 2. Global Resolution Strategy to force Kotlin stdlib and Metadata skip
-    const forceStrategy = `
+    // Force resolution strategy for all dependencies to prevent Kotlin 2.1 metadata issues
+    const globalFix = `
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
-        }
-    }
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            freeCompilerArgs += ["-Xskip-metadata-version-check"]
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-reflect:2.0.21"
         }
     }
 }
 `;
-    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"')) {
-      config.modResults.contents += forceStrategy;
+    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"')) {
+      config.modResults.contents += globalFix;
     }
 
     return config;
