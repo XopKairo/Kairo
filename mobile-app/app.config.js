@@ -5,6 +5,10 @@ export default {
     "slug": "zora",
     "version": "1.0.0",
     "newArchEnabled": false,
+    "react-native-google-mobile-ads": {
+      "android_app_id": "ca-app-pub-2842532668081504~8477148280",
+      "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -58,13 +62,7 @@ export default {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "extraGradleProperties": {
-              "android.suppressKotlinVersionCompatibilityCheck": "1.9.25",
-              "androidx.compose.compiler.plugins.kotlin.suppressKotlinVersionCompatibilityCheck": "1.9.25"
-            },
-            "kotlinCompilerArgs": [
-              "-Xskip-metadata-version-check"
-            ]
+            "newArchEnabled": false
           }
         }
       ],
@@ -72,11 +70,17 @@ export default {
       "expo-notifications",
       "expo-image-picker",
       "expo-asset",
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": []
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-2842532668081504~8477148280",
+          "android_app_id": "ca-app-pub-2842532668081504~8477148280",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
@@ -89,9 +93,5 @@ export default {
         "projectId": "84ba64b2-72c6-4ad6-8c30-20f4e351ef9c"
       }
     }
-  },
-  "react-native-google-mobile-ads": {
-    "android_app_id": "ca-app-pub-2842532668081504~8477148280",
-    "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
   }
 };
