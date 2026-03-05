@@ -58,11 +58,15 @@ export default {
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "1.9.24",
+            "kotlinVersion": "2.1.0",
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "newArchEnabled": false
+            "newArchEnabled": false,
+            "extraGradleProperties": {
+              "android.suppressKotlinVersionCompatibilityCheck": "2.1.0",
+              "kotlin.suppressKotlinVersionCompatibilityCheck": "2.1.0"
+            }
           }
         }
       ],
@@ -70,17 +74,11 @@ export default {
       "expo-notifications",
       "expo-image-picker",
       "expo-asset",
-      [
-        "expo-font",
-        {
-          "fonts": []
-        }
-      ],
+      "expo-font",
       [
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-2842532668081504~8477148280",
-          "android_app_id": "ca-app-pub-2842532668081504~8477148280",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
@@ -93,5 +91,9 @@ export default {
         "projectId": "84ba64b2-72c6-4ad6-8c30-20f4e351ef9c"
       }
     }
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-2842532668081504~8477148280",
+    "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
   }
 };
