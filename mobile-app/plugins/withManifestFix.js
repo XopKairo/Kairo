@@ -12,28 +12,36 @@ const withManifestFix = (config) => {
 
 const withMasterBuildFix = (config) => {
   return withProjectBuildGradle(config, (config) => {
-    // Force Kotlin 2.0.21 at the root level
+    // Force Kotlin 2.1.0 at the root level
     if (config.modResults.contents.includes('kotlinVersion =')) {
       config.modResults.contents = config.modResults.contents.replace(
         /kotlinVersion = .*/g,
-        "kotlinVersion = '2.0.21'"
+        "kotlinVersion = '2.1.0'"
       );
     }
 
-    // Force resolution strategy for all dependencies to prevent Kotlin 2.1 metadata issues
+    // Force resolution strategy and Hard Metadata Skip Flag
     const globalFix = `
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21"
-            force "org.jetbrains.kotlin:kotlin-reflect:2.0.21"
+            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
+            force "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
+        }
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            freeCompilerArgs += [
+                "-Xskip-metadata-version-check",
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=2.1.0"
+            ]
         }
     }
 }
 `;
-    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:2.0.21"')) {
+    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"')) {
       config.modResults.contents += globalFix;
     }
 

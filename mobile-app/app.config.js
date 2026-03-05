@@ -58,16 +58,18 @@ export default {
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.0.21",
+            "kotlinVersion": "2.1.0",
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
+            "newArchEnabled": false,
             "extraGradleProperties": {
-              "android.suppressKotlinVersionCompatibilityCheck": "2.0.21",
-              "kotlinVersion": "2.0.21",
-              "composeCompilerVersion": "1.5.15"
+              "android.suppressKotlinVersionCompatibilityCheck": "2.1.0",
+              "kotlin.suppressKotlinVersionCompatibilityCheck": "2.1.0"
             },
-            "extraProguardRules": "-include ./proguard-rules.pro"
+            "kotlinCompilerArgs": [
+              "-Xskip-metadata-version-check"
+            ]
           }
         }
       ],
