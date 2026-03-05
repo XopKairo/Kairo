@@ -1,17 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, Image, SafeAreaView, StatusBar } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { Construction } from 'lucide-react-native';
 import { COLORS, SPACING } from '../../theme/theme';
 
-const MaintenanceScreen = () => {
+const MaintenanceScreen = ({ onRefresh }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <Construction size={80} color={COLORS.primary} strokeWidth={1.5} />
-        </div>
+        </View>
         
         <Text style={styles.title}>System Maintenance</Text>
         <Text style={styles.subtitle}>
@@ -27,7 +27,7 @@ const MaintenanceScreen = () => {
 
         <Button 
           mode="contained" 
-          onPress={() => {}} // Could be a refresh logic
+          onPress={onRefresh || (() => {})} 
           style={styles.button}
           contentStyle={styles.buttonContent}
         >

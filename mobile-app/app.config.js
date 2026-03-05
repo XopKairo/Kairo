@@ -1,9 +1,14 @@
 export default {
   "expo": {
     "name": "Zora",
-    "owner": "omalloorajil",
+    "owner": "ajilomalloor1",
     "slug": "zora",
     "version": "1.0.0",
+    "newArchEnabled": false,
+    "react-native-google-mobile-ads": {
+      "android_app_id": "ca-app-pub-2842532668081504~8477148280",
+      "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -31,9 +36,7 @@ export default {
     },
     "android": {
       "package": "com.zora.live",
-      "versionCode": 1,
       "googleServicesFile": process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
-      "enableProguardInReleaseBuilds": true,
       "enableGenerateArchitectureSpecificApks": true,
       "permissions": [
         "CAMERA",
@@ -51,34 +54,26 @@ export default {
       }
     },
     "plugins": [
-      "expo-notifications",
-      "expo-image-picker",
-      "expo-asset",
-      "expo-font",
       [
         "expo-build-properties",
         {
           "android": {
             "kotlinVersion": "1.9.24",
-            "compileSdkVersion": 34,
-            "targetSdkVersion": 34,
-            "buildToolsVersion": "34.0.0",
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
             "newArchEnabled": false,
-            "enableProguardInReleaseBuilds": true,
-            "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }",
-            "packagingOptions": {
-              "pickFirst": [
-                "**/libc++_shared.so"
-              ],
-              "exclude": [
-                "**/libjsse.so",
-                "**/libicuuc.so",
-                "**/libicui18n.so"
-              ]
+            "extraGradleProperties": {
+              "android.enableJetifier": "true",
+              "android.useAndroidX": "true"
             }
           }
         }
       ],
+      "./plugins/withManifestFix",
+      "expo-notifications",
+      "expo-image-picker",
+      "expo-asset",
       [
         "expo-font",
         {
@@ -99,7 +94,7 @@ export default {
     },
     "extra": {
       "eas": {
-        "projectId": "0a5a5301-5383-43ce-89df-b8869ca083aa"
+        "projectId": "84ba64b2-72c6-4ad6-8c30-20f4e351ef9c"
       }
     }
   }

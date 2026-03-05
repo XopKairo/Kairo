@@ -31,6 +31,7 @@ import chatRoutes from './routes/chat.js';
 import adminUsersRoutes from './routes/users.js';
 import adminHostsRoutes from './routes/hosts.js';
 import adminAgenciesRoutes from './routes/agencies.js';
+import adminBannersRoutes from './routes/banners.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -124,6 +125,7 @@ app.use('/api/admin/settings', protectAdmin, settingsRoutes);
 app.use('/api/admin/users', protectAdmin, adminUsersRoutes);
 app.use('/api/admin/hosts', protectAdmin, adminHostsRoutes);
 app.use('/api/admin/agencies', protectAdmin, adminAgenciesRoutes);
+app.use('/api/admin/banners', protectAdmin, adminBannersRoutes);
 
 // Public Settings for Mobile App
 app.use('/api/settings', settingsRoutes);
