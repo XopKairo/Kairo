@@ -58,14 +58,13 @@ export default {
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.1.0",
+            "kotlinVersion": "1.9.24",
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "newArchEnabled": false,
             "extraGradleProperties": {
-              "android.suppressKotlinVersionCompatibilityCheck": "2.1.0",
-              "kotlin.suppressKotlinVersionCompatibilityCheck": "2.1.0"
+              "kotlinVersion": "1.9.24",
+              "android.suppressKotlinVersionCompatibilityCheck": "1.9.25"
             }
           }
         }
@@ -79,6 +78,7 @@ export default {
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-2842532668081504~8477148280",
+          "android_app_id": "ca-app-pub-2842532668081504~8477148280",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
