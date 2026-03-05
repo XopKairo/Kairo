@@ -66,7 +66,8 @@ export default {
               "android.suppressKotlinVersionCompatibilityCheck": "2.0.21",
               "kotlinVersion": "2.0.21",
               "composeCompilerVersion": "1.5.15"
-            }
+            },
+            "extraProguardRules": "-include ./proguard-rules.pro"
           }
         }
       ],
@@ -92,5 +93,9 @@ export default {
         "projectId": "84ba64b2-72c6-4ad6-8c30-20f4e351ef9c"
       }
     }
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-2842532668081504~8477148280",
+    "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
   }
 };
