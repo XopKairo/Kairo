@@ -63,9 +63,11 @@ export default {
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
             "extraGradleProperties": {
-              "kotlinVersion": "1.9.24",
               "android.suppressKotlinVersionCompatibilityCheck": "1.9.25"
-            }
+            },
+            "kotlinCompilerArgs": [
+              "-Xskip-metadata-version-check"
+            ]
           }
         }
       ],
