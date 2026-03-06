@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, MoreHorizontal, ShieldBan, Trash2, Edit, UserCheck } from 'lucide-react';
+import { Search, MoreHorizontal, ShieldBan, Trash2, Edit } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface User {
