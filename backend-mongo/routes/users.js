@@ -9,7 +9,23 @@ router.get('/', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-router.put('/ban/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json(user);
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, user });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+router.put('/:id/status', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });

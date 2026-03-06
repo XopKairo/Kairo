@@ -70,7 +70,7 @@ export const registerUser = async (name, contact, password, isPhone, otpToken) =
 
 export const updateUserProfile = async (userId, data) => {
   try {
-    const response = await API.put(`/user/users/${userId}/profile`, data);
+    const response = await API.put(`/users/${userId}/profile`, data);
     if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }

@@ -130,6 +130,7 @@ app.use('/api/admin/reports', protectAdmin, reportsRoutes);
 app.use('/api/admin/monitoring', protectAdmin, monitoringRoutes);
 app.use('/api/admin/settings', protectAdmin, settingsRoutes);
 app.use('/api/admin/users', protectAdmin, adminUsersRoutes);
+app.use('/api/users', adminUsersRoutes);
 app.use('/api/admin/hosts', protectAdmin, adminHostsRoutes);
 app.use('/api/admin/agencies', protectAdmin, adminAgenciesRoutes);
 app.use('/api/admin/banners', protectAdmin, adminBannersRoutes);
