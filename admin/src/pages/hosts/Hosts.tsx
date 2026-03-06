@@ -18,17 +18,19 @@ export default function Hosts() {
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
+  const fetchHosts = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/admin/hosts');
+      setHosts(response.data);
+    } catch (error) {
+      console.error('Error fetching hosts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchHosts = async () => {
-      try {
-        const response = await apiClient.get('/admin/hosts');
-        setHosts(response.data);
-      } catch (error) {
-        console.error('Error fetching hosts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchHosts();
   }, []);
 
@@ -40,8 +42,33 @@ export default function Hosts() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this host?')) return;
+    try {
+      await apiClient.delete(`/admin/hosts/${id}`);
+      setHosts(hosts.filter(h => (h._id || h.id) !== id));
+      setActiveMenu(null);
+    } catch (error) {
+      alert('Failed to delete host');
+    }
+  };
+
+  const handleVerify = async (id: string, isVerified: boolean) => {
+    try {
+      await apiClient.post(`/admin/hosts/${id}/verify`, { isVerified });
+      fetchHosts();
+      setActiveMenu(null);
+    } catch (error) {
+      alert('Failed to update verification status');
+    }
+  };
+
   const handleAction = (action: string, id: string) => {
-    alert(`Action: ${action} on Host ID: ${id}`);
+    if (action === 'Delete') {
+      handleDelete(id);
+    } else {
+      alert(`Action: ${action} on Host ID: ${id}`);
+    }
     setActiveMenu(null);
   };
 
@@ -99,10 +126,18 @@ export default function Hosts() {
                   <td className="py-4 px-6 text-right flex justify-end gap-2 relative">
                     {!host.isVerified && (
                       <>
-                        <button className="text-green-500 hover:text-green-600 transition-colors" title="Approve">
+                        <button 
+                          onClick={() => handleVerify(rowId, true)}
+                          className="text-green-500 hover:text-green-600 transition-colors" 
+                          title="Approve"
+                        >
                           <CheckCircle className="w-5 h-5" />
                         </button>
-                        <button className="text-red-500 hover:text-red-600 transition-colors" title="Reject">
+                        <button 
+                          onClick={() => handleDelete(rowId)}
+                          className="text-red-500 hover:text-red-600 transition-colors" 
+                          title="Reject"
+                        >
                           <XCircle className="w-5 h-5" />
                         </button>
                       </>

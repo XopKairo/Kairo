@@ -1,7 +1,7 @@
 export default {
   "expo": {
     "name": "Zora",
-    "owner": "ajilomalloor1",
+    "owner": "ajil1234",
     "slug": "zora",
     "version": "1.0.0",
     "newArchEnabled": false,
@@ -92,7 +92,7 @@ export default {
     },
     "extra": {
       "eas": {
-        "projectId": "84ba64b2-72c6-4ad6-8c30-20f4e351ef9c"
+        "projectId": "42944b55-11a7-49ea-b4ef-93b4807e4f2a"
       }
     }
   },
