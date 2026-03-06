@@ -11,60 +11,42 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).populate('followers', 'name profilePicture').populate('following', 'name profilePicture');
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    const user = await User.findById(req.params.id);
     res.json(user);
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-router.put('/:id/profile', async (req, res) => {
+// Comprehensive Admin Update
+router.put('/:id', async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-// Follow/Unfollow User
-router.post('/follow/:id', async (req, res) => {
-  const { currentUserId } = req.body;
+// Advanced Ban Route
+router.post('/:id/ban', async (req, res) => {
+  const { isBanned, reason, durationDays } = req.body;
   try {
-    const userToFollow = await User.findById(req.params.id);
-    const currentUser = await User.findById(currentUserId);
-
-    if (!userToFollow || !currentUser) return res.status(404).json({ message: 'User not found' });
-
-    const isFollowing = currentUser.following.includes(req.params.id);
-
-    if (isFollowing) {
-      currentUser.following = currentUser.following.filter(id => id.toString() !== req.params.id);
-      userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUserId);
+    const update = { isBanned, banReason: reason || '' };
+    if (isBanned && durationDays && durationDays !== 'permanent') {
+      const date = new Date();
+      date.setDate(date.getDate() + parseInt(durationDays));
+      update.banUntil = date;
+    } else if (!isBanned) {
+      update.banUntil = null;
     } else {
-      currentUser.following.push(req.params.id);
-      userToFollow.followers.push(currentUserId);
+      update.banUntil = new Date('9999-12-31'); // Permanent
     }
-
-    await currentUser.save();
-    await userToFollow.save();
-
-    res.json({ success: true, following: !isFollowing });
+    const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+    res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-router.put('/:id/status', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    user.isBanned = !user.isBanned;
-    await user.save();
-    res.json({ success: true, message: 'Status updated', user });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
-});
-
-router.delete("/:id", async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: "User deleted successfully" });
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 

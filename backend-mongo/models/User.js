@@ -22,6 +22,9 @@ const userSchema = new Schema({
   gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false },
   verificationSelfie: { type: String, required: false, default: '' },
   isGenderVerified: { type: Boolean, default: false },
+    banUntil: { type: Date, default: null },
+  banReason: { type: String, default: '' },
+  cashBalance: { type: Number, default: 0 },
   status: { type: String, default: 'offline' },
   pushToken: { type: String, default: '' }
 }, { timestamps: true });
