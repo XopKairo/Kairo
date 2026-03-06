@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { View, ActivityIndicator, Platform } from 'react-native';
+import { View, ActivityIndicator, Platform, Image, Text } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
 import mobileAds from 'react-native-google-mobile-ads';
@@ -37,6 +37,16 @@ const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'))
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+const HeaderLogo = () => (
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Image 
+      source={require('./assets/icon.png')} 
+      style={{ width: 28, height: 28, borderRadius: 6, marginRight: 10 }} 
+    />
+    <Text style={{ color: '#FFF', fontSize: 18, fontWeight: '900', letterSpacing: 2 }}>ZORA</Text>
+  </View>
+);
 
 function MainTabs() {
   return (
@@ -75,12 +85,20 @@ function NavigationStack() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash">
+      <Stack.Navigator 
+        initialRouteName="Splash"
+        screenOptions={{
+          headerStyle: { backgroundColor: '#0F0A19' },
+          headerTintColor: '#fff',
+          headerTitle: () => <HeaderLogo />,
+          headerTitleAlign: 'center',
+        }}
+      >
         <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+        <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
           {(props) => (
             <Suspense fallback={
@@ -92,11 +110,11 @@ function NavigationStack() {
             </Suspense>
           )}
         </Stack.Screen>
-        <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerStyle: { backgroundColor: '#0F0A19' }, headerTintColor: '#fff' }} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Complete Profile' }} />
-        <Stack.Screen name="Wallet" component={WalletScreen} options={{ title: 'My Wallet & Withdraw' }} />
-        <Stack.Screen name="Verification" component={VerificationScreen} options={{ title: 'Get Verified' }} />
-        <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} options={{ title: 'Interests' }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="Wallet" component={WalletScreen} />
+        <Stack.Screen name="Verification" component={VerificationScreen} />
+        <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
