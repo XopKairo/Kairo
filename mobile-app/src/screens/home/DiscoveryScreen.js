@@ -21,7 +21,7 @@ const DiscoveryScreen = () => {
       const storedUser = await AsyncStorage.getItem('userData');
       if (storedUser) {
         const parsed = JSON.parse(storedUser);
-        const res = await api.get(`/users/\${parsed._id || parsed.id}`);
+        const res = await api.get(`/users/${parsed._id || parsed.id}`);
         setCurrentUser(res.data);
       }
       const response = await api.get('/users');
@@ -35,7 +35,7 @@ const DiscoveryScreen = () => {
   const handleFollow = async (userId) => {
     if (!currentUser) return;
     try {
-      const res = await api.post(\`/users/follow/\${userId}\`, { currentUserId: currentUser._id || currentUser.id });
+      const res = await api.post(`/users/follow/${userId}`, { currentUserId: currentUser._id || currentUser.id });
       if (res.data.success) {
         // Update local currentUser following list
         const updatedFollowing = res.data.following 
