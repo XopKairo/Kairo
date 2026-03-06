@@ -65,7 +65,7 @@ const WalletScreen = ({ navigation }) => {
           onPress: async () => {
             setLoading(true);
             try {
-              const res = await api.post('/payments/create-order', {
+              const res = await api.post('/user/payments/create-order', {
                 amount: pkg.priceINR,
                 currency: 'INR'
               });
