@@ -20,21 +20,34 @@ const WalletScreen = ({ navigation }) => {
   const [adLoading, setAdLoading] = useState(false);
 
   useEffect(() => {
+    let adCleanup = () => {};
+    
+    const startAds = async () => {
+      adCleanup = await initRewardedAd(
+        () => setAdLoading(false),
+        async (rewardAmount) => {
+          try {
+            const userDataStr = await AsyncStorage.getItem('userData');
+            const userData = JSON.parse(userDataStr || '{}');
+            const uid = userData._id || userData.id;
+            
+            const res = await api.post('/wallet/earn-ad', { userId: uid });
+            if (res.data.success) {
+              Alert.alert('Reward Earned!', `You received ${rewardAmount} coins.`);
+              fetchUserData();
+            }
+          } catch (err) {
+            console.error('Reward error:', err);
+          }
+        }
+      );
+    };
+
     fetchUserData();
     fetchPackages();
-    const cleanupAds = initRewardedAd(
-      () => setAdLoading(false),
-      async (rewardAmount) => {
-        try {
-          const res = await api.post('/wallet/earn-ad', { userId: user?._id || user?.id });
-          if (res.data.success) {
-            Alert.alert('Reward Earned!', `You received ${rewardAmount} coins.`);
-            fetchUserData();
-          }
-        } catch (err) {}
-      }
-    );
-    return () => { if (typeof cleanupAds === 'function') cleanupAds(); };
+    startAds();
+
+    return () => { if (typeof adCleanup === 'function') adCleanup(); };
   }, []);
 
   const fetchUserData = async () => {
