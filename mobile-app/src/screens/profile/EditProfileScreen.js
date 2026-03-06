@@ -47,7 +47,7 @@ const EditProfileScreen = ({ navigation }) => {
     if (!result.canceled) {
       const asset = result.assets[0];
       setSelfie({
-        uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+        uri: asset.uri,
         name: asset.fileName || `profile_${Date.now()}.jpg`,
         type: asset.mimeType || 'image/jpeg'
       });

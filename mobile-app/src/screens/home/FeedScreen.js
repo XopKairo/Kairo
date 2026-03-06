@@ -111,7 +111,7 @@ const FeedScreen = () => {
     return (
       <View style={styles.postCard}>
         <View style={styles.postHeader}>
-          <Avatar.Image size={40} source={{ uri: item.userId?.profilePicture || 'https://via.placeholder.com/40' }} />
+          <Avatar.Image size={40} source={{ uri: item.userId?.profilePicture || "https://ui-avatars.com/api/?name=User" || 'https://via.placeholder.com/40' }} />
           <View style={styles.headerInfo}>
              <Text style={styles.authorName}>{authorName} {item.userId?.isVerified && <Star size={12} fill={COLORS.accentGlow} color={COLORS.accentGlow} />}</Text>
              <Text style={styles.timeText}>{new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>

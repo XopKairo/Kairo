@@ -26,7 +26,7 @@ const VerificationScreen = ({ navigation }) => {
     if (!result.canceled) {
       const asset = result.assets[0];
       const imagePayload = {
-        uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+        uri: asset.uri,
         name: asset.fileName || `verify_${Date.now()}.jpg`,
         type: asset.mimeType || 'image/jpeg'
       };

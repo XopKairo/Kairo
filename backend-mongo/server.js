@@ -20,6 +20,7 @@ import setupSockets from './sockets/socket.js';
 
 // Route Imports
 import authRoutes from './routes/auth.js';
+import interestsRoutes from './routes/interests.js';
 import userAuthRoutes from './routes/userAuth.js';
 import dashboardRoutes from './routes/dashboard.js';
 import walletRoutes from './routes/wallet.js';
@@ -120,7 +121,8 @@ app.use('/api/wallet/withdraw', strictLimiter);
 // --- Routes ---
 
 // Public / Common Auth
-app.use('/api/auth', authRoutes); // Admin login, refresh
+app.use('/api/auth', authRoutes);
+app.use('/api/interests', interestsRoutes); // Admin login, refresh
 app.use('/api/user/auth', userAuthRoutes); // User Registration/OTP
 
 // Admin Protected Routes
