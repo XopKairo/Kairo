@@ -1,17 +1,18 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Production API URL
-export const API_URL = 'https://kairo-b1i9.onrender.com/api';
-export const BASE_URL = 'https://kairo-b1i9.onrender.com';
+// Public Environment Variable for Expo
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com/api';
+// Extract base URL for sockets/assets (removes /api suffix if present)
+export const BASE_URL = API_URL.replace(/\/api$/, '');
 
-// Create an axios instance
-const api = axios.create({
+const API = axios.create({
   baseURL: API_URL,
+  timeout: 15000,
 });
 
 // Interceptor to add the token to every request
-api.interceptors.request.use(
+API.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('userToken');
     if (token) {
@@ -24,21 +25,18 @@ api.interceptors.request.use(
   }
 );
 
-// Global response interceptor for Maintenance Mode and Other status codes
-api.interceptors.response.use(
+// Global response interceptor
+API.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // If backend returns 503 Service Unavailable with maintenance flag
-    if (error.response && error.response.status === 503) {
-       // Handled in AuthContext polling
-    }
     return Promise.reject(error);
   }
 );
 
+// Compatibility logic for older calls
 export const loginUser = async (contact, password) => {
   try {
-    const response = await api.post('/user/auth/login', { contact, password });
+    const response = await API.post('/user/auth/login', { contact, password });
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -59,7 +57,7 @@ export const registerUser = async (name, contact, password, isPhone, otpToken) =
     if (isPhone) payload.phone = contact;
     else payload.email = contact;
 
-    const response = await api.post('/user/auth/register', payload);
+    const response = await API.post('/user/auth/register', payload);
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -72,7 +70,7 @@ export const registerUser = async (name, contact, password, isPhone, otpToken) =
 
 export const updateUserProfile = async (userId, data) => {
   try {
-    const response = await api.put(`/user/users/${userId}/profile`, data);
+    const response = await API.put(`/user/users/${userId}/profile`, data);
     if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
@@ -84,7 +82,7 @@ export const updateUserProfile = async (userId, data) => {
 
 export const sendOtp = async (contact) => {
   try {
-    const response = await api.post('/user/auth/send-otp', { contact });
+    const response = await API.post('/user/auth/send-otp', { contact });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -93,7 +91,7 @@ export const sendOtp = async (contact) => {
 
 export const verifyOtp = async (contact, otp) => {
   try {
-    const response = await api.post('/user/auth/verify-otp', { contact, otp });
+    const response = await API.post('/user/auth/verify-otp', { contact, otp });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -102,7 +100,7 @@ export const verifyOtp = async (contact, otp) => {
 
 export const resetPassword = async (contact, newPassword) => {
   try {
-    const response = await api.post('/user/auth/reset-password', { contact, newPassword });
+    const response = await API.post('/user/auth/reset-password', { contact, newPassword });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -116,12 +114,11 @@ export const logoutUser = async () => {
 
 export const getAppSettings = async () => {
   try {
-    // Correcting to a public settings route
-    const response = await api.get('/settings');
+    const response = await API.get('/settings');
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
   }
 };
 
-export default api;
+export default API;

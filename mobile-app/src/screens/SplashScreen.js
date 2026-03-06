@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, Alert, Platform } from 'react-native';
 import { COLORS } from '../theme/theme';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotificationsAsync } from '../services/pushService';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
+import API from '../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -41,8 +41,8 @@ const SplashScreen = ({ navigation }) => {
     const checkTokenAndNavigate = async () => {
       try {
         const minDelay = new Promise(resolve => setTimeout(resolve, 2500));
-        const settingsReq = axios.get('https://kairo-b1i9.onrender.com/api/settings', { timeout: 3000 }).catch(() => null);
-        
+        const settingsReq = API.get('/settings').catch(() => null);
+
         const [_, settingsRes] = await Promise.all([minDelay, settingsReq]);
 
         if (settingsRes && settingsRes.data && settingsRes.data.maintenance) {

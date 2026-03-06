@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
+import { BASE_URL } from './api';
 
-const SOCKET_URL = 'https://kairo-b1i9.onrender.com';
+const SOCKET_URL = BASE_URL;
 
 class SocketService {
   socket = null;

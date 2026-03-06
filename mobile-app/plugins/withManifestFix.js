@@ -16,7 +16,7 @@ const withMasterBuildFix = (config) => {
     if (config.modResults.contents.includes('kotlinVersion =')) {
       config.modResults.contents = config.modResults.contents.replace(
         /kotlinVersion = .*/g,
-        "kotlinVersion = '2.1.0'"
+        "kotlinVersion = '1.9.24'"
       );
     }
 

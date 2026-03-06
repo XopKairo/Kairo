@@ -13,8 +13,7 @@ import { Send, ChevronLeft } from 'lucide-react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
-import { API_URL } from '../../services/api';
+import api from '../../services/api';
 
 const ChatScreen = ({ route, navigation }) => {
   const { recipient, conversationId: initialConvId } = route.params;
@@ -44,7 +43,7 @@ const ChatScreen = ({ route, navigation }) => {
   const fetchMessages = async () => {
     if (!initialConvId) return;
     try {
-      const response = await axios.get(`${API_URL}/chat/messages/${initialConvId}`);
+      const response = await api.get(`/chat/messages/${initialConvId}`);
       setMessages(response.data);
     } catch (error) {
     }
@@ -64,7 +63,7 @@ const ChatScreen = ({ route, navigation }) => {
 
     // Save to DB via REST
     try {
-      await axios.post(`${API_URL}/chat/send`, messageData);
+      await api.post(`/chat/send`, messageData);
       setMessages(prev => [...prev, { ...messageData, sender: user.id, createdAt: new Date() }]);
       setInputText('');
     } catch (error) {
