@@ -16,7 +16,7 @@ const withMasterBuildFix = (config) => {
     if (config.modResults.contents.includes('kotlinVersion =')) {
       config.modResults.contents = config.modResults.contents.replace(
         /kotlinVersion = .*/g,
-        "kotlinVersion = '1.9.24'"
+        "kotlinVersion = '1.9.25'"
       );
     }
 
@@ -25,23 +25,23 @@ const withMasterBuildFix = (config) => {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
-            force "org.jetbrains.kotlin:kotlin-reflect:1.9.24"
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.25"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.25"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.25"
+            force "org.jetbrains.kotlin:kotlin-reflect:1.9.25"
         }
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             freeCompilerArgs += [
                 "-Xskip-metadata-version-check",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.24"
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.25"
             ]
         }
     }
 }
 `;
-    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"')) {
+    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:1.9.25"')) {
       config.modResults.contents += globalFix;
     }
 
