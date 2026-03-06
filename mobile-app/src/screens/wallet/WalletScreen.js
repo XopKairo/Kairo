@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Text, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Text, SafeAreaView, StatusBar, ActivityIndicator, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import { initRewardedAd, showRewardedAd } from '../../services/adService';
@@ -52,6 +52,38 @@ const WalletScreen = ({ navigation }) => {
       const res = await api.get('/wallet/coin-packages');
       setPackages(res.data);
     } catch (error) {}
+  };
+
+  const handlePurchase = async (pkg) => {
+    Alert.alert(
+      'Confirm Purchase',
+      `Buy ${pkg.coins} coins ${pkg.bonus ? `+ ${pkg.bonus} bonus` : ''} for ₹${pkg.priceINR}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Buy Now', 
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const res = await api.post('/payments/create-order', {
+                amount: pkg.priceINR,
+                currency: 'INR'
+              });
+              if (res.data.paymentLink) {
+                Linking.openURL(res.data.paymentLink);
+                Alert.alert('Payment Started', 'Complete the payment in your browser to get coins.');
+              } else {
+                throw new Error('Failed to create payment link');
+              }
+            } catch (err) {
+              Alert.alert('Purchase Failed', err.response?.data?.message || 'Try again later.');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleWithdraw = async () => {
@@ -118,7 +150,7 @@ const WalletScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   key={pkg._id} 
                   style={styles.packageCard}
-                  onPress={() => Alert.alert('Purchase', `Would you like to buy ${pkg.coins} coins ${pkg.bonus ? `+ ${pkg.bonus} bonus` : ''} for ₹${pkg.priceINR}?`)}
+                  onPress={() => handlePurchase(pkg)}
                 >
                    {pkg.bonus > 0 && (
                      <View style={styles.bonusBadge}>

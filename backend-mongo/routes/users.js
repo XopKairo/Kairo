@@ -61,4 +61,11 @@ router.put('/:id/status', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 export default router;
