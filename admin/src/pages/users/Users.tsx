@@ -3,6 +3,8 @@ import { Search, Filter, MoreHorizontal, ShieldBan } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface User {
+  profilePicture?: string;
+  isVerified?: boolean;
   id?: string;
   _id?: string;
   name?: string;
@@ -75,7 +77,7 @@ export default function Users() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 dark:text-gray-400 text-sm font-medium">
-                <th className="py-4 px-6 font-medium">Name</th>
+                <th className="py-4 px-6 font-medium">User</th>
                 <th className="py-4 px-6 font-medium">Email</th>
                 <th className="py-4 px-6 font-medium">Role</th>
                 <th className="py-4 px-6 font-medium">Status</th>

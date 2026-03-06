@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, CheckCircle, XCircle, Trash2, Edit } from 'lucide-react';
+import { Search, Eye, MoreHorizontal, CheckCircle, XCircle, Trash2, Edit } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Host {
+  profilePicture?: string;
+  verificationSelfie?: string;
   id?: string;
   _id?: string;
   name?: string;
@@ -129,7 +131,7 @@ export default function Hosts() {
                         <button 
                           onClick={() => handleVerify(rowId, true)}
                           className="text-green-500 hover:text-green-600 transition-colors" 
-                          title="Approve"
+                          title="View Selfie" onClick={() => window.open(host.verificationSelfie, "_blank")} className="text-blue-500 hover:text-blue-600 mr-2"><Eye className="w-5 h-5" /></button><button onClick={() => handleVerify(rowId, true)} className="text-green-500 hover:text-green-600 transition-colors" title="Approve"
                         >
                           <CheckCircle className="w-5 h-5" />
                         </button>
