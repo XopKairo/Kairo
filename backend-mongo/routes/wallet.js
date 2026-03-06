@@ -158,10 +158,6 @@ router.post("/earn-ad", async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   }
 });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
 
 // GET active coin packages for store
 router.get('/coin-packages', async (req, res) => {
