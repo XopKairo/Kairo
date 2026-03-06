@@ -14,6 +14,7 @@ router.get('/stats', async (req, res) => {
     const totalUsers = await User.countDocuments();
     const verifiedHosts = await Host.countDocuments({ isVerified: true });
     const pendingPayouts = await Payout.countDocuments({ status: 'Pending' });
+    const totalReports = await User.countDocuments({ isVerified: false }); // Placeholder count
     const totalCalls = await Call.countDocuments();
     const totalTransactions = await Transaction.countDocuments({ status: 'completed' });
     
