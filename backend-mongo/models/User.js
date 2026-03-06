@@ -25,6 +25,8 @@ const userSchema = new Schema({
     banUntil: { type: Date, default: null },
   banReason: { type: String, default: '' },
   cashBalance: { type: Number, default: 0 },
+    dailyAdsWatched: { type: Number, default: 0 },
+  lastAdWatchedAt: { type: Date, default: null },
   status: { type: String, default: 'offline' },
   pushToken: { type: String, default: '' }
 }, { timestamps: true });

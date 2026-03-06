@@ -8,6 +8,8 @@ export default function Settings() {
   const [maintenance, setMaintenance] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [rewardPerAd, setRewardPerAd] = useState(5);
+  const [dailyLimit, setDailyLimit] = useState(10);
   
   // Profile Update State
   const [username, setUsername] = useState('');
@@ -30,6 +32,8 @@ export default function Settings() {
       const response = await apiClient.get('/settings');
       if (response.data) {
         setMaintenance(response.data.maintenance || false);
+        setRewardPerAd(response.data.rewardPerAd || 5);
+        setDailyLimit(response.data.dailyLimit || 10);
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -96,6 +100,19 @@ export default function Settings() {
     }
   };
 
+
+  const handleUpdateAds = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await apiClient.put('/settings', { rewardPerAd, dailyLimit });
+      alert('Ad settings updated!');
+    } catch (error) {
+      alert('Update failed');
+    } finally {
+      setSaving(false);
+    }
+  };
   if (loading) {
     return <div className="p-6">Loading settings...</div>;
   }
@@ -237,6 +254,21 @@ export default function Settings() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 p-6 mb-6">
+        <h3 className="text-lg font-medium mb-4">Ad Rewards & Limits</h3>
+        <form onSubmit={handleUpdateAds} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Reward Per Ad (Coins)</label>
+            <input type="number" value={rewardPerAd} onChange={e => setRewardPerAd(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 border rounded-xl" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Daily Limit Per User</label>
+            <input type="number" value={dailyLimit} onChange={e => setDailyLimit(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 border rounded-xl" />
+          </div>
+          <button type="submit" disabled={saving} className="md:col-span-2 py-3 bg-brand-600 text-white rounded-xl font-bold">Update Ad Settings</button>
+        </form>
       </div>
     </div>
   );

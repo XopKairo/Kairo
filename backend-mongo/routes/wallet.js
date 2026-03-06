@@ -136,21 +136,28 @@ router.post('/withdraw', async (req, res) => {
 });
 
 // Route to earn coins via Ads - Using ATOMIC updates
-router.post('/earn-ad', async (req, res) => {
+router.post("/earn-ad", async (req, res) => {
   const { userId } = req.body;
   try {
     const settings = await Settings.findOne();
+    const limit = settings ? settings.dailyLimit : 10;
     const rewardAmount = settings ? settings.rewardPerAd : 5;
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $inc: { coins: rewardAmount } },
-      { new: true }
-    );
-    
-    if (!user) throw new Error('User not found');
-
-    res.json({ success: true, message: `You earned ${rewardAmount} coins!`, newBalance: user.coins });
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+    const now = new Date();
+    const isSameDay = user.lastAdWatchedAt && user.lastAdWatchedAt.toDateString() === now.toDateString();
+    if (isSameDay && user.dailyAdsWatched >= limit) {
+      return res.status(400).json({ success: false, message: "Daily ad limit reached" });
+    }
+    user.coins += rewardAmount;
+    user.dailyAdsWatched = isSameDay ? user.dailyAdsWatched + 1 : 1;
+    user.lastAdWatchedAt = now;
+    await user.save();
+    res.json({ success: true, message: "You earned " + rewardAmount + " coins!", newBalance: user.coins });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }

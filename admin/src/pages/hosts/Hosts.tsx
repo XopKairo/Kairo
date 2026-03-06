@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, CheckCircle, Trash2, Edit, Eye } from 'lucide-react';
+import { Search, MoreHorizontal, CheckCircle, Trash2, Edit, Eye, X, Save } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Host {
@@ -9,8 +9,6 @@ interface Host {
   agency?: string;
   status?: string;
   isVerified?: boolean;
-  calls?: number;
-  revenue?: string;
   profilePicture?: string;
   verificationSelfie?: string;
 }
@@ -19,35 +17,35 @@ export default function Hosts() {
   const [hosts, setHosts] = useState<Host[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingHost, setEditingHost] = useState<Host | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
 
   const fetchHosts = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/admin/hosts');
       setHosts(response.data);
-    } catch (error) {
-      console.error('Error fetching hosts:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) {} finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchHosts();
-  }, []);
+  useEffect(() => { fetchHosts(); }, []);
 
-  const toggleMenu = (id: string) => {
-    setActiveMenu(activeMenu === id ? null : id);
+  const openEdit = (host: Host) => {
+    setEditingHost(host);
+    setEditForm({ ...host });
+    setIsEditModalOpen(true);
+    setActiveMenu(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure?')) return;
+  const handleUpdateHost = async () => {
+    if (!editingHost) return;
     try {
-      await apiClient.delete('/admin/hosts/' + id);
-      setHosts(hosts.filter(h => (h._id || h.id) !== id));
-    } catch (error) {
-      alert('Failed');
-    }
+      await apiClient.put('/admin/hosts/' + (editingHost._id || editingHost.id), editForm);
+      fetchHosts();
+      setIsEditModalOpen(false);
+    } catch (e) { alert('Failed'); }
   };
 
   const handleVerify = async (id: string, isVerified: boolean) => {
@@ -55,78 +53,59 @@ export default function Hosts() {
       await apiClient.post('/admin/hosts/' + id + '/verify', { isVerified });
       fetchHosts();
       setActiveMenu(null);
-    } catch (error) {
-      alert('Failed');
-    }
+    } catch (error) {}
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hosts & Verification</h1>
+      <h1 className="text-2xl font-bold">Hosts & Verification</h1>
+
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] overflow-hidden shadow-sm">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 dark:bg-surface-800 text-gray-500 text-sm">
+            <tr>
+              <th className="p-6">Host</th>
+              <th className="p-6">Agency</th>
+              <th className="p-6 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {hosts.map(host => (
+              <tr key={host._id || host.id}>
+                <td className="p-6 flex items-center gap-3">
+                  <img src={host.profilePicture || 'https://ui-avatars.com/api/?name='+host.name} className="w-10 h-10 rounded-full" />
+                  <span className="font-bold">{host.name}</span>
+                </td>
+                <td className="p-6 text-gray-500">{host.agency || 'None'}</td>
+                <td className="p-6 text-right relative">
+                  <button onClick={() => window.open(host.verificationSelfie, '_blank')} className="text-blue-500 mr-2"><Eye size={18}/></button>
+                  <button onClick={() => setActiveMenu(activeMenu === host._id ? null : host._id)}><MoreHorizontal /></button>
+                  {activeMenu === host._id && (
+                    <div className="absolute right-6 top-12 w-48 bg-white dark:bg-surface-800 border rounded-2xl shadow-xl z-50 p-2">
+                      <button onClick={() => openEdit(host)} className="w-full text-left p-3 hover:bg-gray-50 rounded-xl flex gap-2 text-sm"><Edit size={16}/> Edit Host</button>
+                      {!host.isVerified && <button onClick={() => handleVerify(host._id || '', true)} className="w-full text-left p-3 hover:bg-green-50 rounded-xl flex gap-2 text-sm text-green-600"><CheckCircle size={16}/> Approve</button>}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Search hosts..." className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-surface-800 rounded-xl text-sm outline-none dark:text-white" />
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8">
+            <h2 className="text-xl font-bold mb-6">Edit Host</h2>
+            <div className="space-y-4">
+              <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full p-3 border rounded-xl" placeholder="Name" />
+              <input value={editForm.agency} onChange={e => setEditForm({...editForm, agency: e.target.value})} className="w-full p-3 border rounded-xl" placeholder="Agency" />
+              <button onClick={handleUpdateHost} className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold">Save</button>
+              <button onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500">Cancel</button>
+            </div>
           </div>
         </div>
-
-        <div className="overflow-x-auto min-h-[300px]">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 dark:text-gray-400 text-sm font-medium">
-                <th className="py-4 px-6">Host Name</th>
-                <th className="py-4 px-6">Agency</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-              {loading ? (
-                <tr><td colSpan={4} className="py-4 text-center">Loading...</td></tr>
-              ) : hosts.length === 0 ? (
-                <tr><td colSpan={4} className="py-8 text-center">No hosts found.</td></tr>
-              ) : hosts.map((host) => {
-                const rowId = (host._id || host.id || "").toString();
-                return (
-                  <tr key={rowId} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                    <td className="py-4 px-6 flex items-center gap-3">
-                      <img src={host.profilePicture || "https://ui-avatars.com/api/?name="+host.name} className="w-8 h-8 rounded-full" />
-                      <span className="font-medium text-gray-900 dark:text-white">{host.name || 'Unknown'}</span>
-                    </td>
-                    <td className="py-4 px-6">{host.agency || 'None'}</td>
-                    <td className="py-4 px-6">
-                      <span className={"px-3 py-1 rounded-full text-xs font-medium " + (host.isVerified ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600")}>
-                        {host.isVerified ? 'Verified' : 'Pending'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right flex justify-end gap-2 relative">
-                      {host.verificationSelfie && (
-                        <button onClick={() => window.open(host.verificationSelfie, "_blank")} className="text-blue-500 hover:text-blue-600" title="View Selfie">
-                          <Eye className="w-5 h-5" />
-                        </button>
-                      )}
-                      {!host.isVerified && (
-                        <button onClick={() => handleVerify(rowId, true)} className="text-green-500 hover:text-green-600"><CheckCircle className="w-5 h-5" /></button>
-                      )}
-                      <button onClick={() => toggleMenu(rowId)} className="text-gray-400 p-1"><MoreHorizontal className="w-5 h-5" /></button>
-                      {activeMenu === rowId && (
-                        <div className="absolute right-8 top-10 w-40 bg-white dark:bg-surface-800 rounded-xl shadow-lg border p-2 z-20">
-                          <button className="w-full text-left px-4 py-2 flex items-center gap-2"><Edit className="w-4 h-4" /> Edit</button>
-                          <button onClick={() => handleDelete(rowId)} className="w-full text-left px-4 py-2 text-red-600 flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
