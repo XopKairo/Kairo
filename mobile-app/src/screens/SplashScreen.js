@@ -83,6 +83,7 @@ const SplashScreen = ({ navigation }) => {
         <Text style={styles.logo}>ZORA</Text>
         <View style={styles.glow} />
         <Text style={styles.quote}>Where connections blossom</Text>
+        <Text style={styles.creator}>by Ajil M</Text>
       </Animated.View>
     </View>
   );
@@ -109,6 +110,15 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     fontWeight: '500',
     opacity: 0.8,
+  },
+  creator: {
+    fontSize: 10,
+    color: COLORS.textGray,
+    marginTop: 40,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    opacity: 0.4,
   },
   glow: {
     position: 'absolute',

@@ -57,6 +57,11 @@ const SettingsScreen = ({ navigation }) => {
             <Text style={[styles.itemTitle, { color: COLORS.error }]}>Log Out</Text>
           </View>
         </TouchableOpacity>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Made with love by Ajil M</Text>
+          <Text style={styles.versionText}>Version 1.0.0</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -71,7 +76,10 @@ const styles = StyleSheet.create({
   item: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.cardBackground, padding: 16, borderRadius: 18, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
   left: { flexDirection: 'row', alignItems: 'center' },
   iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  itemTitle: { color: COLORS.textWhite, fontSize: 15, fontWeight: '600' }
+  itemTitle: { color: COLORS.textWhite, fontSize: 15, fontWeight: '600' },
+  footer: { marginTop: 50, marginBottom: 30, alignItems: 'center', opacity: 0.5 },
+  footerText: { color: COLORS.textWhite, fontSize: 12, fontWeight: '600', letterSpacing: 1 },
+  versionText: { color: COLORS.textGray, fontSize: 10, marginTop: 5 }
 });
 
 export default SettingsScreen;
