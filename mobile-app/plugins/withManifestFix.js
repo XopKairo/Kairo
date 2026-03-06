@@ -36,7 +36,8 @@ allprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             freeCompilerArgs += [
-                "-Xskip-metadata-version-check"
+                "-Xskip-metadata-version-check",
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.25"
             ]
         }
     }
