@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { updateUserProfile, API_URL } from '../../services/api';
@@ -45,7 +45,12 @@ const EditProfileScreen = ({ navigation }) => {
     });
 
     if (!result.canceled) {
-      setSelfie(result.assets[0]);
+      const asset = result.assets[0];
+      setSelfie({
+        uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+        name: asset.fileName || `profile_${Date.now()}.jpg`,
+        type: asset.mimeType || 'image/jpeg'
+      });
     }
   };
 
@@ -55,34 +60,25 @@ const EditProfileScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const userId = user._id || user.id;
-      const updateData = { gender };
+      const formData = new FormData();
+      formData.append('gender', gender);
       
       if (selfie) {
         setUploading(true);
-        const formData = new FormData();
-        const selfieName = selfie.uri.split('/').pop();
-        formData.append('image', {
-          uri: selfie.uri,
-          name: selfieName,
-          type: `image/${selfieName.split('.').pop()}`,
-        });
-        formData.append('userId', userId);
-
-        const uploadRes = await fetch(`${API_URL}/posts`, {
-          method: 'POST',
-          body: formData,
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        const uploadData = await uploadRes.json();
-        if (uploadData.mediaUrl) updateData.verificationSelfie = uploadData.mediaUrl;
-        setUploading(false);
+        formData.append('image', selfie);
       }
 
-      await updateUserProfile(userId, updateData);
-      Alert.alert('Success', 'Profile updated!');
-      navigation.goBack();
+      const response = await api.put(`/users/${userId}/profile`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (response.data.success) {
+        await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+        Alert.alert('Success', 'Profile updated!');
+        navigation.goBack();
+      }
     } catch (error) {
-      Alert.alert('Update Failed', 'Try again later.');
+      Alert.alert('Update Failed', error.response?.data?.message || 'Try again later.');
     } finally {
       setLoading(false);
       setUploading(false);

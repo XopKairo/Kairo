@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../../services/api';
@@ -24,8 +24,14 @@ const VerificationScreen = ({ navigation }) => {
     });
 
     if (!result.canceled) {
-      if (type === 'selfie') setSelfie(result.assets[0]);
-      else setIdProof(result.assets[0]);
+      const asset = result.assets[0];
+      const imagePayload = {
+        uri: Platform.OS === 'android' ? asset.uri : asset.uri.replace('file://', ''),
+        name: asset.fileName || `verify_${Date.now()}.jpg`,
+        type: asset.mimeType || 'image/jpeg'
+      };
+      if (type === 'selfie') setSelfie(imagePayload);
+      else setIdProof(imagePayload);
     }
   };
 
@@ -40,14 +46,12 @@ const VerificationScreen = ({ navigation }) => {
 
       const formData = new FormData();
       formData.append('userId', userId);
-      
-      const selfieName = selfie.uri.split('/').pop();
-      formData.append('selfie', { uri: selfie.uri, name: selfieName, type: `image/${selfieName.split('.').pop()}` });
+      formData.append('selfie', selfie);
+      formData.append('idProof', idProof);
 
-      const idName = idProof.uri.split('/').pop();
-      formData.append('idProof', { uri: idProof.uri, name: idName, type: `image/${idName.split('.').pop()}` });
-
-      await api.post(`/verification/submit`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const response = await api.post(`/verification/submit`, formData, { 
+        headers: { 'Content-Type': 'multipart/form-data' } 
+      });
 
       Alert.alert('Success', 'Verification pending review.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (error) {
