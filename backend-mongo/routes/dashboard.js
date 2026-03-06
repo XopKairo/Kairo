@@ -43,6 +43,7 @@ router.get('/stats', async (req, res) => {
       totalTransactions,
       verifiedHosts,
       pendingPayouts,
+      totalReports,
       dailyRevenue: `₹${dailyRevenue.toLocaleString('en-IN')}`,
       totalRevenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
       rawTotalRevenue: totalRevenue
