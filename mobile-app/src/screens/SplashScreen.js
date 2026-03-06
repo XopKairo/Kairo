@@ -20,7 +20,9 @@ const SplashScreen = ({ navigation }) => {
           await NavigationBar.setVisibilityAsync('hidden');
           await NavigationBar.setBehaviorAsync('inset-touch');
           await SystemUI.setBackgroundColorAsync('transparent');
-        } catch (e) {}
+        } catch (e) {
+          console.warn('Splash UI setup failed:', e);
+        }
       }
     }
     setupUI();

@@ -22,6 +22,7 @@ export default function Economy() {
   const [formData, setFormData] = useState({
     coins: 0,
     priceINR: 0,
+    bonus: 0,
     isActive: true
   });
 
@@ -46,6 +47,7 @@ export default function Economy() {
       setFormData({
         coins: pkg.coins,
         priceINR: pkg.priceINR,
+        bonus: pkg.bonus || 0,
         isActive: pkg.isActive
       });
     } else {
@@ -53,6 +55,7 @@ export default function Economy() {
       setFormData({
         coins: 0,
         priceINR: 0,
+    bonus: 0,
         isActive: true
       });
     }
@@ -66,14 +69,23 @@ export default function Economy() {
 
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, we update the local state as requested. 
-    // In a real scenario, we would call apiClient.put or apiClient.post here.
-    if (selectedPackage) {
-      // Update existing
-      setCoins(prev => prev.map(p => p._id === selectedPackage._id ? { ...p, ...formData } : p));
-    } else {
-      // Add new (dummy ID for UI logic)
-      const newPkg = { ...formData, _id: Math.random().toString(36).substr(2, 9) };
+    setSaving(true);
+    try {
+      if (selectedPackage) {
+        const response = await apiClient.put(`/admin/economy/coins/${selectedPackage._id}`, formData);
+        setCoins(prev => prev.map(p => p._id === selectedPackage._id ? response.data : p));
+      } else {
+        const response = await apiClient.post("/admin/economy/coins", formData);
+        setCoins(prev => [...prev, response.data]);
+      }
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Failed to save package:", error);
+      alert("Failed to save changes.");
+    } finally {
+      setSaving(false);
+    }
+  };
       setCoins(prev => [...prev, newPkg]);
     }
     setIsEditModalOpen(false);

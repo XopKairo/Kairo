@@ -111,7 +111,9 @@ export default function App() {
           await NavigationBar.setVisibilityAsync('hidden');
           await NavigationBar.setBehaviorAsync('inset-touch');
           await SystemUI.setBackgroundColorAsync('transparent');
-        } catch (e) {}
+        } catch (e) {
+          console.warn('Android UI initialisation failed:', e);
+        }
       }
 
       try {

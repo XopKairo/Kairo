@@ -118,8 +118,13 @@ const WalletScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   key={pkg._id} 
                   style={styles.packageCard}
-                  onPress={() => Alert.alert('Purchase', `Would you like to buy ${pkg.coins} coins for ₹${pkg.priceINR}?`)}
+                  onPress={() => Alert.alert('Purchase', `Would you like to buy ${pkg.coins} coins ${pkg.bonus ? `+ ${pkg.bonus} bonus` : ''} for ₹${pkg.priceINR}?`)}
                 >
+                   {pkg.bonus > 0 && (
+                     <View style={styles.bonusBadge}>
+                        <Text style={styles.bonusText}>+{pkg.bonus}</Text>
+                     </View>
+                   )}
                    <Text style={styles.pkgCoins}>{pkg.coins}</Text>
                    <Text style={styles.pkgLabel}>Coins</Text>
                    <View style={styles.pkgPriceBox}>
@@ -195,7 +200,9 @@ const styles = StyleSheet.create({
   adSubtitle: { color: COLORS.textGray, fontSize: 12, marginTop: 2 },
   storeSection: { marginBottom: 30 },
   packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  packageCard: { width: '30%', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  packageCard: { width: '30%', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)', position: 'relative' },
+  bonusBadge: { position: 'absolute', top: -8, right: -5, backgroundColor: COLORS.success, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, zIndex: 5 },
+  bonusText: { color: '#FFF', fontSize: 10, fontWeight: '900' },
   pkgCoins: { color: COLORS.textWhite, fontSize: 18, fontWeight: '900' },
   pkgLabel: { color: COLORS.textGray, fontSize: 10, marginBottom: 10 },
   pkgPriceBox: { backgroundColor: COLORS.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
