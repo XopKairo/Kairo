@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Avatar } from 'react-native-paper';
 import { 
   View, 
   Text, 
@@ -11,7 +12,8 @@ import {
   TextInput, 
   Alert,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -80,14 +82,13 @@ const FeedScreen = () => {
       formData.append('userId', userId);
       formData.append('caption', newCaption.trim());
       
-      const uriParts = selectedImage.uri.split('.');
-      const fileType = uriParts[uriParts.length - 1];
+      const filePayload = {
+        uri: Platform.OS === 'android' ? selectedImage.uri : selectedImage.uri.replace('file://', ''),
+        name: selectedImage.fileName || `story_${Date.now()}.jpg`,
+        type: selectedImage.mimeType || 'image/jpeg'
+      };
 
-      formData.append('image', {
-        uri: selectedImage.uri,
-        name: `photo.${fileType}`,
-        type: `image/${fileType}`,
-      });
+      formData.append('image', filePayload);
 
       await api.post('/posts', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -175,34 +176,5 @@ const FeedScreen = () => {
     </SafeAreaView>
   );
 };
-
-// ... import Avatar from Paper separately or use custom
-import { Avatar } from 'react-native-paper';
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
-  center: { flex: 1, justifyContent: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg, paddingTop: 10 },
-  headerTitle: { fontSize: 22, fontWeight: '900', color: COLORS.textWhite, letterSpacing: 2 },
-  addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
-  listContainer: { padding: SPACING.md },
-  postCard: { backgroundColor: COLORS.cardBackground, borderRadius: 24, marginBottom: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
-  postHeader: { flexDirection: 'row', alignItems: 'center', padding: 15 },
-  headerInfo: { marginLeft: 12 },
-  authorName: { color: COLORS.textWhite, fontSize: 15, fontWeight: '700' },
-  timeText: { color: COLORS.textGray, fontSize: 11, marginTop: 2 },
-  postImage: { width: '100%', height: 350 },
-  postFooter: { padding: 15 },
-  caption: { color: COLORS.textGray, fontSize: 14, lineHeight: 20 },
-  emptyText: { textAlign: 'center', marginTop: 50, color: COLORS.textGray },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: COLORS.cardBackground, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  modalTitle: { color: COLORS.textWhite, fontSize: 20, fontWeight: '800' },
-  imagePlaceholder: { width: '100%', height: 250, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, justifyContent: 'center', marginBottom: 20 },
-  placeholderText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' },
-  selectedImg: { width: '100%', height: '100%', borderRadius: 20 },
-  input: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 15, padding: 15, color: COLORS.textWhite, minHeight: 80, textAlignVertical: 'top', marginBottom: 20 }
-});
 
 export default FeedScreen;

@@ -1,21 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, FlatList, ActivityIndicator, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, ActivityIndicator, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
-import { Search, UserPlus, MapPin, ShieldCheck } from 'lucide-react-native';
+import { Search, UserPlus, UserMinus, MapPin, ShieldCheck } from 'lucide-react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 
 const DiscoveryScreen = () => {
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchAllUsers();
+    fetchInitialData();
   }, []);
 
-  const fetchAllUsers = async () => {
+  const fetchInitialData = async () => {
     setLoading(true);
     try {
+      const storedUser = await AsyncStorage.getItem('userData');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        const res = await api.get(`/users/\${parsed._id || parsed.id}`);
+        setCurrentUser(res.data);
+      }
       const response = await api.get('/users');
       setUsers(response.data || []);
     } catch (error) {
@@ -24,24 +32,52 @@ const DiscoveryScreen = () => {
     }
   };
 
-  const renderUser = ({ item }) => (
-    <View style={styles.userCard}>
-      <View style={[styles.avatar, { backgroundColor: item.gender === 'Female' ? '#E91E63' : '#6C2BD9' }]}>
-        <Text style={styles.avatarText}>{item.name?.charAt(0).toUpperCase()}</Text>
-        <View style={[styles.statusDot, { backgroundColor: item.status === 'online' ? COLORS.success : '#555' }]} />
-      </View>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name} {item.isVerified && <ShieldCheck size={14} color={COLORS.accentGlow} />}</Text>
-        <View style={styles.detailRow}>
-           <MapPin size={12} color={COLORS.textGray} />
-           <Text style={styles.userDetail}>{item.location || 'Global'}</Text>
+  const handleFollow = async (userId) => {
+    if (!currentUser) return;
+    try {
+      const res = await api.post(\`/users/follow/\${userId}\`, { currentUserId: currentUser._id || currentUser.id });
+      if (res.data.success) {
+        // Update local currentUser following list
+        const updatedFollowing = res.data.following 
+          ? [...(currentUser.following || []), userId]
+          : (currentUser.following || []).filter(id => id !== userId);
+        
+        setCurrentUser({ ...currentUser, following: updatedFollowing });
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not process follow request');
+    }
+  };
+
+  const renderUser = ({ item }) => {
+    if (item._id === currentUser?._id) return null; // Don't show self
+
+    const isFollowing = currentUser?.following?.some(id => 
+      (typeof id === 'string' ? id : id._id) === item._id
+    );
+
+    return (
+      <View style={styles.userCard}>
+        <View style={[styles.avatar, { backgroundColor: item.gender === 'Female' ? '#E91E63' : '#6C2BD9' }]}>
+          <Text style={styles.avatarText}>{item.name?.charAt(0).toUpperCase()}</Text>
+          <View style={[styles.statusDot, { backgroundColor: item.status === 'online' ? COLORS.success : '#555' }]} />
         </View>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>{item.name} {item.isVerified && <ShieldCheck size={14} color={COLORS.accentGlow} />}</Text>
+          <View style={styles.detailRow}>
+             <MapPin size={12} color={COLORS.textGray} />
+             <Text style={styles.userDetail}>{item.location || 'Global'}</Text>
+          </View>
+        </View>
+        <TouchableOpacity 
+          style={[styles.connectBtn, isFollowing && { backgroundColor: 'rgba(255,255,255,0.1)' }]} 
+          onPress={() => handleFollow(item._id)}
+        >
+          {isFollowing ? <UserMinus color={COLORS.textGray} size={18} /> : <UserPlus color={COLORS.textWhite} size={18} />}
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.connectBtn}>
-        <UserPlus color={COLORS.textWhite} size={18} />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>

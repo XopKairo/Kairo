@@ -15,6 +15,8 @@ const userSchema = new Schema({
   lastLoginDate: { type: Date },
   isBanned: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false },
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   profilePicture: { type: String, default: '' },
   gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false },
