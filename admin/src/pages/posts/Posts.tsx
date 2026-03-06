@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Star, Eye } from 'lucide-react';
+import { Trash2, Star } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Post {
