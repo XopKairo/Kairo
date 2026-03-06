@@ -19,19 +19,32 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/admin/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await apiClient.get('/admin/users');
-        setUsers(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setLoading(false);
-      }
-    };
     fetchUsers();
   }, []);
+
+  const handleToggleBan = async (id: string, isBanned: boolean) => {
+    const action = isBanned ? 'unban' : 'ban';
+    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
+    try {
+      await apiClient.put(`/admin/users/${id}/status`, { isBanned: !isBanned });
+      fetchUsers();
+    } catch (error) {
+      alert(`Failed to ${action} user`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -73,6 +86,8 @@ export default function Users() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
               {loading ? (
                 <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={6} className="py-8 text-center text-gray-500">No users found.</td></tr>
               ) : users.map((user) => (
                 <tr key={user._id || user.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
                   <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{user.name || user.username || 'Unknown'}</td>
@@ -89,7 +104,11 @@ export default function Users() {
                       : 'Unknown'}
                   </td>
                   <td className="py-4 px-6 text-right flex justify-end gap-2">
-                    <button className="text-gray-400 hover:text-red-500 transition-colors" title="Ban User">
+                    <button 
+                      onClick={() => handleToggleBan(user._id || user.id || '', !!user.isBanned)}
+                      className={`${user.isBanned ? 'text-green-500 hover:text-green-600' : 'text-gray-400 hover:text-red-500'} transition-colors`} 
+                      title={user.isBanned ? "Unban User" : "Ban User"}
+                    >
                       <ShieldBan className="w-5 h-5" />
                     </button>
                     <button className="text-gray-400 hover:text-brand-500 transition-colors">

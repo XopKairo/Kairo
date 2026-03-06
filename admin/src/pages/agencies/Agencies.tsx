@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, Plus } from 'lucide-react';
+import { Search, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Agency {
@@ -16,19 +16,31 @@ export default function Agencies() {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchAgencies = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/admin/agencies');
+      setAgencies(response.data);
+    } catch (error) {
+      console.error('Error fetching agencies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAgencies = async () => {
-      try {
-        const response = await apiClient.get('/admin/agencies');
-        setAgencies(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching agencies:', error);
-        setLoading(false);
-      }
-    };
     fetchAgencies();
   }, []);
+
+  const handleDeleteAgency = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this agency?')) return;
+    try {
+      await apiClient.delete(`/admin/agencies/${id}`);
+      fetchAgencies();
+    } catch (error) {
+      alert('Failed to delete agency');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -70,8 +82,12 @@ export default function Agencies() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
               {loading ? (
                 <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
-              ) : agencies.map((agency) => (
-                <tr key={agency._id || agency.id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
+              ) : agencies.length === 0 ? (
+                <tr><td colSpan={6} className="py-8 text-center text-gray-500">No agencies found.</td></tr>
+              ) : agencies.map((agency) => {
+                const agencyId = agency._id || agency.id || '';
+                return (
+                <tr key={agencyId} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
                   <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{agency.name || 'Unknown'}</td>
                   <td className="py-4 px-6 text-gray-600 dark:text-gray-300 font-mono">{agency.code || 'N/A'}</td>
                   <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.hosts || 0}</td>
@@ -81,13 +97,20 @@ export default function Agencies() {
                       {agency.status || 'Active'}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-right">
+                  <td className="py-4 px-6 text-right flex justify-end gap-2">
+                    <button 
+                      onClick={() => handleDeleteAgency(agencyId)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete Agency"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                     <button className="text-gray-400 hover:text-brand-500 transition-colors">
-                      <MoreHorizontal className="w-5 h-5 ml-auto" />
+                      <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

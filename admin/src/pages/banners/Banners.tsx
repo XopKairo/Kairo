@@ -4,7 +4,7 @@ import apiClient from '../../api/apiClient';
 
 interface Banner {
   _id: string;
-  id?: string; // Support for both _id and id
+  id?: string;
   title: string;
   imageUrl: string;
   status: string;
@@ -32,15 +32,11 @@ export default function Banners() {
 
   const fetchBanners = async () => {
     try {
+      setLoading(true);
       const response = await apiClient.get('/admin/banners');
       setBanners(response.data);
     } catch (error) {
       console.error('Failed to fetch banners:', error);
-      // Fallback to initial mock if API fails for now
-      setBanners([
-        { _id: '1', title: 'Welcome Bonus', imageUrl: 'https://via.placeholder.com/400x150', status: 'Active' },
-        { _id: '2', title: 'Diwali Offer', imageUrl: 'https://via.placeholder.com/400x150', status: 'Inactive' },
-      ]);
     } finally {
       setLoading(false);
     }
@@ -72,20 +68,29 @@ export default function Banners() {
 
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedBanner) {
-      setBanners(prev => prev.map(b => (b._id === selectedBanner._id || b.id === selectedBanner._id) ? { ...b, ...formData } : b));
-    } else {
-      const newBanner = { ...formData, _id: Math.random().toString(36).substr(2, 9) };
-      setBanners(prev => [...prev, newBanner]);
+    try {
+      if (selectedBanner) {
+        await apiClient.put(`/admin/banners/${selectedBanner._id || selectedBanner.id}`, formData);
+      } else {
+        await apiClient.post('/admin/banners', formData);
+      }
+      fetchBanners();
+      setIsEditModalOpen(false);
+    } catch (error) {
+      alert('Failed to save banner');
     }
-    setIsEditModalOpen(false);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedBanner) {
-      setBanners(prev => prev.filter(b => (b._id !== selectedBanner._id && b.id !== selectedBanner._id)));
+      try {
+        await apiClient.delete(`/admin/banners/${selectedBanner._id || selectedBanner.id}`);
+        fetchBanners();
+        setIsDeleteModalOpen(false);
+      } catch (error) {
+        alert('Failed to delete banner');
+      }
     }
-    setIsDeleteModalOpen(false);
   };
 
   return (

@@ -25,23 +25,23 @@ const withMasterBuildFix = (config) => {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0"
-            force "org.jetbrains.kotlin:kotlin-reflect:2.1.0"
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
+            force "org.jetbrains.kotlin:kotlin-reflect:1.9.24"
         }
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             freeCompilerArgs += [
                 "-Xskip-metadata-version-check",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=2.1.0"
+                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.24"
             ]
         }
     }
 }
 `;
-    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"')) {
+    if (!config.modResults.contents.includes('force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"')) {
       config.modResults.contents += globalFix;
     }
 
