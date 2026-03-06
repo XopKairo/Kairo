@@ -4,7 +4,7 @@ export default {
     "owner": "ajil1234",
     "slug": "zora",
     "version": "1.0.0",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "react-native-google-mobile-ads": {
       "android_app_id": "ca-app-pub-2842532668081504~8477148280",
       "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
@@ -62,11 +62,7 @@ export default {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "newArchEnabled": false,
-            "extraGradleProperties": {
-              "android.suppressKotlinVersionCompatibilityCheck": "1.9.25",
-              "kotlin.suppressKotlinVersionCompatibilityCheck": "1.9.25"
-            },
+            "newArchEnabled": true,
             "kotlinCompilerArgs": [
               "-Xskip-metadata-version-check"
             ]

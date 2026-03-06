@@ -29,13 +29,14 @@ allprojects {
             force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.25"
             force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.25"
             force "org.jetbrains.kotlin:kotlin-reflect:1.9.25"
+            force "com.facebook.react:react-android:0.76.9"
+            force "com.facebook.react:react-native:0.76.9"
         }
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         kotlinOptions {
             freeCompilerArgs += [
-                "-Xskip-metadata-version-check",
-                "-P", "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.25"
+                "-Xskip-metadata-version-check"
             ]
         }
     }
