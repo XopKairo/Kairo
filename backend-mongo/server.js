@@ -105,9 +105,16 @@ const strictLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please wait a minute.' }
 });
 
+const otpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 3, // 3 requests per 5 minutes
+  message: { success: false, message: 'Too many OTP requests. Please wait 5 minutes.' }
+});
+
 app.use('/api', globalLimiter);
 app.use('/api/auth/login', strictLimiter);
 app.use('/api/user/auth/register', strictLimiter);
+app.use('/api/user/auth/send-otp', otpLimiter);
 app.use('/api/wallet/withdraw', strictLimiter);
 
 // --- Routes ---

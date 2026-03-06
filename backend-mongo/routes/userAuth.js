@@ -76,7 +76,7 @@ router.post('/send-otp', async (req, res) => {
        }
     }
 
-    return res.status(200).json({ success: true, message: 'OTP generated (Dev Mode)', otp: process.env.NODE_ENV === 'development' ? otp : undefined });
+    return res.status(200).json({ success: true, message: 'OTP generated (Dev Mode)' });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
