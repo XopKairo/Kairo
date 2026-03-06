@@ -1,7 +1,7 @@
 export default {
   "expo": {
     "name": "Zora",
-    "owner": "ajil1234",
+    "owner": "ajilomalloor77",
     "slug": "zora",
     "version": "1.0.0",
     "newArchEnabled": false,
@@ -62,6 +62,8 @@ export default {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "kotlinCompilerArgs": [
               "-Xskip-metadata-version-check"
             ]
@@ -87,7 +89,7 @@ export default {
     },
     "extra": {
       "eas": {
-        "projectId": "42944b55-11a7-49ea-b4ef-93b4807e4f2a"
+        "projectId": "7c0bb517-c5d6-4ce7-9c19-afad7984df8b"
       }
     }
   },

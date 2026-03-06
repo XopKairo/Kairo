@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
+import mobileAds from 'react-native-google-mobile-ads';
 
 // Context
 import { AuthProvider } from './src/context/AuthContext';
@@ -36,6 +37,34 @@ const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'))
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
+          else if (route.name === 'Discovery') iconName = focused ? 'compass' : 'compass-outline';
+          else if (route.name === 'Feed') iconName = focused ? 'play-circle' : 'play-circle-outline';
+          else if (route.name === 'Notifications') iconName = focused ? 'bell' : 'bell-outline';
+          else if (route.name === 'Profile') iconName = focused ? 'account' : 'account-outline';
+          return <Icon name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#6C2BD9',
+        tabBarInactiveTintColor: 'gray',
+        tabBarStyle: { backgroundColor: '#0F0A19', borderTopWidth: 0 },
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Discovery" component={DiscoveryScreen} />
+      <Tab.Screen name="Feed" component={FeedScreen} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} />
+      <Tab.Screen name="Profile" component={UserProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 function NavigationStack() {
   const { isMaintenance, checkMaintenance } = useAuth();
@@ -76,7 +105,7 @@ function NavigationStack() {
 
 export default function App() {
   useEffect(() => {
-    async function lockImmersiveMode() {
+    async function initApp() {
       if (Platform.OS === 'android') {
         try {
           await NavigationBar.setVisibilityAsync('hidden');
@@ -84,8 +113,14 @@ export default function App() {
           await SystemUI.setBackgroundColorAsync('transparent');
         } catch (e) {}
       }
+
+      try {
+        await mobileAds().initialize();
+      } catch (err) {
+        console.warn('MobileAds initialisation failed', err);
+      }
     }
-    lockImmersiveMode();
+    initApp();
   }, []);
 
   return (

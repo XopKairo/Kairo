@@ -33,10 +33,12 @@ export const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
       <div className="p-6 flex items-center space-x-3">
-        <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
-          Z
-        </div>
-        <span className="text-2xl font-bold text-gray-900 dark:text-white">Zora</span>
+        <img 
+          src="/zora.png" 
+          alt="Zora Logo" 
+          className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-brand-500/20" 
+        />
+        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Zora</span>
       </div>
 
       <div className="px-6 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
