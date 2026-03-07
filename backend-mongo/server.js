@@ -40,6 +40,7 @@ import growthRoutes from './routes/growth.js';
 import callRoutes from './routes/calls.js';
 import paymentsRoutes from './routes/payments.js';
 import notificationsRoutes from './routes/notifications.js';
+import verificationRoutes from './routes/verification.js';
 
 import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
@@ -184,6 +185,7 @@ app.use('/api/admin/hosts', protectAdmin, adminHostsRoutes);
 app.use('/api/admin/agencies', protectAdmin, adminAgenciesRoutes);
 app.use('/api/admin/banners', protectAdmin, adminBannersRoutes);
 app.use('/api/admin/notifications', protectAdmin, notificationsRoutes);
+app.use('/api/verification', protectUser, verificationRoutes);
 
 // Public Settings for Mobile App
 app.use('/api/settings', settingsRoutes);
