@@ -1,7 +1,28 @@
 import express from 'express';
 import User from '../models/User.js';
 import redisClient from '../config/redis.js';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+
 const router = express.Router();
+
+// Cloudinary Configuration (Assumption: ENV is set)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'kairo_profiles',
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+  },
+});
+
+const upload = multer({ storage });
 
 router.get('/', async (req, res) => {
   try {
@@ -17,17 +38,35 @@ router.get('/:id', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-// Comprehensive Admin Update
+// Profile Update with Image Upload
+router.put('/:id/profile', upload.single('image'), async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.profilePicture = req.file.path; // Cloudinary URL
+      updateData.verificationSelfie = req.file.path; // Also update selfie if uploaded here
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    
+    // Invalidate Cache
+    await redisClient.del(`user_status:${req.params.id}`);
+    
+    res.json({ success: true, user });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// Generic Admin Update
 router.put('/:id', async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    // Invalidate Cache
     await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-// Advanced Ban Route
 router.post('/:id/ban', async (req, res) => {
   const { isBanned, reason, durationDays } = req.body;
   try {
@@ -39,10 +78,9 @@ router.post('/:id/ban', async (req, res) => {
     } else if (!isBanned) {
       update.banUntil = null;
     } else {
-      update.banUntil = new Date('9999-12-31'); // Permanent
+      update.banUntil = new Date('9999-12-31');
     }
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
-    // Invalidate Cache
     await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
@@ -51,7 +89,6 @@ router.post('/:id/ban', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
-    // Invalidate Cache
     await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }

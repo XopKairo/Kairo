@@ -13,25 +13,32 @@ const VerificationScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const pickImage = async (type) => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') return Alert.alert('Permission Denied', 'Camera roll access required.');
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera roll access is required.');
+        return;
+      }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: type === 'selfie' ? [1, 1] : [4, 3],
-      quality: 0.7,
-    });
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: type === 'selfie' ? [1, 1] : [4, 3],
+        quality: 0.6,
+      });
 
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      const imagePayload = {
-        uri: asset.uri,
-        name: asset.fileName || `verify_${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg'
-      };
-      if (type === 'selfie') setSelfie(imagePayload);
-      else setIdProof(imagePayload);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const imagePayload = {
+          uri: asset.uri,
+          name: asset.fileName || `verify_${type}_${Date.now()}.jpg`,
+          type: asset.mimeType || 'image/jpeg'
+        };
+        if (type === 'selfie') setSelfie(imagePayload);
+        else setIdProof(imagePayload);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to pick image');
     }
   };
 
@@ -46,16 +53,27 @@ const VerificationScreen = ({ navigation }) => {
 
       const formData = new FormData();
       formData.append('userId', userId);
-      formData.append('selfie', selfie);
-      formData.append('idProof', idProof);
+      
+      formData.append('selfie', {
+        uri: Platform.OS === 'android' ? selfie.uri : selfie.uri.replace('file://', ''),
+        name: selfie.name,
+        type: selfie.type
+      });
 
-      const response = await api.post(`/verification/submit`, formData, { 
+      formData.append('idProof', {
+        uri: Platform.OS === 'android' ? idProof.uri : idProof.uri.replace('file://', ''),
+        name: idProof.name,
+        type: idProof.type
+      });
+
+      await api.post(`/verification/submit`, formData, { 
         headers: { 'Content-Type': 'multipart/form-data' } 
       });
 
       Alert.alert('Success', 'Verification pending review.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit request.');
+      console.error('Verification Error:', error.response?.data || error.message);
+      Alert.alert('Error', 'Failed to submit request. Check your connection.');
     } finally {
       setLoading(false);
     }
@@ -112,7 +130,7 @@ const styles = StyleSheet.create({
   subtitle: { color: COLORS.textGray, fontSize: 14, textAlign: 'center', marginTop: 8 },
   label: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700', marginBottom: 15, marginTop: 20 },
   uploadBox: { height: 180, backgroundColor: COLORS.cardBackground, borderRadius: 24, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
-  image: { width: '100%', height: '100%' },
+  image: { width: '100%', height: '100%', resizeMode: 'cover' },
   placeholder: { alignItems: 'center' },
   uploadText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' },
   infoBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30, gap: 8 },

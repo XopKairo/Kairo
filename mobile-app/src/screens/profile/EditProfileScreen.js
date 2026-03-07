@@ -26,35 +26,43 @@ const EditProfileScreen = ({ navigation }) => {
         setUser(userData);
         setGender(userData.gender || '');
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('Load User Error:', error);
+    }
   };
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Camera roll access is required.');
-      return;
-    }
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera roll access is required to update profile picture.');
+        return;
+      }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      setSelfie({
-        uri: asset.uri,
-        name: asset.fileName || `profile_${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg'
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'], // Newer Expo syntax
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.6,
       });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        console.log('Selected Image:', asset.uri);
+        setSelfie({
+          uri: asset.uri,
+          name: asset.fileName || `profile_${Date.now()}.jpg`,
+          type: asset.mimeType || 'image/jpeg'
+        });
+      }
+    } catch (err) {
+      console.error('Pick Image Error:', err);
+      Alert.alert('Error', 'Failed to open image picker');
     }
   };
 
   const handleUpdate = async () => {
-    if (!gender) return Alert.alert('Error', 'Select your gender');
+    if (!gender) return Alert.alert('Error', 'Please select your gender');
 
     setLoading(true);
     try {
@@ -76,12 +84,13 @@ const EditProfileScreen = ({ navigation }) => {
       });
 
       if (response.data.success) {
+        // Important: Update local storage with new user data including photo URL
         await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
-        Alert.alert('Success', 'Profile updated!');
+        Alert.alert('Success', 'Profile updated successfully!');
         navigation.goBack();
       }
     } catch (error) {
-      console.error('Update error:', error);
+      console.error('Update error details:', error.response?.data || error.message);
       Alert.alert('Update Failed', error.response?.data?.message || 'Check your internet connection.');
     } finally {
       setLoading(false);
@@ -115,14 +124,16 @@ const EditProfileScreen = ({ navigation }) => {
           ))}
         </View>
 
-        <Text style={styles.label}>Verification Selfie</Text>
+        <Text style={styles.label}>Profile Picture / Selfie</Text>
         <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-          {selfie || user?.verificationSelfie ? (
-            <Image source={{ uri: selfie?.uri || user?.verificationSelfie }} style={styles.image} />
+          {selfie ? (
+            <Image source={{ uri: selfie.uri }} style={styles.image} />
+          ) : user?.profilePicture || user?.verificationSelfie ? (
+            <Image source={{ uri: user.profilePicture || user.verificationSelfie }} style={styles.image} />
           ) : (
             <View style={styles.placeholder}>
               <Camera color={COLORS.primary} size={40} />
-              <Text style={styles.uploadText}>Update Selfie</Text>
+              <Text style={styles.uploadText}>Select Photo</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
   activeGender: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   genderText: { color: COLORS.textGray, fontWeight: 'bold' },
   uploadBox: { width: '100%', height: 250, backgroundColor: COLORS.cardBackground, borderRadius: 24, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', marginBottom: 40, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
-  image: { width: '100%', height: '100%' },
+  image: { width: '100%', height: '100%', resizeMode: 'cover' },
   placeholder: { alignItems: 'center' },
   uploadText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' }
 });
