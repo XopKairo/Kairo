@@ -16,6 +16,7 @@ import Settings from './pages/settings/Settings';
 import Banners from './pages/banners/Banners';
 import Posts from "./pages/posts/Posts";
 import MarketingNotifications from './pages/MarketingNotifications';
+import Payouts from './pages/payouts/Payouts';
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const authContext = useContext(AuthContext);
@@ -40,6 +41,7 @@ function App() {
             <Route path="/hosts" element={<ProtectedRoute><Layout><Hosts /></Layout></ProtectedRoute>} />
             <Route path="/agencies" element={<ProtectedRoute><Layout><Agencies /></Layout></ProtectedRoute>} />
             <Route path="/economy" element={<ProtectedRoute><Layout><Economy /></Layout></ProtectedRoute>} />
+            <Route path="/payouts" element={<ProtectedRoute><Layout><Payouts /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
             <Route path="/banners" element={<ProtectedRoute><Layout><Banners /></Layout></ProtectedRoute>} />
             <Route path="/posts" element={<ProtectedRoute><Layout><Posts /></Layout></ProtectedRoute>} />

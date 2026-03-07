@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell, CreditCard } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -13,6 +13,7 @@ const navItems = [
   { icon: UserCheck, label: 'Hosts & Verification', path: '/hosts' },
   { icon: Building2, label: 'Agencies', path: '/agencies' },
   { icon: Wallet, label: 'Economy', path: '/economy' },
+  { icon: CreditCard, label: 'Payout Requests', path: '/payouts' },
   { icon: Bell, label: 'Marketing Push', path: '/notifications' },
   { icon: Flag, label: 'Reports', path: '/reports' },
   { icon: Image, label: 'Banners', path: '/banners' },
