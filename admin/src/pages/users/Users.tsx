@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, ShieldBan, Trash2, Edit, X, Save, UserCheck, UserPlus } from 'lucide-react';
+import { MoreHorizontal, ShieldBan, Trash2, Edit, X, Save, UserCheck, UserPlus, Search } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface User {
@@ -17,6 +17,7 @@ interface User {
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -51,7 +52,10 @@ export default function Users() {
       setIsAddModalOpen(false);
       setAddForm({ name: '', email: '', phone: '', password: '', gender: 'Male' });
       fetchUsers();
-    } catch (e) { alert('Creation failed. User might already exist.'); }
+    } catch (e: any) { 
+      const msg = e.response?.data?.message || 'Creation failed. User might already exist.';
+      alert(msg); 
+    }
   };
 
   const handleUpdateUser = async () => {
@@ -84,32 +88,53 @@ export default function Users() {
   };
 
   const deleteUser = async (id: string) => {
-    if (!window.confirm('Permanent delete?')) return;
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) return;
     try {
       await apiClient.delete('/admin/users/' + id);
       fetchUsers();
-    } catch (e) {}
+      alert('User deleted successfully');
+    } catch (e) {
+      alert('Failed to delete user');
+    }
   };
+
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (u.phone && u.phone.includes(searchQuery))
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-sm text-gray-500">View and manage all registered users.</p>
+          <p className="text-sm text-gray-500">View and manage all {users.length} registered users.</p>
         </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-brand-500/20 transition-all"
-        >
-          <UserPlus size={20}/> Add New User
-        </button>
+        <div className="flex gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search by name, email, phone..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-surface-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+            />
+          </div>
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-500/20 transition-all whitespace-nowrap"
+          >
+            <UserPlus size={18}/> Add User
+          </button>
+        </div>
       </div>
       
       <div className="bg-white dark:bg-surface-900 rounded-[32px] overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 text-xs font-bold uppercase tracking-widest">
+            <thead className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 text-xs font-bold uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
               <tr>
                 <th className="p-6">User Details</th>
                 <th className="p-6">Wallet / Cash</th>
@@ -120,9 +145,9 @@ export default function Users() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {loading ? (
                 <tr><td colSpan={4} className="p-10 text-center text-gray-500">Loading users...</td></tr>
-              ) : users.length === 0 ? (
-                <tr><td colSpan={4} className="p-10 text-center text-gray-500">No users found.</td></tr>
-              ) : users.map(u => (
+              ) : filteredUsers.length === 0 ? (
+                <tr><td colSpan={4} className="p-10 text-center text-gray-500">No users found matching your search.</td></tr>
+              ) : filteredUsers.map(u => (
                 <tr key={u._id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/30 transition-colors">
                   <td className="p-6 text-sm">
                     <div className="flex items-center gap-3">
@@ -134,7 +159,7 @@ export default function Users() {
                     </div>
                   </td>
                   <td className="p-6 text-sm">
-                    <p className="font-bold text-gray-900 dark:text-white">{u.coins} Coins</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{u.coins} <span className="text-[10px] text-gray-400">Coins</span></p>
                     <p className="text-brand-600 font-medium">₹{u.cashBalance || 0} Balance</p>
                   </td>
                   <td className="p-6 text-sm">
