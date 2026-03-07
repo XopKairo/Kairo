@@ -38,6 +38,7 @@ import adminAgenciesRoutes from './routes/agencies.js';
 import adminBannersRoutes from './routes/banners.js';
 import growthRoutes from './routes/growth.js';
 import callRoutes from './routes/calls.js';
+import paymentsRoutes from './routes/payments.js';
 
 import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
@@ -166,6 +167,7 @@ app.use('/api/wallet/withdraw', strictLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/interests', interestsRoutes); // Admin login, refresh
 app.use('/api/user/auth', userAuthRoutes); // User Registration/OTP
+app.use('/api/user/payments', paymentsRoutes); // Payment Routes
 
 // Admin Protected Routes
 app.use('/api/admin/dashboard', protectAdmin, dashboardRoutes);
