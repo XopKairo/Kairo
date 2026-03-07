@@ -7,7 +7,7 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 const router = express.Router();
 
-// Cloudinary Configuration (Assumption: ENV is set)
+// Cloudinary Configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -34,9 +34,34 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, password, gender } = req.body;
-    const user = await User.create({ name, email, phone, password, gender });
+
+    // Build query to check duplicates only for provided values
+    const query = [];
+    if (email && email.trim() !== '') query.push({ email: email.trim() });
+    if (phone && phone.trim() !== '') query.push({ phone: phone.trim() });
+
+    if (query.length > 0) {
+      const existing = await User.findOne({ $or: query });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Email or Phone already exists' });
+      }
+    }
+
+    const userData = { 
+      name: name.trim(), 
+      password, 
+      gender: gender || 'Male' 
+    };
+    
+    if (email && email.trim() !== '') userData.email = email.trim();
+    if (phone && phone.trim() !== '') userData.phone = phone.trim();
+
+    const user = await User.create(userData);
     res.status(201).json({ success: true, user });
-  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+  } catch (e) {
+    console.error('Admin user creation error:', e);
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 router.get('/:id', async (req, res) => {
@@ -51,15 +76,12 @@ router.put('/:id/profile', upload.single('image'), async (req, res) => {
   try {
     const updateData = { ...req.body };
     if (req.file) {
-      updateData.profilePicture = req.file.path; // Cloudinary URL
-      updateData.verificationSelfie = req.file.path; // Also update selfie if uploaded here
+      updateData.profilePicture = req.file.path;
+      updateData.verificationSelfie = req.file.path;
     }
 
     const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    
-    // Invalidate Cache
     await redisClient.del(`user_status:${req.params.id}`);
-    
     res.json({ success: true, user });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
@@ -69,7 +91,12 @@ router.put('/:id/profile', upload.single('image'), async (req, res) => {
 // Generic Admin Update
 router.put('/:id', async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+    // Prevent empty strings from causing unique index issues
+    if (updateData.email === '') delete updateData.email;
+    if (updateData.phone === '') delete updateData.phone;
+
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
     await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
