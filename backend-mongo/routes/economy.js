@@ -19,8 +19,8 @@ router.get('/coins', async (req, res) => {
 });
 
 router.post('/coins', async (req, res) => {
-  const { coins, priceINR, icon, isActive } = req.body;
-  const pkg = await CoinPackage.create({ coins, priceINR, icon, isActive });
+  const { coins, priceINR, bonus, icon, isActive } = req.body;
+  const pkg = await CoinPackage.create({ coins, priceINR, bonus, icon, isActive });
   res.json(pkg);
 });
 
