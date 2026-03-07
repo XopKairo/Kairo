@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Send, Bell, User, Users as UsersIcon } from 'lucide-react';
-import apiClient from '../../api/apiClient';
+import { Send, Bell } from 'lucide-react';
+import apiClient from '../api/apiClient';
 
 interface NotificationLog {
   _id: string;

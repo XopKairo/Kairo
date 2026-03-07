@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, History, Plus } from 'lucide-react';
+import { History, Plus } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface CoinPackage {
