@@ -1,5 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
+import redisClient from '../config/redis.js';
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -20,6 +21,8 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Invalidate Cache
+    await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
@@ -39,6 +42,8 @@ router.post('/:id/ban', async (req, res) => {
       update.banUntil = new Date('9999-12-31'); // Permanent
     }
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+    // Invalidate Cache
+    await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
@@ -46,6 +51,8 @@ router.post('/:id/ban', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
+    // Invalidate Cache
+    await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });

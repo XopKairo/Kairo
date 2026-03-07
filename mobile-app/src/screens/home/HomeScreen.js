@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -13,9 +13,11 @@ import {
 import { Text, Card, Avatar, ActivityIndicator } from 'react-native-paper';
 import { Search, Bell, ShieldCheck, Star } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FlashList } from '@shopify/flash-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { BASE_URL } from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
+import HostCard from '../../components/HostCard';
 
 const { width } = Dimensions.get('window');
 
@@ -29,6 +31,8 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const activeBanners = useMemo(() => banners.filter(b => b.status === 'Active'), [banners]);
 
   const fetchData = async () => {
     try {
@@ -70,36 +74,12 @@ const HomeScreen = ({ navigation }) => {
   );
 
   const renderHost = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.hostCard}
-      activeOpacity={0.9}
-      onPress={() => {
-        if (!currentUser) return;
-        navigation.navigate('VideoCall', {
-          userId: currentUser.id || currentUser._id,
-          userName: currentUser.name || 'User',
-          hostId: item._id,
-          hostName: item.name,
-          callId: 'call_' + Date.now(),
-          callRatePerMinute: appSettings.callRate || 30
-        });
-      }}
-    >
-      <View style={styles.hostImageContainer}>
-        <Avatar.Image size={120} source={{ uri: item.profilePicture || 'https://via.placeholder.com/120' }} />
-        <View style={[styles.statusDot, { backgroundColor: item.status === 'Online' ? COLORS.success : COLORS.error }]} />
-        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.hostOverlay}>
-           <View style={styles.ratingBadge}>
-              <Star size={10} fill="#FFD700" color="#FFD700" />
-              <Text style={styles.ratingText}>{item.rating || '4.8'}</Text>
-           </View>
-        </LinearGradient>
-      </View>
-      <View style={styles.hostInfo}>
-        <Text style={styles.hostName}>{item.name}</Text>
-        <Text style={styles.hostPrice}>{appSettings.callRate || 30} coins/min</Text>
-      </View>
-    </TouchableOpacity>
+    <HostCard 
+      item={item} 
+      currentUser={currentUser} 
+      navigation={navigation} 
+      appSettings={appSettings} 
+    />
   );
 
   if (loading) {
@@ -138,7 +118,7 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Banners */}
         <FlatList
-          data={banners.filter(b => b.status === 'Active')}
+          data={activeBanners}
           renderItem={renderBanner}
           keyExtractor={item => item._id || item.id}
           horizontal
@@ -154,14 +134,16 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Hosts Grid */}
-        <FlatList
-          data={hosts}
-          renderItem={renderHost}
-          keyExtractor={item => item._id}
-          numColumns={2}
-          scrollEnabled={false}
-          contentContainerStyle={styles.hostList}
-        />
+        <View style={{ minHeight: 400 }}>
+          <FlashList
+            data={hosts}
+            renderItem={renderHost}
+            keyExtractor={item => item._id}
+            numColumns={2}
+            estimatedItemSize={200}
+            scrollEnabled={false}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

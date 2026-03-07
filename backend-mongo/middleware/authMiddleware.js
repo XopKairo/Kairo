@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
+import redisClient from '../config/redis.js';
 
 // Protect Admin Middleware
-export const protect = async (req, res, next) => {
+export const protectAdmin = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
@@ -21,15 +22,10 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   }
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Not authorized, no token' });
-  }
+  return res.status(401).json({ success: false, message: 'Not authorized, no token' });
 };
 
-// Alias for clarity in server.js
-export const protectAdmin = protect;
-
-// Protect User Middleware (Live Ban Sync)
+// Protect User Middleware with Redis Caching (Performance Optimized)
 export const protectUser = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -37,23 +33,54 @@ export const protectUser = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Query the database to check current status on EVERY request
-      const user = await User.findById(decoded.id).select('-password');
+      const cacheKey = `user_status:${decoded.id}`;
+      
+      // Attempt to get user status from Redis
+      let userStatus = await redisClient.get(cacheKey);
+      
+      if (userStatus) {
+        userStatus = JSON.parse(userStatus);
+        
+        if (userStatus.isBanned) {
+          return res.status(403).json({ success: false, message: 'Account is banned by admin' });
+        }
+        
+        req.user = { id: decoded.id, ...userStatus };
+        return next();
+      }
+
+      // If not in cache, fallback to Database
+      const user = await User.findById(decoded.id).select('isBanned name email phone coins zoraPoints gender');
       
       if (!user) {
          return res.status(401).json({ success: false, message: 'User not found' });
       }
 
       if (user.isBanned) {
+         // Cache the banned status too
+         await redisClient.setEx(cacheKey, 3600, JSON.stringify({ isBanned: true }));
          return res.status(403).json({ success: false, message: 'Account is banned by admin' });
       }
+
+      // Cache active user data (Expires in 10 mins)
+      const userData = { 
+        isBanned: false, 
+        name: user.name, 
+        email: user.email, 
+        phone: user.phone,
+        coins: user.coins,
+        zoraPoints: user.zoraPoints,
+        gender: user.gender
+      };
+      
+      await redisClient.setEx(cacheKey, 600, JSON.stringify(userData));
 
       req.user = user;
       return next();
     } catch (error) {
+      console.error('[Auth Middleware Error]', error);
       return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
-  } else {
-    return res.status(401).json({ success: false, message: 'Not authorized, no token' });
   }
+  return res.status(401).json({ success: false, message: 'Not authorized, no token' });
 };

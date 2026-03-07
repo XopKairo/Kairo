@@ -8,6 +8,7 @@ const settingsSchema = new Schema({
   
   // System Control
   maintenance: { type: Boolean, default: false },
+  isAiModerationEnabled: { type: Boolean, default: true },
   
   // Ad Settings
   enableAds: { type: Boolean, default: true },

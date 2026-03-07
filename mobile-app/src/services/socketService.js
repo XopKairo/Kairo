@@ -10,7 +10,9 @@ class SocketService {
 
   connect(userId = null) {
     if (!this.socket) {
-      this.socket = io(SOCKET_URL);
+      this.socket = io(SOCKET_URL, {
+        transports: ['websocket'], // Crucial for horizontal scaling without sticky sessions
+      });
       this.socket.on('connect', () => {
         if (userId) {
           // Both joinUserRoom and registerUser are used in backend

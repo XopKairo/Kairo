@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import 'express-async-errors';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -11,6 +12,8 @@ import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import hpp from 'hpp';
 import { Server } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
+import redisClient from './config/redis.js';
 
 // Internal Modules
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -33,8 +36,40 @@ import adminUsersRoutes from './routes/users.js';
 import adminHostsRoutes from './routes/hosts.js';
 import adminAgenciesRoutes from './routes/agencies.js';
 import adminBannersRoutes from './routes/banners.js';
+import growthRoutes from './routes/growth.js';
+import callRoutes from './routes/calls.js';
+
+import * as Sentry from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
+import { httpRequestDurationMicroseconds, getMetrics, getContentType } from './utils/monitoring.js';
 
 const app = express();
+
+// Initialize Sentry
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+  profilesSampleRate: 1.0,
+});
+
+// Sentry request handler
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
+
+// Metrics middleware for latency tracking
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const route = req.route ? req.route.path : req.path;
+    httpRequestDurationMicroseconds.labels(req.method, route, res.statusCode).observe(duration);
+  });
+  next();
+});
+
 const server = http.createServer(app);
 
 // Socket.io initialization
@@ -51,6 +86,17 @@ const io = new Server(server, {
     credentials: true
   }
 });
+
+// Phase 6: Socket.io Redis Adapter for Scalability
+try {
+  const subClient = redisClient.duplicate();
+  await subClient.connect();
+  io.adapter(createAdapter(redisClient, subClient));
+  console.log('✅ Socket.io Redis Adapter connected');
+} catch (err) {
+  console.error('⚠️ Socket.io Redis Adapter failed. Running in single-server mode.', err.message);
+}
+
 setupSockets(io);
 
 // Middleware
@@ -143,6 +189,19 @@ app.use('/api/settings', settingsRoutes);
 // Shared / User Routes
 app.use('/api/wallet', walletRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/growth', growthRoutes);
+app.use('/api/calls', callRoutes);
+
+// Monitoring / Metrics Endpoint
+app.get('/api/metrics', async (req, res) => {
+  try {
+    const metrics = await getMetrics();
+    res.set('Content-Type', getContentType());
+    res.send(metrics);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
 
 // Health Check Endpoint (Robust Debugging)
 app.get('/api/health', async (req, res) => {
@@ -165,6 +224,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'Kairo Ultimate API is Live', status: 'Healthy' });
 });
 
+// Sentry error handler must be before any other error middleware
+app.use(Sentry.Handlers.errorHandler());
+
 // Error Handling
 app.use(errorHandler);
 
@@ -172,6 +234,20 @@ import { seedAdmin } from './utils/initDb.js';
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
+
+// Global Exception & Rejection Handlers
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION! Shutting down...', err.message);
+  Sentry.captureException(err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('💥 UNHANDLED REJECTION! Shutting down...', err.message);
+  Sentry.captureException(err);
+  // Graceful shutdown: wait for pending requests to finish
+  server.close(() => process.exit(1));
+});
 
 // Phase 5: Mongoose Connection Tuning
 mongoose.connect(MONGO_URI, {

@@ -13,13 +13,10 @@ const userSchema = new Schema({
   coins: { type: Number, default: 0 },
   zoraPoints: { type: Number, default: 0 },
   lastLoginDate: { type: Date },
-  isBanned: { type: Boolean, default: false },
+  isBanned: { type: Boolean, default: false, index: true },
   isVerified: { type: Boolean, default: false },
-    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   profilePicture: { type: String, default: '' },
-  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false },
+  gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false, index: true },
   verificationSelfie: { type: String, required: false, default: '' },
   isGenderVerified: { type: Boolean, default: false },
     banUntil: { type: Date, default: null },
@@ -27,9 +24,22 @@ const userSchema = new Schema({
   cashBalance: { type: Number, default: 0 },
     dailyAdsWatched: { type: Number, default: 0 },
   lastAdWatchedAt: { type: Date, default: null },
-  status: { type: String, default: 'offline' },
-  pushToken: { type: String, default: '' }
+  status: { type: String, default: 'offline', index: true },
+  pushToken: { type: String, default: '' },
+
+  // Growth Features
+  referralCode: { type: String, unique: true, sparse: true },
+  referredBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  currentStreak: { type: Number, default: 0 },
+  lastStreakClaimedAt: { type: Date },
+  totalSpent: { type: Number, default: 0 },
+  level: { type: Number, default: 1 },
+  vipLevel: { type: String, enum: ['None', 'Bronze', 'Silver', 'Gold', 'Platinum'], default: 'None' }
 }, { timestamps: true });
+
+// Compound indexes for common queries
+userSchema.index({ status: 1, gender: 1 });
+userSchema.index({ isBanned: 1, lastLoginDate: -1 });
 
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
