@@ -1,10 +1,12 @@
 import { Bell, MessageSquare, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/apiClient';
 
 export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [lang, setLang] = useState(localStorage.getItem('zora-lang') || 'ENG');
   const [stats, setStats] = useState({ payouts: 0, messages: 0 });
 
@@ -42,7 +44,7 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
       </div>
 
       <div className="flex items-center space-x-2 sm:space-x-4">
-        <button onClick={toggleLanguage} className="text-xs font-bold px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-600 dark:text-gray-300">
+        <button onClick={toggleLanguage} className="text-xs font-bold px-2 py-1 bg-brand-50 dark:bg-brand-500/10 rounded text-brand-600 dark:text-brand-400">
           {lang}
         </button>
 
@@ -51,20 +53,26 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
         </button>
 
         {/* Bell Icon - Withdrawal Requests */}
-        <button className="p-2 text-gray-400 relative rounded-lg hover:bg-gray-50">
+        <button 
+          onClick={() => navigate('/payouts')}
+          className="p-2 text-gray-400 relative rounded-lg hover:bg-gray-50"
+        >
           <Bell className="w-5 h-5" />
           {stats.payouts > 0 && (
-            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-pink-500 text-[10px] text-white font-bold rounded-full border-2 border-white dark:border-surface-900">
+            <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center bg-pink-500 text-[10px] text-white font-bold rounded-full border-2 border-white dark:border-surface-900">
               {stats.payouts}
             </span>
           )}
         </button>
 
         {/* Message Icon - Purchases & Reports */}
-        <button className="p-2 text-gray-400 relative rounded-lg hover:bg-gray-50">
+        <button 
+          onClick={() => navigate('/reports')}
+          className="p-2 text-gray-400 relative rounded-lg hover:bg-gray-50"
+        >
           <MessageSquare className="w-5 h-5" />
           {stats.messages > 0 && (
-            <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-brand-500 text-[10px] text-white font-bold rounded-full border-2 border-white dark:border-surface-900">
+            <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center bg-brand-500 text-[10px] text-white font-bold rounded-full border-2 border-white dark:border-surface-900">
               {stats.messages}
             </span>
           )}
