@@ -31,6 +31,14 @@ router.get('/', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+router.post('/', async (req, res) => {
+  try {
+    const { name, email, phone, password, gender } = req.body;
+    const user = await User.create({ name, email, phone, password, gender });
+    res.status(201).json({ success: true, user });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
