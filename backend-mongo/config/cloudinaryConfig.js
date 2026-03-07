@@ -34,4 +34,4 @@ const getStorage = (folderName, type = 'image') => {
   }
 };
 
-export default { cloudinary, getStorage };
+export { cloudinary, getStorage };
