@@ -54,16 +54,45 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Discovery') iconName = focused ? 'compass' : 'compass-outline';
-          else if (route.name === 'Feed') iconName = focused ? 'play-circle' : 'play-circle-outline';
-          else if (route.name === 'Notifications') iconName = focused ? 'bell' : 'bell-outline';
-          else if (route.name === 'Profile') iconName = focused ? 'account' : 'account-outline';
-          return <Icon name={iconName} size={size} color={color} />;
+          if (route.name === 'Home') iconName = focused ? 'home-variant' : 'home-variant-outline';
+          else if (route.name === 'Discovery') iconName = focused ? 'magnify' : 'magnify';
+          else if (route.name === 'Feed') iconName = focused ? 'play-box-multiple' : 'play-box-multiple-outline';
+          else if (route.name === 'Notifications') iconName = focused ? 'bell-ring' : 'bell-outline';
+          else if (route.name === 'Profile') iconName = focused ? 'account-circle' : 'account-circle-outline';
+          
+          return (
+            <View style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              top: Platform.OS === 'ios' ? 10 : 0
+            }}>
+              <View style={focused ? {
+                backgroundColor: 'rgba(108, 43, 217, 0.15)',
+                padding: 8,
+                borderRadius: 15,
+                shadowColor: '#6C2BD9',
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.5,
+                shadowRadius: 10,
+                elevation: 5
+              } : {}}>
+                <Icon name={iconName} size={focused ? 26 : 24} color={color} />
+              </View>
+            </View>
+          );
         },
-        tabBarActiveTintColor: '#6C2BD9',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: { backgroundColor: '#0F0A19', borderTopWidth: 0 },
+        tabBarActiveTintColor: '#A855F7',
+        tabBarInactiveTintColor: '#6B7280',
+        tabBarStyle: { 
+          backgroundColor: '#0F0A19', 
+          borderTopWidth: 0,
+          height: Platform.OS === 'ios' ? 90 : 70,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
+          borderTopColor: 'rgba(159, 103, 255, 0.1)',
+          borderTopWidth: 1,
+          elevation: 0
+        },
+        tabBarShowLabel: false,
         headerShown: false,
       })}
     >
