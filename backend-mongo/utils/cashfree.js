@@ -5,7 +5,7 @@ const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const CASHFREE_ENDPOINT = process.env.CASHFREE_ENDPOINT; // https://api.cashfree.com/pg
 
-const createCashfreeOrder = async (orderData) => {
+export const createCashfreeOrder = async (orderData) => {
   try {
     const response = await axios.post(
       `${CASHFREE_ENDPOINT}/orders`,
@@ -38,20 +38,11 @@ const createCashfreeOrder = async (orderData) => {
   }
 };
 
-const verifyCashfreeSignature = (orderId, paymentId, signature) => {
-  // Cashfree logic for signature verification depends on the webhook/return data
-  // For standard V3 API, they usually provide a signature in the response or webhook
-  // If we are doing it manually for a custom flow:
-  // const data = orderId + paymentId;
-  // const expectedSignature = crypto.createHmac('sha256', CASHFREE_SECRET_KEY).update(data).digest('base64');
-  // return expectedSignature === signature;
-  
-  // NOTE: In the latest Cashfree SDK/API, it is recommended to fetch the order status
-  // from their API to verify instead of just checking the signature.
+export const verifyCashfreeSignature = (orderId, paymentId, signature) => {
   return true; // Placeholder for logic below in status check
 };
 
-const getCashfreeOrderStatus = async (orderId) => {
+export const getCashfreeOrderStatus = async (orderId) => {
     try {
         const response = await axios.get(
           `${CASHFREE_ENDPOINT}/orders/${orderId}`,
@@ -69,5 +60,3 @@ const getCashfreeOrderStatus = async (orderId) => {
         throw new Error(error.response?.data?.message || 'Failed to fetch Cashfree order status');
       }
 }
-
-export default { createCashfreeOrder, verifyCashfreeSignature, getCashfreeOrderStatus };
