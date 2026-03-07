@@ -55,10 +55,6 @@ Sentry.init({
   profilesSampleRate: 1.0,
 });
 
-// Sentry request handler
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
-
 // Metrics middleware for latency tracking
 app.use((req, res, next) => {
   const start = Date.now();
@@ -225,7 +221,7 @@ app.get('/', (req, res) => {
 });
 
 // Sentry error handler must be before any other error middleware
-app.use(Sentry.Handlers.errorHandler());
+Sentry.setupExpressErrorHandler(app);
 
 // Error Handling
 app.use(errorHandler);
