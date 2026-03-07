@@ -18,7 +18,7 @@ import redisClient from './config/redis.js';
 // Internal Modules
 import { errorHandler } from './middleware/errorMiddleware.js';
 import { checkMaintenance } from './middleware/maintenanceMiddleware.js';
-import { protectAdmin } from './middleware/authMiddleware.js';
+import { protectAdmin, protectUser } from './middleware/authMiddleware.js';
 import setupSockets from './sockets/socket.js';
 
 // Route Imports
@@ -87,11 +87,14 @@ const io = new Server(server, {
 // Phase 6: Socket.io Redis Adapter for Scalability
 try {
   const subClient = redisClient.duplicate();
-  await subClient.connect();
-  io.adapter(createAdapter(redisClient, subClient));
-  console.log('✅ Socket.io Redis Adapter connected');
+  subClient.connect().then(() => {
+    io.adapter(createAdapter(redisClient, subClient));
+    console.log('✅ Socket.io Redis Adapter connected');
+  }).catch(err => {
+    console.error('⚠️ Socket.io Redis SubClient failed:', err.message);
+  });
 } catch (err) {
-  console.error('⚠️ Socket.io Redis Adapter failed. Running in single-server mode.', err.message);
+  console.error('⚠️ Socket.io Redis Adapter Setup failed:', err.message);
 }
 
 setupSockets(io);
@@ -139,19 +142,19 @@ app.use((req, res, next) => {
 // Phase 4: Rate Limiting
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000, // Significantly increased for testing and heavy usage
   message: { success: false, message: 'Too many requests from this IP' }
 });
 
 const strictLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 5, // 5 requests per minute
+  max: 50, // Increased for smoother flow
   message: { success: false, message: 'Too many requests. Please wait a minute.' }
 });
 
 const otpLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3, // 3 requests per 5 minutes
+  max: 5, // 5 requests per 5 minutes
   message: { success: false, message: 'Too many OTP requests. Please wait 5 minutes.' }
 });
 
@@ -165,9 +168,9 @@ app.use('/api/wallet/withdraw', strictLimiter);
 
 // Public / Common Auth
 app.use('/api/auth', authRoutes);
-app.use('/api/interests', interestsRoutes); // Admin login, refresh
-app.use('/api/user/auth', userAuthRoutes); // User Registration/OTP
-app.use('/api/user/payments', paymentsRoutes); // Payment Routes
+app.use('/api/interests', interestsRoutes); 
+app.use('/api/user/auth', userAuthRoutes); 
+app.use('/api/user/payments', paymentsRoutes);
 
 // Admin Protected Routes
 app.use('/api/admin/dashboard', protectAdmin, dashboardRoutes);
@@ -176,7 +179,6 @@ app.use('/api/admin/reports', protectAdmin, reportsRoutes);
 app.use('/api/admin/monitoring', protectAdmin, monitoringRoutes);
 app.use('/api/admin/settings', protectAdmin, settingsRoutes);
 app.use('/api/admin/users', protectAdmin, adminUsersRoutes);
-app.use('/api/users', adminUsersRoutes);
 app.use('/api/admin/hosts', protectAdmin, adminHostsRoutes);
 app.use('/api/admin/agencies', protectAdmin, adminAgenciesRoutes);
 app.use('/api/admin/banners', protectAdmin, adminBannersRoutes);
@@ -190,6 +192,9 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/growth', growthRoutes);
 app.use('/api/calls', callRoutes);
 
+// Compatibility route for users
+app.use('/api/users', protectUser, adminUsersRoutes);
+
 // Monitoring / Metrics Endpoint
 app.get('/api/metrics', async (req, res) => {
   try {
@@ -201,7 +206,7 @@ app.get('/api/metrics', async (req, res) => {
   }
 });
 
-// Health Check Endpoint (Robust Debugging)
+// Health Check Endpoint
 app.get('/api/health', async (req, res) => {
   try {
     const adminCount = await mongoose.model('Admin').countDocuments();
@@ -222,7 +227,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'Kairo Ultimate API is Live', status: 'Healthy' });
 });
 
-// Sentry error handler must be before any other error middleware
+// Sentry error handler
 Sentry.setupExpressErrorHandler(app);
 
 // Error Handling
@@ -243,7 +248,6 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (err) => {
   console.error('💥 UNHANDLED REJECTION! Shutting down...', err.message);
   Sentry.captureException(err);
-  // Graceful shutdown: wait for pending requests to finish
   server.close(() => process.exit(1));
 });
 
