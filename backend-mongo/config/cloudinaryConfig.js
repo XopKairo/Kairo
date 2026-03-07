@@ -1,4 +1,4 @@
-import cloudinary from 'cloudinary'.v2;
+import { v2 as cloudinary } from 'cloudinary';
 import multerStorageCloudinary from 'multer-storage-cloudinary';
 
 // Handle different import versions safely

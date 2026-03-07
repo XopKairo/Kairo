@@ -1,4 +1,5 @@
 import callService from '../services/callService.js';
+import crypto from 'crypto';
 
 class CallController {
   async generateToken(req, res) {
@@ -60,6 +61,36 @@ class CallController {
     } catch (error) {
       console.error('[Zego Webhook Error]', error);
       res.status(500).send('Webhook Processing Error');
+    }
+  }
+
+  async getTurnCredentials(req, res) {
+    try {
+      const username = req.user._id.toString();
+      const secret = process.env.TURN_SECRET || 'your-secure-turn-secret';
+      
+      // 5 minutes expiry
+      const unixTimeStamp = Math.floor(Date.now() / 1000) + 300; 
+      const turnUsername = `${unixTimeStamp}:${username}`;
+      
+      const hmac = crypto.createHmac('sha1', secret);
+      hmac.setEncoding('base64');
+      hmac.write(turnUsername);
+      hmac.end();
+      const password = hmac.read();
+      
+      res.json({
+        success: true,
+        iceServers: [
+          {
+            urls: 'turn:turn.yourdomain.com:3478',
+            username: turnUsername,
+            credential: password
+          }
+        ]
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
     }
   }
 }

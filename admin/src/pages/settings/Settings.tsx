@@ -11,6 +11,12 @@ export default function Settings() {
   const [rewardPerAd, setRewardPerAd] = useState(5);
   const [dailyLimit, setDailyLimit] = useState(10);
   
+  // App Config
+  const [callRate, setCallRate] = useState(30);
+  const [commission, setCommission] = useState(30);
+  const [isAiModerationEnabled, setIsAiModerationEnabled] = useState(true);
+  const [aiSensitivity, setAiSensitivity] = useState('High');
+  
   // Profile Update State
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -34,6 +40,10 @@ export default function Settings() {
         setMaintenance(response.data.maintenance || false);
         setRewardPerAd(response.data.rewardPerAd || 5);
         setDailyLimit(response.data.dailyLimit || 10);
+        setCallRate(response.data.callRate || 30);
+        setCommission(response.data.commission || 30);
+        setIsAiModerationEnabled(response.data.isAiModerationEnabled !== undefined ? response.data.isAiModerationEnabled : true);
+        setAiSensitivity(response.data.aiSensitivity || 'High');
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -113,6 +123,25 @@ export default function Settings() {
       setSaving(false);
     }
   };
+
+  const handleUpdateConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await apiClient.put('/settings', { 
+        callRate, 
+        commission, 
+        isAiModerationEnabled, 
+        aiSensitivity 
+      });
+      alert('Global configuration updated!');
+    } catch (error) {
+      alert('Update failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading settings...</div>;
   }
@@ -132,13 +161,54 @@ export default function Settings() {
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <SettingsIcon className="w-5 h-5 text-brand-500" /> Global Configuration
               </h3>
-              <div className="space-y-4">
-                 <button className="px-4 py-2 bg-gray-50 dark:bg-surface-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium w-full text-left hover:bg-gray-100 dark:hover:bg-surface-700 transition-colors">Coin Pricing & Packages</button>
-                 
+              <form onSubmit={handleUpdateConfig} className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Call Rate (Coins/Min)</label>
+                      <input type="number" value={callRate} onChange={e => setCallRate(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Admin Commission (%)</label>
+                      <input type="number" value={commission} onChange={e => setCommission(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm" />
+                    </div>
+                 </div>
+
+                 <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">AI Nudity/Abuse Moderation</h4>
+                      <p className="text-xs text-gray-500 mt-1">Automatically detects and terminates explicit calls.</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsAiModerationEnabled(!isAiModerationEnabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAiModerationEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAiModerationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                 </div>
+
+                 {isAiModerationEnabled && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Moderation Sensitivity</label>
+                      <select value={aiSensitivity} onChange={e => setAiSensitivity(e.target.value)} className="w-full px-4 py-2 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm">
+                        <option value="Low">Low (Permissive)</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High (Strict)</option>
+                      </select>
+                    </div>
+                 )}
+
+                 <button type="submit" disabled={saving} className="w-full py-2.5 bg-brand-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20 disabled:opacity-50">
+                    {saving ? 'Saving...' : 'Update Configuration'}
+                 </button>
+              </form>
+            </div>
+            
+            <div className="space-y-4">
                  <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl flex items-center justify-between">
                     <div>
                       <h4 className="text-sm font-semibold text-gray-900 dark:text-white">System Maintenance Mode</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">When enabled, the app will be inaccessible to users.</p>
+                      <p className="text-xs text-gray-500 mt-1">Disable app access for all users.</p>
                     </div>
                     <button 
                       onClick={toggleMaintenance}
@@ -156,7 +226,6 @@ export default function Settings() {
                     </button>
                  </div>
               </div>
-            </div>
          </div>
       </div>
 

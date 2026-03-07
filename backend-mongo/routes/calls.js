@@ -1,6 +1,6 @@
 import express from 'express';
 import callController from '../controllers/callController.js';
-import { protectUser } from '../middleware/authMiddleware.js';
+import { protectUser, protectAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -14,9 +14,12 @@ router.post('/start', protectUser, callController.startCall);
 router.post('/end', callController.endCall);
 
 // 4. Get Active Calls for Admin
-router.get('/active', callController.getActiveCalls);
+router.get('/active', protectAdmin, callController.getActiveCalls);
 
 // 5. ZegoCloud Webhook
 router.post('/webhook', callController.zegoWebhook);
+
+// 6. TURN Server Credentials (Short-lived 5-minute expiry)
+router.get('/turn-credentials', protectUser, callController.getTurnCredentials);
 
 export default router;

@@ -8,6 +8,9 @@ interface Host {
   name?: string;
   agency?: string;
   status?: string;
+  earnings?: number;
+  totalCalls?: number;
+  totalMinutes?: number;
   isVerified?: boolean;
   profilePicture?: string;
   verificationSelfie?: string;
@@ -19,13 +22,15 @@ export default function Hosts() {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingHost, setEditingHost] = useState<Host | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Partial<Host>>({});
 
   const fetchHosts = async () => {
     try {
       const response = await apiClient.get('/admin/hosts');
       setHosts(response.data);
-    } catch (error) {}
+    } catch (error) {
+      console.error('Failed to fetch hosts', error);
+    }
   };
 
   useEffect(() => { fetchHosts(); }, []);
@@ -48,7 +53,10 @@ export default function Hosts() {
       await apiClient.post('/admin/hosts/' + id + '/verify', { isVerified });
       fetchHosts();
       setActiveMenu(null);
-    } catch (error) {}
+    } catch (error) {
+      console.error('Failed to verify host', error);
+      alert('Failed to verify host');
+    }
   };
 
   return (
@@ -60,7 +68,9 @@ export default function Hosts() {
           <thead className="bg-gray-50 dark:bg-surface-800 text-gray-500 text-sm">
             <tr>
               <th className="p-6">Host</th>
-              <th className="p-6">Agency</th>
+              <th className="p-6 text-center">Calls / Mins</th>
+              <th className="p-6 text-center">Earnings</th>
+              <th className="p-6">Status</th>
               <th className="p-6 text-right">Actions</th>
             </tr>
           </thead>
@@ -71,12 +81,27 @@ export default function Hosts() {
                 <tr key={rowId}>
                   <td className="p-6 flex items-center gap-3">
                     <img src={host.profilePicture || "https://ui-avatars.com/api/?name="+host.name} className="w-10 h-10 rounded-full" />
-                    <span className="font-bold">{host.name}</span>
+                    <div>
+                       <span className="font-bold text-gray-900 dark:text-white block">{host.name}</span>
+                       <span className="text-[10px] text-gray-400">{host.agency || 'Independent'}</span>
+                    </div>
                   </td>
-                  <td className="p-6 text-gray-500">{host.agency || 'None'}</td>
+                  <td className="p-6 text-center">
+                    <p className="font-bold">{host.totalCalls || 0}</p>
+                    <p className="text-[10px] text-gray-400">{host.totalMinutes || 0} mins</p>
+                  </td>
+                  <td className="p-6 text-center">
+                    <p className="font-black text-brand-600">₹{((host.earnings || 0) * 0.1).toFixed(2)}</p>
+                    <p className="text-[10px] text-gray-400">({host.earnings || 0} coins)</p>
+                  </td>
+                  <td className="p-6">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${host.status === 'Online' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                      {host.status}
+                    </span>
+                  </td>
                   <td className="p-6 text-right relative">
-                    <button onClick={() => window.open(host.verificationSelfie, '_blank')} className="text-blue-500 mr-2"><Eye size={18}/></button>
-                    <button onClick={() => toggleMenu(rowId)}><MoreHorizontal /></button>
+                    <button onClick={() => window.open(host.verificationSelfie, '_blank')} className="text-blue-500 mr-2 p-2 hover:bg-blue-50 rounded-lg"><Eye size={18}/></button>
+                    <button onClick={() => toggleMenu(rowId)} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-lg"><MoreHorizontal /></button>
                     {activeMenu === rowId && (
                       <div className="absolute right-6 top-12 w-48 bg-white dark:bg-surface-800 border rounded-2xl shadow-xl z-50 p-2">
                         <button onClick={() => { setEditingHost(host); setEditForm({...host}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-gray-50 rounded-xl flex gap-2 text-sm"><Edit size={16}/> Edit Host</button>

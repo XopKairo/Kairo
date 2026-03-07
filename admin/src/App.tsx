@@ -12,7 +12,10 @@ import Hosts from './pages/hosts/Hosts';
 import Agencies from './pages/agencies/Agencies';
 import Economy from './pages/economy/Economy';
 import Reports from './pages/reports/Reports';
+import Calls from './pages/calls/Calls';
 import Settings from './pages/settings/Settings';
+import AuditLogs from './pages/settings/AuditLogs';
+import Blacklist from './pages/settings/Blacklist';
 import Banners from './pages/banners/Banners';
 import Posts from "./pages/posts/Posts";
 import MarketingNotifications from './pages/MarketingNotifications';
@@ -41,12 +44,15 @@ function App() {
             <Route path="/hosts" element={<ProtectedRoute><Layout><Hosts /></Layout></ProtectedRoute>} />
             <Route path="/agencies" element={<ProtectedRoute><Layout><Agencies /></Layout></ProtectedRoute>} />
             <Route path="/economy" element={<ProtectedRoute><Layout><Economy /></Layout></ProtectedRoute>} />
+            <Route path="/calls" element={<ProtectedRoute><Layout><Calls /></Layout></ProtectedRoute>} />
             <Route path="/payouts" element={<ProtectedRoute><Layout><Payouts /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
             <Route path="/banners" element={<ProtectedRoute><Layout><Banners /></Layout></ProtectedRoute>} />
             <Route path="/posts" element={<ProtectedRoute><Layout><Posts /></Layout></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Layout><MarketingNotifications /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+            <Route path="/audit-logs" element={<ProtectedRoute><Layout><AuditLogs /></Layout></ProtectedRoute>} />
+            <Route path="/blacklist" element={<ProtectedRoute><Layout><Blacklist /></Layout></ProtectedRoute>} />
             
             {/* Fallback route */}
             <Route path="*" element={<Navigate to="/" replace />} />

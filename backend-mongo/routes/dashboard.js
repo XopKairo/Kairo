@@ -1,5 +1,6 @@
 import express from 'express';
-import mongoose from 'mongoose'; // Moved to top level
+import mongoose from 'mongoose';
+import os from 'os';
 import User from '../models/User.js';
 import Host from '../models/Host.js';
 import Payout from '../models/Payout.js';
@@ -47,7 +48,13 @@ router.get('/stats', async (req, res) => {
       totalReports,
       dailyRevenue: `₹${dailyRevenue.toLocaleString('en-IN')}`,
       totalRevenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
-      rawTotalRevenue: totalRevenue
+      rawTotalRevenue: totalRevenue,
+      system: {
+        cpuUsage: (os.loadavg()[0] * 10).toFixed(1) + '%',
+        memoryUsage: ((1 - os.freemem() / os.totalmem()) * 100).toFixed(1) + '%',
+        uptime: Math.floor(os.uptime() / 3600) + 'h',
+        dbStatus: mongoose.connection.readyState === 1 ? 'Healthy' : 'Disconnected'
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -7,6 +7,7 @@ class SocketService {
   socket = null;
   onBanHandler = null;
   onCallTerminatedHandler = null;
+  onBalanceUpdateHandler = null;
 
   connect(userId = null) {
     if (!this.socket) {
@@ -27,6 +28,10 @@ class SocketService {
       this.socket.on('callTerminated', (data) => {
         if (this.onCallTerminatedHandler) this.onCallTerminatedHandler(data);
       });
+
+      this.socket.on('balanceUpdated', (data) => {
+        if (this.onBalanceUpdateHandler) this.onBalanceUpdateHandler(data);
+      });
     }
   }
 
@@ -36,6 +41,10 @@ class SocketService {
 
   setCallTerminatedHandler(handler) {
     this.onCallTerminatedHandler = handler;
+  }
+
+  setBalanceUpdateHandler(handler) {
+    this.onBalanceUpdateHandler = handler;
   }
 
   disconnect() {

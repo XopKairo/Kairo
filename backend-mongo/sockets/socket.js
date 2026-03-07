@@ -1,62 +1,82 @@
-import { logCallStart, logCallEnd } from '../routes/monitoring.js';
+import redisClient from '../config/redis.js';
 import LiveCall from '../models/LiveCall.js';
-import Message from '../models/Message.js';
-import Conversation from '../models/Conversation.js';
+import User from '../models/User.js';
+import WalletLedger from '../models/WalletLedger.js';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 
 const setupSockets = (io) => {
   const ringingTimeouts = new Map();
+  const activeCallTimeouts = new Map();
+
+  // Simple Rate Limiting for Socket Events
+  const socketRateLimit = new Map();
+
+  // Socket JWT Authentication Middleware
+  io.use((socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+      if (!token) {
+        return next(new Error('Authentication error: No token provided'));
+      }
+      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id; 
+      next();
+    } catch (err) {
+      next(new Error('Authentication error: Invalid token'));
+    }
+  });
 
   io.on('connection', (socket) => {
-    console.log('🔗 Socket Connected:', socket.id);
+    console.log('🔗 Socket Connected:', socket.id, 'User:', socket.userId);
 
-    socket.on('registerUser', (userId) => {
-      if (userId) {
-        socket.join(userId);
-        socket.userId = userId;
-        console.log(`👤 User registered: ${userId}`);
-      }
+    // Auto-join user room based on verified token
+    if (socket.userId) {
+      socket.join(socket.userId);
+    }
+
+    socket.on('registerUser', () => {
+      // Legacy support, room is already joined
+      console.log(`👤 User registered via token: ${socket.userId}`);
     });
 
-    // --- Private Messaging Events ---
-    
-    socket.on('privateMessage', async (data) => {
-      const { recipientId, text, conversationId, type = 'text' } = data;
+    // Rate Limiter Middleware for events
+    socket.use(([event, ...args], next) => {
+      const now = Date.now();
+      const limit = 20; // 20 events per 10 seconds
+      const window = 10000;
       
-      try {
-        // Emit to recipient if online
-        io.to(recipientId).emit('newMessage', {
-          ...data,
-          sender: socket.userId,
-          createdAt: new Date(),
-          status: 'sent'
-        });
-
-        // Backend logic for persistence is handled via REST, 
-        // but we emit for instant UI feedback.
-      } catch (err) {
-        console.error('Socket Message Error:', err);
+      let userLimit = socketRateLimit.get(socket.id) || { count: 0, startTime: now };
+      
+      if (now - userLimit.startTime > window) {
+        userLimit = { count: 1, startTime: now };
+      } else {
+        userLimit.count++;
       }
+      
+      socketRateLimit.set(socket.id, userLimit);
+      
+      if (userLimit.count > limit) {
+        return next(new Error('Rate limit exceeded'));
+      }
+      next();
     });
 
-    socket.on('typing', (data) => {
-      const { recipientId, conversationId } = data;
-      io.to(recipientId).emit('userTyping', { conversationId, userId: socket.userId });
-    });
-
-    socket.on('stopTyping', (data) => {
-      const { recipientId, conversationId } = data;
-      io.to(recipientId).emit('userStoppedTyping', { conversationId, userId: socket.userId });
-    });
-
-    // --- Call Signaling ---
-    
     socket.on('callStarted', async (data) => {
       const { callId, userId, hostId, receiverId } = data;
       const targetId = receiverId || hostId;
       
       if (targetId) {
         io.to(targetId).emit('incomingCall', data);
-        await logCallStart({ ...data, status: 'RINGING' });
+        
+        // Initial LiveCall entry
+        await LiveCall.create({
+          callId,
+          userId,
+          hostId: targetId,
+          status: 'RINGING'
+        });
 
         const timeout = setTimeout(async () => {
           const call = await LiveCall.findOne({ callId, status: 'RINGING' });
@@ -74,40 +94,166 @@ const setupSockets = (io) => {
     });
 
     socket.on('callAccepted', async (callId) => {
-      if (ringingTimeouts.has(callId)) {
-        clearTimeout(ringingTimeouts.get(callId));
-        ringingTimeouts.delete(callId);
+      try {
+        if (ringingTimeouts.has(callId)) {
+          clearTimeout(ringingTimeouts.get(callId));
+          ringingTimeouts.delete(callId);
+        }
+
+        const call = await LiveCall.findOne({ callId });
+        if (!call) return;
+
+        // Fetch caller to check balance
+        const caller = await User.findById(call.userId);
+        const ratePerMinute = 10; // This should ideally come from a config or host profile
+        
+        if (!caller || caller.coins < ratePerMinute) {
+            io.to(call.userId).emit('callError', { message: 'Insufficient coins' });
+            io.to(call.hostId).emit('callEnded', { callId });
+            return;
+        }
+
+        const maxMinutes = Math.floor(caller.coins / ratePerMinute);
+        const maxDurationMs = maxMinutes * 60 * 1000;
+        const startTime = Date.now();
+
+        // Store call state in Redis for authoritative tracking
+        await redisClient.hSet(`activeCall:${callId}`, {
+            callerId: call.userId.toString(),
+            hostId: call.hostId.toString(),
+            startTime: startTime.toString(),
+            ratePerMinute: ratePerMinute.toString()
+        });
+        await redisClient.expire(`activeCall:${callId}`, 3600); // 1 hour safety expiry
+
+        call.status = 'ACTIVE';
+        call.startedAt = new Date(startTime);
+        await call.save();
+
+        io.to(call.userId).to(call.hostId).emit('callActive', { callId, startTime });
+
+        // Server-side auto-disconnect timer
+        const timeoutId = setTimeout(() => {
+            console.log(`⏰ Force disconnecting call ${callId} due to zero balance`);
+            io.to(call.userId).to(call.hostId).emit('forceDisconnect', { reason: 'insufficient-balance' });
+            endCallAndDeductBalance(callId);
+        }, maxDurationMs);
+
+        activeCallTimeouts.set(callId, timeoutId);
+
+      } catch (err) {
+        console.error('Call Accepted Error:', err);
       }
-      await LiveCall.findOneAndUpdate({ callId }, { status: 'ACTIVE', startedAt: new Date() });
     });
 
     socket.on('callEnded', async (callId) => {
-      if (ringingTimeouts.has(callId)) {
-        clearTimeout(ringingTimeouts.get(callId));
-        ringingTimeouts.delete(callId);
-      }
-      await logCallEnd(callId);
+      await endCallAndDeductBalance(callId);
     });
 
     socket.on('disconnect', async () => {
+      socketRateLimit.delete(socket.id);
       if (socket.userId) {
+        // Find if user was in an active call
         const activeCalls = await LiveCall.find({
           $or: [{ userId: socket.userId }, { hostId: socket.userId }],
-          status: { $in: ['RINGING', 'ACTIVE'] }
+          status: 'ACTIVE'
         });
 
         for (const call of activeCalls) {
-          if (ringingTimeouts.has(call.callId)) {
-            clearTimeout(ringingTimeouts.get(call.callId));
-            ringingTimeouts.delete(call.callId);
-          }
-          call.status = 'ENDED';
-          call.endedAt = new Date();
-          await call.save();
+            await endCallAndDeductBalance(call.callId);
+        }
+
+        // Handle ringing calls
+        const ringingCalls = await LiveCall.find({
+            $or: [{ userId: socket.userId }, { hostId: socket.userId }],
+            status: 'RINGING'
+        });
+        for (const call of ringingCalls) {
+            if (ringingTimeouts.has(call.callId)) {
+                clearTimeout(ringingTimeouts.get(call.callId));
+                ringingTimeouts.delete(call.callId);
+            }
+            call.status = 'MISSED';
+            await call.save();
         }
       }
     });
   });
+
+  async function endCallAndDeductBalance(callId) {
+    try {
+        // 1. Atomic Lock using Redis DEL
+        const callData = await redisClient.hGetAll(`activeCall:${callId}`);
+        if (!callData || Object.keys(callData).length === 0) return;
+
+        // Remove from Redis immediately to prevent double processing
+        await redisClient.del(`activeCall:${callId}`);
+
+        // 2. Clear server-side timeout
+        if (activeCallTimeouts.has(callId)) {
+            clearTimeout(activeCallTimeouts.get(callId));
+            activeCallTimeouts.delete(callId);
+        }
+
+        const endTime = Date.now();
+        const durationMs = endTime - parseInt(callData.startTime);
+        const durationMinutes = Math.ceil(durationMs / 60000);
+        const totalCost = durationMinutes * parseInt(callData.ratePerMinute);
+
+        // 3. Database Transaction for Atomic Deduction and Ledger
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            const caller = await User.findOneAndUpdate(
+                { _id: callData.callerId, coins: { $gte: totalCost } },
+                { $inc: { coins: -totalCost, totalSpent: totalCost } },
+                { new: true, session }
+            );
+
+            if (caller) {
+                // Create Wallet Ledger Entry
+                await WalletLedger.create([{
+                    userId: callData.callerId,
+                    type: 'DEBIT',
+                    amount: totalCost,
+                    balanceBefore: caller.coins + totalCost,
+                    balanceAfter: caller.coins,
+                    transactionType: 'CALL_CHARGE',
+                    referenceId: callId,
+                    description: `Video call charges for ${durationMinutes} minutes`,
+                    metadata: { durationMs, callId }
+                }], { session });
+
+                // Update LiveCall status
+                await LiveCall.findOneAndUpdate(
+                    { callId },
+                    { 
+                        status: 'ENDED', 
+                        endedAt: new Date(endTime), 
+                        duration: durationMinutes,
+                        cost: totalCost
+                    },
+                    { session }
+                );
+            }
+
+            await session.commitTransaction();
+            console.log(`✅ Call ${callId} ended. Duration: ${durationMinutes}min, Cost: ${totalCost} coins`);
+            
+            io.to(callData.callerId).to(callData.hostId).emit('callEnded', { callId, durationMinutes, totalCost });
+
+        } catch (dbErr) {
+            await session.abortTransaction();
+            console.error('❌ Billing Transaction Failed:', dbErr);
+        } finally {
+            session.endSession();
+        }
+
+    } catch (err) {
+        console.error('End Call Error:', err);
+    }
+  }
 };
 
 export default setupSockets;

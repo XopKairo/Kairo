@@ -116,6 +116,12 @@ router.post('/:id/ban', async (req, res) => {
       update.banUntil = new Date('9999-12-31');
     }
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+    
+    // Notify user via Socket
+    if (isBanned && req.io) {
+      req.io.to(`user-${user._id}`).emit('userBanned', { reason: user.banReason });
+    }
+
     await redisClient.del(`user_status:${req.params.id}`);
     res.json({ success: true, user });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }

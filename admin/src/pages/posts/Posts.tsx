@@ -24,7 +24,9 @@ export default function Posts() {
       try {
         const res = await apiClient.get('/admin/posts'); 
         setPosts(res.data);
-      } catch (err) {}
+      } catch (err) {
+        console.error('Failed to fetch posts', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -36,7 +38,10 @@ export default function Posts() {
     try {
       await apiClient.put('/admin/posts/' + id + '/feature', { isFeatured: !current });
       fetchPosts();
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to toggle feature', e);
+      alert('Failed to update post status');
+    }
   };
 
   const deletePost = async (id: string) => {
@@ -44,7 +49,10 @@ export default function Posts() {
     try {
       await apiClient.delete('/admin/posts/' + id);
       fetchPosts();
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to delete post', e);
+      alert('Failed to delete post');
+    }
   };
 
   return (

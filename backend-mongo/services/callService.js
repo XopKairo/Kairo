@@ -26,9 +26,14 @@ class CallService {
   }
 
   async startCall(userId, hostId, callId) {
+    let settings = await Settings.findOne();
+    if (!settings) settings = { callRate: 30 };
+    
+    const minRequired = settings.callRate;
     const user = await userRepository.findById(userId);
-    if (!user || user.coins < 30) {
-      throw new Error('Minimum 30 coins required to start a call');
+    
+    if (!user || user.coins < minRequired) {
+      throw new Error(`Minimum ${minRequired} coins required to start a call`);
     }
 
     const call = await callRepository.createCall({
@@ -88,6 +93,8 @@ class CallService {
       const isEarningEligible = host && host.gender === 'Female' && host.isGenderVerified;
       if (isEarningEligible) {
         host.earnings += hostShare;
+        host.totalCalls += 1;
+        host.totalMinutes += durationInMinutes;
         host.status = 'Online';
         await host.save({ session });
         

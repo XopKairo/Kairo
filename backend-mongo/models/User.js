@@ -27,6 +27,10 @@ const userSchema = new Schema({
   status: { type: String, default: 'offline', index: true },
   pushToken: { type: String, default: '' },
 
+  // Privacy & Stealth Features
+  isStealthModeEnabled: { type: Boolean, default: false },
+  isDrmEnabled: { type: Boolean, default: true },
+
   // Growth Features
   referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: Schema.Types.ObjectId, ref: 'User' },

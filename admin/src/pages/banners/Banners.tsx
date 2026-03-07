@@ -8,6 +8,8 @@ interface Banner {
   title: string;
   imageUrl: string;
   status: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export default function Banners() {
@@ -23,7 +25,9 @@ export default function Banners() {
   const [formData, setFormData] = useState({
     title: '',
     imageUrl: '',
-    status: 'Active'
+    status: 'Active',
+    startDate: '',
+    endDate: ''
   });
 
   useEffect(() => {
@@ -48,14 +52,18 @@ export default function Banners() {
       setFormData({
         title: banner.title,
         imageUrl: banner.imageUrl,
-        status: banner.status
+        status: banner.status,
+        startDate: banner.startDate ? banner.startDate.split('T')[0] : '',
+        endDate: banner.endDate ? banner.endDate.split('T')[0] : ''
       });
     } else {
       setSelectedBanner(null);
       setFormData({
         title: '',
         imageUrl: '',
-        status: 'Active'
+        status: 'Active',
+        startDate: '',
+        endDate: ''
       });
     }
     setIsEditModalOpen(true);
@@ -193,6 +201,27 @@ export default function Banners() {
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Start Date</label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-surface-800 border border-transparent focus:border-brand-500 rounded-xl text-sm outline-none dark:text-white transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">End Date</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-surface-800 border border-transparent focus:border-brand-500 rounded-xl text-sm outline-none dark:text-white transition-all"
+                  />
+                </div>
               </div>
               
               <button

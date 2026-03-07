@@ -14,7 +14,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: any) => Promise<void>;
+  login: (credentials: Record<string, string>) => Promise<void>;
   logout: () => void;
 }
 
@@ -28,10 +28,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let isMounted = true;
     const initAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token && isMounted) {
-        // Ideally we should verify token or fetch user profile here
-        // For now, keep the dummy user to avoid getting stuck if no /me endpoint
-        setUser({ id: '1', name: 'Admin', role: 'ADMIN', email: 'admin@zora.com' });
+      if (token) {
+        try {
+          const response = await apiClient.get('/auth/admin/me');
+          if (isMounted) {
+            setUser(response.data.user);
+          }
+        } catch (error) {
+          console.error("Token verification failed", error);
+          localStorage.removeItem('token');
+          if (isMounted) setUser(null);
+        }
       }
       if (isMounted) setLoading(false);
     };
@@ -39,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => { isMounted = false; };
   }, []);
 
-  const login = async (credentials: any) => {
+  const login = async (credentials: Record<string, string>) => {
     try {
       const response = await apiClient.post('/auth/admin/login', credentials);
       const { accessToken, user } = response.data;

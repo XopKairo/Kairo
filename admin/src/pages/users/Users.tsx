@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, ShieldBan, Trash2, Edit, X, Save, UserCheck, UserPlus, Search } from 'lucide-react';
+import { MoreHorizontal, ShieldBan, Trash2, Edit, X, Save, UserCheck, UserPlus, Search, Receipt } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface User {
@@ -23,13 +23,35 @@ export default function Users() {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Partial<User>>({});
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addForm, setAddForm] = useState({ name: '', email: '', phone: '', password: '', gender: 'Male' });
 
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [banForm, setBanForm] = useState({ reason: '', duration: '1' });
+
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletForm, setWalletForm] = useState({ amount: '', type: 'ADD', reason: '' });
+
+  const handleWalletSubmit = async () => {
+    if (!editingUser) return;
+    try {
+      await apiClient.post('/admin/wallet/adjust', {
+        userId: editingUser._id,
+        amount: walletForm.amount,
+        type: walletForm.type,
+        reason: walletForm.reason
+      });
+      alert('Wallet adjusted successfully');
+      fetchUsers();
+      setIsWalletModalOpen(false);
+      setWalletForm({ amount: '', type: 'ADD', reason: '' });
+    } catch (error) {
+      const e = error as { response?: { data?: { message?: string } } };
+      alert('Adjustment failed: ' + (e.response?.data?.message || 'Unknown error'));
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -52,7 +74,8 @@ export default function Users() {
       setIsAddModalOpen(false);
       setAddForm({ name: '', email: '', phone: '', password: '', gender: 'Male' });
       fetchUsers();
-    } catch (e: any) { 
+    } catch (error) { 
+      const e = error as { response?: { data?: { message?: string } } };
       const msg = e.response?.data?.message || 'Creation failed. User might already exist.';
       alert(msg); 
     }
@@ -84,7 +107,10 @@ export default function Users() {
     try {
       await apiClient.post('/admin/users/' + id + '/ban', { isBanned: false });
       fetchUsers();
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to unban user', e);
+      alert('Failed to unban user');
+    }
   };
 
   const deleteUser = async (id: string) => {
@@ -179,6 +205,7 @@ export default function Users() {
                     {activeMenu === u._id && (
                       <div className="absolute right-6 top-12 w-52 bg-white dark:bg-surface-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 p-2 text-left animate-in fade-in zoom-in-95 duration-100">
                         <button onClick={() => { setEditingUser(u); setEditForm({...u}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full p-3 hover:bg-gray-50 dark:hover:bg-surface-700/50 rounded-xl flex gap-3 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors"><Edit size={18} className="text-blue-500"/> Edit Profile</button>
+                        <button onClick={() => { setEditingUser(u); setIsWalletModalOpen(true); setActiveMenu(null); }} className="w-full p-3 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-xl flex gap-3 text-sm font-medium text-brand-600 transition-colors"><Receipt size={18} className="text-brand-500"/> Adjust Wallet</button>
                         {u.isBanned ? 
                           <button onClick={() => handleUnban(u._id)} className="w-full p-3 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-xl flex gap-3 text-sm font-medium text-green-600 transition-colors"><UserCheck size={18}/> Unban User</button> :
                           <button onClick={() => { setEditingUser(u); setIsBanModalOpen(true); setActiveMenu(null); }} className="w-full p-3 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl flex gap-3 text-sm font-medium text-red-600 transition-colors"><ShieldBan size={18}/> Ban User</button>
@@ -288,6 +315,41 @@ export default function Users() {
               </div>
               <button onClick={handleBanSubmit} className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20 transition-all">Suspend Account</button>
               <button onClick={() => setIsBanModalOpen(false)} className="w-full py-2 text-gray-500 font-bold">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isWalletModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><Receipt className="text-brand-500" /> Wallet Adjust</h2>
+              <button onClick={() => setIsWalletModalOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-full transition-colors"><X size={20}/></button>
+            </div>
+            <div className="space-y-5">
+              <div className="flex gap-4 p-1 bg-gray-100 dark:bg-surface-800 rounded-2xl">
+                <button 
+                  onClick={() => setWalletForm({...walletForm, type: 'ADD'})}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${walletForm.type === 'ADD' ? 'bg-white dark:bg-surface-700 text-brand-600 shadow-sm' : 'text-gray-500'}`}
+                >Add Coins</button>
+                <button 
+                  onClick={() => setWalletForm({...walletForm, type: 'REMOVE'})}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${walletForm.type === 'REMOVE' ? 'bg-white dark:bg-surface-700 text-red-600 shadow-sm' : 'text-gray-500'}`}
+                >Remove Coins</button>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Amount (Coins)</label>
+                <input type="number" value={walletForm.amount} onChange={e => setWalletForm({...walletForm, amount: e.target.value})} placeholder="e.g. 500" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm font-bold" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Reason (Optional)</label>
+                <textarea value={walletForm.reason} onChange={e => setWalletForm({...walletForm, reason: e.target.value})} placeholder="Bonus, refund, penalty etc." className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm h-24" />
+              </div>
+              <button onClick={handleWalletSubmit} className={`w-full py-4 rounded-2xl font-bold shadow-lg transition-all ${walletForm.type === 'ADD' ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-500/20' : 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/20'}`}>
+                {walletForm.type === 'ADD' ? 'Confirm Addition' : 'Confirm Removal'}
+              </button>
+              <button onClick={() => setIsWalletModalOpen(false)} className="w-full py-2 text-gray-500 font-bold">Cancel</button>
             </div>
           </div>
         </div>

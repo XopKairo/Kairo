@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { loginUser, registerUser, setMaintenanceHandler } from '../services/api';
+import api, { loginUser, registerUser, setMaintenanceHandler, setBlacklistHandler } from '../services/api';
 import socketService from '../services/socketService';
+import { Alert } from 'react-native';
 
 const AuthContext = createContext({});
 
@@ -9,14 +10,36 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [isBlacklisted, setIsBlacklisted] = useState(false);
+  const [blacklistMessage, setBlacklistMessage] = useState('');
 
   useEffect(() => {
-    // Register maintenance handler for global API events
+    // 1. API Handlers
     setMaintenanceHandler(setIsMaintenance);
+    setBlacklistHandler((msg) => {
+      setBlacklistMessage(msg);
+      setIsBlacklisted(true);
+    });
+
+    // 2. Socket Listeners for Real-time Admin Controls
+    socketService.setBanHandler((data) => {
+      Alert.alert('Account Restricted', data.reason || 'You have been banned by admin.');
+      signOut();
+    });
+
+    socketService.setBalanceUpdateHandler((data) => {
+      setUser(prev => prev ? { ...prev, coins: data.newBalance } : null);
+      AsyncStorage.getItem('userData').then(oldData => {
+        if (oldData) {
+          const updated = JSON.parse(oldData);
+          updated.coins = data.newBalance;
+          AsyncStorage.setItem('userData', JSON.stringify(updated));
+        }
+      });
+    });
 
     async function init() {
-...
-
+      await Promise.all([
         loadStorageData(),
         checkMaintenance()
       ]);

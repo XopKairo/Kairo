@@ -16,7 +16,13 @@ export default function Dashboard() {
     verifiedHosts: 0,
     pendingPayouts: 0,
     dailyRevenue: '₹0',
-    totalRevenue: '₹0'
+    totalRevenue: '₹0',
+    system: {
+      cpuUsage: '0%',
+      memoryUsage: '0%',
+      uptime: '0h',
+      dbStatus: 'Healthy'
+    }
   });
   
   const [analytics, setAnalytics] = useState({
@@ -89,6 +95,20 @@ export default function Dashboard() {
             <div className={`flex items-center mt-4 text-sm font-medium text-gray-500 dark:text-gray-400`}>
               {stat.trend}
             </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {[
+          { title: 'Server CPU', value: stats.system?.cpuUsage, color: 'text-blue-500' },
+          { title: 'Server RAM', value: stats.system?.memoryUsage, color: 'text-purple-500' },
+          { title: 'Server Uptime', value: stats.system?.uptime, color: 'text-orange-500' },
+          { title: 'Database', value: stats.system?.dbStatus, color: stats.system?.dbStatus === 'Healthy' ? 'text-green-500' : 'text-red-500' },
+        ].map((sys, i) => (
+          <div key={i} className="bg-white dark:bg-surface-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{sys.title}</p>
+            <p className={`text-lg font-black ${sys.color}`}>{sys.value}</p>
           </div>
         ))}
       </div>

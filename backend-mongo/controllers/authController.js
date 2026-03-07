@@ -161,3 +161,24 @@ export const updateAdminProfile = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during profile update' });
   }
 };
+
+export const getAdminProfile = async (req, res) => {
+  try {
+    const admin = req.admin;
+    if (!admin) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    res.json({
+      success: true,
+      user: {
+        id: admin._id,
+        name: admin.name || admin.username,
+        username: admin.username,
+        email: admin.email,
+        role: 'ADMIN'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error fetching profile' });
+  }
+};

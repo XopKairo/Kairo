@@ -56,6 +56,15 @@ class UserAuthController {
     }
   }
 
+  async resetPassword(req, res) {
+    try {
+      const result = await authService.resetPassword(req.body);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
   async deleteAccount(req, res) {
     try {
       const result = await authService.deleteAccount(req.params.id);

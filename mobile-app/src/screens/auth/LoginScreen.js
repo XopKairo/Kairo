@@ -87,8 +87,8 @@ const LoginScreen = ({ navigation }) => {
     setFpLoading(true);
     try {
       const verifyRes = await verifyOtp(fpContact, fpOtp);
-      if (verifyRes.success) {
-        const resetRes = await resetPassword(fpContact, fpNewPassword);
+      if (verifyRes.success && verifyRes.otp_verified_token) {
+        const resetRes = await resetPassword(fpContact, fpNewPassword, verifyRes.otp_verified_token);
         if (resetRes.success) {
           Alert.alert('Success', 'Password reset successfully. You can now login.');
           setFpModalVisible(false);

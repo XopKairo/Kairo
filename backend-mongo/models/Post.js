@@ -5,6 +5,7 @@ const postSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   mediaUrl: { type: String, default: '' },
   mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
+  type: { type: String, enum: ['STORY', 'TEASER', 'PREMIUM'], default: 'STORY' },
   caption: { type: String, default: '' },
   isFeatured: { type: Boolean, default: false },
   expiresAt: { type: Date, required: true }

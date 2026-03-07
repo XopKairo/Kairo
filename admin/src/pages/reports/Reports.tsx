@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Flag, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Flag, MessageCircle, ChevronDown, ChevronUp, ShieldBan, CheckCircle } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Report {
@@ -17,19 +17,37 @@ export default function Reports() {
   const [reportsExpanded, setReportsExpanded] = useState(true);
   const [ticketsExpanded, setTicketsExpanded] = useState(true);
 
+  const fetchReports = async () => {
+    try {
+      const response = await apiClient.get('/admin/reports');
+      setReports(response.data);
+    } catch (error) {
+      console.error('Failed to fetch reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchReports = async () => {
-      try {
-        const response = await apiClient.get('/admin/reports');
-        setReports(response.data);
-      } catch (error) {
-        console.error('Failed to fetch reports:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchReports();
   }, []);
+
+  const handleAction = async (reportId: string, action: 'BAN' | 'DISMISS') => {
+    const reason = action === 'BAN' ? window.prompt('Enter ban reason:') : 'Dismissed by admin';
+    if (action === 'BAN' && !reason) return;
+
+    try {
+      await apiClient.post('/admin/reports/action', {
+        reportId,
+        action,
+        reason
+      });
+      alert(`Report handled: ${action}`);
+      fetchReports();
+    } catch (error) {
+      alert('Action failed');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -59,9 +77,27 @@ export default function Reports() {
                         <p className="text-sm font-medium dark:text-white">{report.reason}</p>
                         <div className="flex justify-between items-center mt-3">
                           <p className="text-xs text-gray-500">{new Date(report.createdAt).toLocaleDateString()}</p>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${report.status === 'Resolved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {report.status}
-                          </span>
+                          <div className="flex gap-2">
+                            {report.status !== 'Action Taken' && report.status !== 'Resolved' && (
+                              <>
+                                <button 
+                                  onClick={() => handleAction(report._id, 'BAN')}
+                                  className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-100 transition-colors"
+                                >
+                                  <ShieldBan size={12} /> Ban User
+                                </button>
+                                <button 
+                                  onClick={() => handleAction(report._id, 'DISMISS')}
+                                  className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-bold hover:bg-green-100 transition-colors"
+                                >
+                                  <CheckCircle size={12} /> Dismiss
+                                </button>
+                              </>
+                            )}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${report.status === 'Resolved' || report.status === 'Action Taken' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {report.status}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -33,10 +33,12 @@ import monitoringRoutes from './routes/monitoring.js';
 import settingsRoutes from './routes/settings.js';
 import chatRoutes from './routes/chat.js';
 import adminUsersRoutes from './routes/users.js';
+import adminRoutes from './routes/admin.js';
 import adminHostsRoutes from './routes/hosts.js';
 import adminAgenciesRoutes from './routes/agencies.js';
 import adminBannersRoutes from './routes/banners.js';
 import growthRoutes from './routes/growth.js';
+import interactionRoutes from './routes/interactions.js';
 import callRoutes from './routes/calls.js';
 import paymentsRoutes from './routes/payments.js';
 import notificationsRoutes from './routes/notifications.js';
@@ -176,6 +178,7 @@ app.use('/api/user/payments', paymentsRoutes);
 
 // Admin Protected Routes
 app.use('/api/admin/dashboard', protectAdmin, dashboardRoutes);
+app.use('/api/admin', protectAdmin, adminRoutes);
 app.use('/api/admin/economy', protectAdmin, economyRoutes);
 app.use('/api/admin/reports', protectAdmin, reportsRoutes);
 app.use('/api/admin/monitoring', protectAdmin, monitoringRoutes);
@@ -195,6 +198,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/growth', growthRoutes);
 app.use('/api/calls', callRoutes);
+app.use('/api/interactions', interactionRoutes);
 
 // Compatibility route for users
 app.use('/api/users', protectUser, adminUsersRoutes);

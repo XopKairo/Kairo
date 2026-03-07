@@ -20,7 +20,9 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
           payouts: res.data.pendingPayouts || 0,
           messages: (res.data.totalReports || 0) // Placeholder logic
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to fetch topbar stats', e);
+      }
     };
     fetchStats();
     const interval = setInterval(fetchStats, 30000); // Refresh every 30s

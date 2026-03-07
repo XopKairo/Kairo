@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Home, Search as SearchIcon, PlaySquare, Bell as BellIcon, User as UserIcon } from 'lucide-react-native';
 import { View, ActivityIndicator, Platform, Image, Text } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -21,6 +21,7 @@ import HomeScreen from './src/screens/home/HomeScreen';
 import FeedScreen from './src/screens/home/FeedScreen';
 import DiscoveryScreen from './src/screens/home/DiscoveryScreen';
 import UserProfileScreen from './src/screens/profile/UserProfileScreen';
+import HostProfileScreen from './src/screens/profile/HostProfileScreen';
 import VerificationScreen from './src/screens/profile/VerificationScreen';
 import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
@@ -53,12 +54,12 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          if (route.name === 'Home') iconName = focused ? 'home-variant' : 'home-variant-outline';
-          else if (route.name === 'Discovery') iconName = focused ? 'magnify' : 'magnify';
-          else if (route.name === 'Feed') iconName = focused ? 'play-box-multiple' : 'play-box-multiple-outline';
-          else if (route.name === 'Notifications') iconName = focused ? 'bell-ring' : 'bell-outline';
-          else if (route.name === 'Profile') iconName = focused ? 'account-circle' : 'account-circle-outline';
+          let IconComponent;
+          if (route.name === 'Home') IconComponent = Home;
+          else if (route.name === 'Discovery') IconComponent = SearchIcon;
+          else if (route.name === 'Feed') IconComponent = PlaySquare;
+          else if (route.name === 'Notifications') IconComponent = BellIcon;
+          else if (route.name === 'Profile') IconComponent = UserIcon;
           
           return (
             <View style={{
@@ -76,7 +77,7 @@ function MainTabs() {
                 shadowRadius: 10,
                 elevation: 5
               } : {}}>
-                <Icon name={iconName} size={focused ? 26 : 24} color={color} />
+                <IconComponent size={focused ? 26 : 24} color={color} strokeWidth={focused ? 2.5 : 2} />
               </View>
             </View>
           );
@@ -128,6 +129,7 @@ function NavigationStack() {
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen name="HostProfile" component={HostProfileScreen} options={{ headerShown: false }} />
         <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
           {(props) => (
             <Suspense fallback={

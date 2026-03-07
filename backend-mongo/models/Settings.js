@@ -9,6 +9,7 @@ const settingsSchema = new Schema({
   // System Control
   maintenance: { type: Boolean, default: false },
   isAiModerationEnabled: { type: Boolean, default: true },
+  aiSensitivity: { type: String, enum: ['Low', 'Medium', 'High'], default: 'High' },
   
   // Ad Settings
   enableAds: { type: Boolean, default: true },

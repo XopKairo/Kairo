@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
 import User from '../models/User.js';
+import Blacklist from '../models/Blacklist.js';
 import redisClient from '../config/redis.js';
 
 // Protect Admin Middleware
@@ -28,6 +29,14 @@ export const protectAdmin = async (req, res, next) => {
 // Protect User Middleware with Redis Caching (Performance Optimized)
 export const protectUser = async (req, res, next) => {
   let token;
+
+  // 1. IP Blacklist Check (Surgical Security)
+  const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const isBlacklisted = await Blacklist.findOne({ value: clientIP });
+  if (isBlacklisted) {
+    return res.status(403).json({ success: false, message: 'Your access is restricted due to security violations.' });
+  }
+
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];

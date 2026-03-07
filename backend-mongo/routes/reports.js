@@ -1,5 +1,6 @@
 import express from 'express';
 import Report from '../models/Report.js';
+import { protectUser } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -10,6 +11,22 @@ router.get('/', async (req, res) => {
     res.json(reports);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// CREATE a new report (User only)
+router.post('/', protectUser, async (req, res) => {
+  try {
+    const { reportedId, reason } = req.body;
+    const report = await Report.create({
+      reporterId: req.user._id,
+      reportedId,
+      reason,
+      status: 'Pending'
+    });
+    res.status(201).json({ success: true, report });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 

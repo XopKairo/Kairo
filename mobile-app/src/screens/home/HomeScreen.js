@@ -32,7 +32,15 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
-  const activeBanners = useMemo(() => banners.filter(b => b.status === 'Active'), [banners]);
+  const activeBanners = useMemo(() => {
+    const now = new Date();
+    return banners.filter(b => {
+      if (b.status !== 'Active') return false;
+      if (b.startDate && new Date(b.startDate) > now) return false;
+      if (b.endDate && new Date(b.endDate) < now) return false;
+      return true;
+    });
+  }, [banners]);
 
   const fetchData = async () => {
     try {
@@ -41,21 +49,13 @@ const HomeScreen = ({ navigation }) => {
       if (userDataStr) setCurrentUser(JSON.parse(userDataStr));
 
       const [bannerRes, hostRes, settingsRes] = await Promise.all([
-        api.get('/settings/app').catch(() => ({ data: { banners: [] } })), // Fetching from unified settings/app
+        api.get('/admin/banners').catch(() => ({ data: [] })), // Admin panel banners path
         api.get('/hosts').catch(() => ({ data: [] })),
         api.get('/settings').catch(() => ({ data: { callRate: 30 } }))
       ]);
       
-      // Handle banners if they are in settingsRes or dedicated res
-      if (bannerRes.data && bannerRes.data.banners) {
-        setBanners(bannerRes.data.banners);
-      } else {
-        // Fallback to dedicated marketing banners if exists
-        const marketingRes = await api.get('/marketing/banners').catch(() => ({ data: [] }));
-        setBanners(marketingRes.data);
-      }
-
-      setHosts(hostRes.data);
+      setBanners(bannerRes.data || []);
+      setHosts(hostRes.data || []);
       if (settingsRes.data) setAppSettings(settingsRes.data);
     } catch (error) {
     } finally {

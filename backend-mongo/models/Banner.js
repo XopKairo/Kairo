@@ -6,6 +6,8 @@ const bannerSchema = new Schema({
   imageUrl: { type: String, required: true },
   linkUrl: { type: String },
   status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
+  startDate: { type: Date },
+  endDate: { type: Date },
   order: { type: Number, default: 0 }
 }, { timestamps: true });
 

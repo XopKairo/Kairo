@@ -153,6 +153,25 @@ class AuthService {
     throw new Error('Invalid credentials');
   }
 
+  async resetPassword(data) {
+    const { contact, password, otp_verified_token } = data;
+    if (!otp_verified_token) throw new Error('OTP token missing');
+
+    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
+    if (decoded.contact !== contact || !decoded.verified) {
+      throw new Error('OTP verification mismatch');
+    }
+
+    const user = await userRepository.findByContact(contact);
+    if (!user) throw new Error('User not found');
+
+    user.password = password;
+    await user.save();
+
+    await authRepository.deleteOtp(contact);
+    return { success: true, message: 'Password reset successful' };
+  }
+
   async deleteAccount(userId) {
     const user = await userRepository.deleteById(userId);
     if (!user) throw new Error('User not found');

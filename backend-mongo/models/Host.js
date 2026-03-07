@@ -6,6 +6,8 @@ const hostSchema = new Schema({
   email: { type: String, required: true, unique: true },
   status: { type: String, enum: ['Online', 'Busy', 'Offline'], default: 'Offline' },
   earnings: { type: Number, default: 0 },
+  totalCalls: { type: Number, default: 0 },
+  totalMinutes: { type: Number, default: 0 },
   gender: { type: String, enum: ['Male', 'Female', 'Other'], default: 'Female' },
   isVerified: { type: Boolean, default: false },
   callRatePerMinute: { type: Number, default: 30 }

@@ -12,8 +12,14 @@ const API = axios.create({
 
 // Subscription mechanism for maintenance events
 let onMaintenanceTrigger = () => {};
+let onBlacklistTrigger = () => {};
+
 export const setMaintenanceHandler = (handler) => {
   onMaintenanceTrigger = handler;
+};
+
+export const setBlacklistHandler = (handler) => {
+  onBlacklistTrigger = handler;
 };
 
 // Interceptor to add the token to every request
@@ -30,13 +36,22 @@ API.interceptors.request.use(
   }
 );
 
-// Global response interceptor to handle Maintenance (503)
+// Global response interceptor to handle Maintenance (503), Blacklist (403) and Auth (401)
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 503) {
-      // Trigger global maintenance screen
-      onMaintenanceTrigger(true);
+    if (error.response) {
+      const { status, data } = error.response;
+      if (status === 503) {
+        onMaintenanceTrigger(true);
+      } else if (status === 403) {
+        onBlacklistTrigger(data.message || 'Access restricted');
+      } else if (status === 401) {
+        // Clear token and logout if unauthorized (except on login path)
+        if (!error.config.url.includes('/login')) {
+          await logoutUser();
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -107,9 +122,13 @@ export const verifyOtp = async (contact, otp) => {
   }
 };
 
-export const resetPassword = async (contact, newPassword) => {
+export const resetPassword = async (contact, newPassword, otpToken) => {
   try {
-    const response = await API.post('/user/auth/reset-password', { contact, newPassword });
+    const response = await API.post('/user/auth/reset-password', { 
+      contact, 
+      password: newPassword, 
+      otp_verified_token: otpToken 
+    });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
