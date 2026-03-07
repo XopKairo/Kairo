@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { updateUserProfile, API_URL } from '../../services/api';
+import api from '../../services/api';
 import { Camera, ChevronLeft, CheckCircle2 } from 'lucide-react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
-import ZoraInput from '../../components/ZoraInput';
 
 const EditProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -65,7 +64,11 @@ const EditProfileScreen = ({ navigation }) => {
       
       if (selfie) {
         setUploading(true);
-        formData.append('image', selfie);
+        formData.append('image', {
+          uri: Platform.OS === 'android' ? selfie.uri : selfie.uri.replace('file://', ''),
+          name: selfie.name,
+          type: selfie.type
+        });
       }
 
       const response = await api.put(`/users/${userId}/profile`, formData, {
@@ -78,7 +81,8 @@ const EditProfileScreen = ({ navigation }) => {
         navigation.goBack();
       }
     } catch (error) {
-      Alert.alert('Update Failed', error.response?.data?.message || 'Try again later.');
+      console.error('Update error:', error);
+      Alert.alert('Update Failed', error.response?.data?.message || 'Check your internet connection.');
     } finally {
       setLoading(false);
       setUploading(false);

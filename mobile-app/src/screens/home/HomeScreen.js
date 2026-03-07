@@ -99,8 +99,8 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.headerTitle}>ZORA PREMIUM</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.iconBtn}><Search color={COLORS.textWhite} size={22} /></TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}><Bell color={COLORS.textWhite} size={22} /></TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Discovery')}><Search color={COLORS.textWhite} size={22} /></TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}><Bell color={COLORS.textWhite} size={22} /></TouchableOpacity>
         </View>
       </View>
 

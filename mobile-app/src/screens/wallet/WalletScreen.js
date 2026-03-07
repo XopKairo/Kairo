@@ -31,7 +31,10 @@ const WalletScreen = ({ navigation }) => {
             const userData = JSON.parse(userDataStr || '{}');
             const uid = userData._id || userData.id;
             
-            const res = await api.post('/wallet/earn-ad', { userId: uid });
+            const res = await api.post('/wallet/earn-ad', { 
+              userId: uid,
+              clientRequestId: `ad_${Date.now()}_${uid}`
+            });
             if (res.data.success) {
               Alert.alert('Reward Earned!', `You received ${rewardAmount} coins.`);
               fetchUserData();
