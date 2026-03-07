@@ -3,13 +3,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Public Environment Variable for Expo
 export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com/api';
-// Extract base URL for sockets/assets (removes /api suffix if present)
 export const BASE_URL = API_URL.replace(/\/api$/, '');
 
 const API = axios.create({
   baseURL: API_URL,
   timeout: 15000,
 });
+
+// Subscription mechanism for maintenance events
+let onMaintenanceTrigger = () => {};
+export const setMaintenanceHandler = (handler) => {
+  onMaintenanceTrigger = handler;
+};
 
 // Interceptor to add the token to every request
 API.interceptors.request.use(
@@ -25,10 +30,14 @@ API.interceptors.request.use(
   }
 );
 
-// Global response interceptor
+// Global response interceptor to handle Maintenance (503)
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error.response && error.response.status === 503) {
+      // Trigger global maintenance screen
+      onMaintenanceTrigger(true);
+    }
     return Promise.reject(error);
   }
 );

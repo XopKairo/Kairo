@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { loginUser, registerUser } from '../services/api';
+import api, { loginUser, registerUser, setMaintenanceHandler } from '../services/api';
 import socketService from '../services/socketService';
 
 const AuthContext = createContext({});
@@ -11,8 +11,12 @@ export const AuthProvider = ({ children }) => {
   const [isMaintenance, setIsMaintenance] = useState(false);
 
   useEffect(() => {
+    // Register maintenance handler for global API events
+    setMaintenanceHandler(setIsMaintenance);
+
     async function init() {
-      await Promise.all([
+...
+
         loadStorageData(),
         checkMaintenance()
       ]);
