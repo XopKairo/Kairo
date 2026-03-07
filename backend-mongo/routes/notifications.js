@@ -1,10 +1,8 @@
 import express from 'express';
 const router = express.Router();
-import { admin } from '../utils/pushNotification.js';
+import { firebaseAdmin } from '../utils/pushNotification.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
-
-// Initialize Firebase Admin removed - now in utils/pushNotification.js
 
 // GET all notifications (Admin)
 router.get('/', async (req, res) => {
@@ -43,7 +41,6 @@ router.post('/', async (req, res) => {
           title: title,
           body: message,
         },
-        // You can add data payload for app logic
         data: {
           type: type || 'Info',
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
@@ -51,7 +48,7 @@ router.post('/', async (req, res) => {
       };
 
       try {
-        const response = await admin.messaging().sendEachForMulticast({
+        const response = await firebaseAdmin.messaging().sendEachForMulticast({
           tokens: tokens,
           notification: payload.notification,
           data: payload.data

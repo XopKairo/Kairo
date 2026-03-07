@@ -71,7 +71,9 @@ if (serviceAccount && !admin.apps.length) {
   }
 }
 
-const sendPushNotification = async (pushToken, title, body, data = {}) => {
+export const firebaseAdmin = admin;
+
+export const sendPushNotification = async (pushToken, title, body, data = {}) => {
   if (!pushToken) return;
   const message = { notification: { title, body }, data, token: pushToken };
   try {
@@ -81,4 +83,4 @@ const sendPushNotification = async (pushToken, title, body, data = {}) => {
   }
 };
 
-export default { admin, sendPushNotification };
+export default admin;
