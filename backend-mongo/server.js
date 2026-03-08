@@ -270,7 +270,7 @@ app.use(errorHandler);
 import { seedAdmin } from "./utils/initDb.js";
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/kairo';
 
 // Global Exception & Rejection Handlers
 process.on("uncaughtException", (err) => {
