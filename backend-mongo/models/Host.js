@@ -18,6 +18,7 @@ const hostSchema = new Schema(
       enum: ["Male", "Female", "Other"],
       default: "Female",
     },
+    followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     isVerified: { type: Boolean, default: false },
     callRatePerMinute: { type: Number, default: 30 },
   },

@@ -155,4 +155,32 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+router.post("/follow/:id", async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    const currentUserId = req.user._id;
+
+    if (targetId === currentUserId.toString()) {
+      return res.status(400).json({ success: false, message: "Cannot follow yourself" });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    const isFollowing = currentUser.following && currentUser.following.includes(targetId);
+
+    if (isFollowing) {
+      // Unfollow
+      await User.findByIdAndUpdate(currentUserId, { $pull: { following: targetId } });
+      await User.findByIdAndUpdate(targetId, { $pull: { followers: currentUserId } }).catch(() => {});
+      return res.json({ success: true, following: false });
+    } else {
+      // Follow
+      await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: targetId } });
+      await User.findByIdAndUpdate(targetId, { $addToSet: { followers: currentUserId } }).catch(() => {});
+      return res.json({ success: true, following: true });
+    }
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 export default router;

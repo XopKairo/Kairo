@@ -34,6 +34,8 @@ const userSchema = new Schema(
     pushToken: { type: String, default: "" },
 
     // Privacy & Stealth Features
+    followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    following: [{ type: Schema.Types.ObjectId, ref: "User" }],
     isStealthModeEnabled: { type: Boolean, default: false },
     isDrmEnabled: { type: Boolean, default: true },
 

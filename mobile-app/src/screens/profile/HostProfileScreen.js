@@ -44,10 +44,10 @@ const HostProfileScreen = ({ route, navigation }) => {
       const response = await api.get(`/users/${hostId}`);
       setHost(response.data);
       
-      const followRes = await api.get(`/follow/status/${hostId}`);
+      const followRes = await api.get(`/interactions/follow/status/${hostId}`);
       setIsFollowing(followRes.data.isFollowing);
 
-      const giftsRes = await api.get('/gifts');
+      const giftsRes = await api.get('/interactions/gifts');
       setGifts(giftsRes.data);
     } catch (error) {
       console.error('Fetch error:', error);
@@ -63,7 +63,7 @@ const HostProfileScreen = ({ route, navigation }) => {
   const handleSendGift = async (gift) => {
     setSendingGift(true);
     try {
-      const response = await api.post('/gifts/send', {
+      const response = await api.post('/interactions/gifts/send', {
         giftId: gift._id,
         receiverId: hostId,
         callId: null // Independent gifting
@@ -82,12 +82,9 @@ const HostProfileScreen = ({ route, navigation }) => {
   const handleFollow = async () => {
     setFollowLoading(true);
     try {
-      if (isFollowing) {
-        await api.delete(`/follow/${hostId}`);
-        setIsFollowing(false);
-      } else {
-        await api.post('/follow', { followeeId: hostId });
-        setIsFollowing(true);
+      const res = await api.post(`/users/follow/${hostId}`);
+      if (res.data.success) {
+        setIsFollowing(res.data.following);
       }
     } catch (error) {
       Alert.alert('Error', 'Action failed. Please try again.');

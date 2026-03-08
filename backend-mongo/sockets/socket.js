@@ -194,9 +194,21 @@ const setupSockets = (io) => {
 
   async function endCallAndDeductBalance(callId) {
     try {
-      // 1. Atomic Lock using Redis DEL
-      const callData = await redisClient.hGetAll(`activeCall:${callId}`);
-      if (!callData || Object.keys(callData).length === 0) return;
+      // 1. Try Redis first
+      let callData = await redisClient.hGetAll(`activeCall:${callId}`);
+      
+      // Fallback to LiveCall DB if Redis fails or data is missing
+      if (!callData || Object.keys(callData).length === 0) {
+        const liveCall = await LiveCall.findOne({ callId });
+        if (!liveCall || liveCall.status === "ENDED" || liveCall.status === "MISSED") return;
+        
+        callData = {
+          callerId: liveCall.userId.toString(),
+          hostId: liveCall.hostId.toString(),
+          startTime: (new Date(liveCall.startedAt || Date.now()).getTime()).toString(),
+          ratePerMinute: "10" // Default fallback rate
+        };
+      }
 
       // Remove from Redis immediately to prevent double processing
       await redisClient.del(`activeCall:${callId}`);
@@ -209,7 +221,7 @@ const setupSockets = (io) => {
 
       const endTime = Date.now();
       const durationMs = endTime - parseInt(callData.startTime);
-      const durationMinutes = Math.ceil(durationMs / 60000);
+      const durationMinutes = Math.max(1, Math.ceil(durationMs / 60000)); // Minimum 1 min charge
       const totalCost = durationMinutes * parseInt(callData.ratePerMinute);
 
       // 3. Database Transaction for Atomic Deduction and Ledger
