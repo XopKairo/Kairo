@@ -1,14 +1,14 @@
-import Conversation from '../models/Conversation.js';
-import Message from '../models/Message.js';
+import Conversation from "../models/Conversation.js";
+import Message from "../models/Message.js";
 
 export const getConversations = async (req, res) => {
   try {
     const conversations = await Conversation.find({
-      participants: req.user._id
+      participants: req.user._id,
     })
-    .populate('participants', 'name profilePicture status')
-    .populate('lastMessage')
-    .sort({ updatedAt: -1 });
+      .populate("participants", "name profilePicture status")
+      .populate("lastMessage")
+      .sort({ updatedAt: -1 });
 
     res.json(conversations);
   } catch (error) {
@@ -19,10 +19,10 @@ export const getConversations = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const messages = await Message.find({
-      conversationId: req.params.conversationId
+      conversationId: req.params.conversationId,
     })
-    .sort({ createdAt: 1 })
-    .limit(50);
+      .sort({ createdAt: 1 })
+      .limit(50);
 
     res.json(messages);
   } catch (error) {
@@ -31,16 +31,16 @@ export const getMessages = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-  const { recipientId, text, type = 'text' } = req.body;
-  
+  const { recipientId, text, type = "text" } = req.body;
+
   try {
     let conversation = await Conversation.findOne({
-      participants: { $all: [req.user._id, recipientId] }
+      participants: { $all: [req.user._id, recipientId] },
     });
 
     if (!conversation) {
       conversation = await Conversation.create({
-        participants: [req.user._id, recipientId]
+        participants: [req.user._id, recipientId],
       });
     }
 
@@ -49,7 +49,7 @@ export const sendMessage = async (req, res) => {
       sender: req.user._id,
       recipient: recipientId,
       text,
-      type
+      type,
     });
 
     conversation.lastMessage = message._id;

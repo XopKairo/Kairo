@@ -1,10 +1,10 @@
-import express from 'express';
-import Settings from '../models/Settings.js';
+import express from "express";
+import Settings from "../models/Settings.js";
 
 const router = express.Router();
 
 // Get All Settings
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     let settings = await Settings.findOne();
     if (!settings) {
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 });
 
 // Alias for /app to satisfy Admin Panel
-router.get('/app', async (req, res) => {
+router.get("/app", async (req, res) => {
   try {
     let settings = await Settings.findOne();
     if (!settings) settings = await Settings.create({});
@@ -28,9 +28,12 @@ router.get('/app', async (req, res) => {
 });
 
 // Update All Settings
-router.put('/', async (req, res) => {
+router.put("/", async (req, res) => {
   try {
-    const settings = await Settings.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+    const settings = await Settings.findOneAndUpdate({}, req.body, {
+      new: true,
+      upsert: true,
+    });
     res.json(settings);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -38,9 +41,12 @@ router.put('/', async (req, res) => {
 });
 
 // Alias POST for /app
-router.post('/app', async (req, res) => {
+router.post("/app", async (req, res) => {
   try {
-    const settings = await Settings.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+    const settings = await Settings.findOneAndUpdate({}, req.body, {
+      new: true,
+      upsert: true,
+    });
     res.json(settings);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -48,7 +54,7 @@ router.post('/app', async (req, res) => {
 });
 
 // GET Ad Settings specifically
-router.get('/ads', async (req, res) => {
+router.get("/ads", async (req, res) => {
   try {
     let settings = await Settings.findOne();
     if (!settings) settings = await Settings.create({});
@@ -56,8 +62,8 @@ router.get('/ads', async (req, res) => {
       enableAds: settings.enableAds || false,
       rewardPerAd: settings.rewardPerAd || 0,
       dailyLimit: settings.dailyLimit || 0,
-      adMobId: settings.adMobId || '',
-      interstitialId: settings.interstitialId || ''
+      adMobId: settings.adMobId || "",
+      interstitialId: settings.interstitialId || "",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -65,9 +71,12 @@ router.get('/ads', async (req, res) => {
 });
 
 // POST/Update Ad Settings
-router.post('/ads', async (req, res) => {
+router.post("/ads", async (req, res) => {
   try {
-    const settings = await Settings.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+    const settings = await Settings.findOneAndUpdate({}, req.body, {
+      new: true,
+      upsert: true,
+    });
     res.json(settings);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

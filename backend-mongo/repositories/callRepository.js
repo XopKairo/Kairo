@@ -1,4 +1,4 @@
-import Call from '../models/Call.js';
+import Call from "../models/Call.js";
 
 class CallRepository {
   async createCall(callData) {
@@ -6,7 +6,7 @@ class CallRepository {
   }
 
   async findActiveCallByCallId(callId, session) {
-    const query = Call.findOne({ callId, status: 'Active' });
+    const query = Call.findOne({ callId, status: "Active" });
     if (session) query.session(session);
     return await query;
   }
@@ -18,9 +18,9 @@ class CallRepository {
   }
 
   async getActiveCalls() {
-    return await Call.find({ status: 'Active' })
-      .populate('userId', 'name email')
-      .populate('hostId', 'name email');
+    return await Call.find({ status: "Active" })
+      .populate("userId", "name email")
+      .populate("hostId", "name email");
   }
 }
 

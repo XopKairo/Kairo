@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import User from "../models/User.js";
 
 class UserRepository {
   async findById(userId, session) {
@@ -8,7 +8,9 @@ class UserRepository {
   }
 
   async findByContact(contact) {
-    return await User.findOne({ $or: [{ email: contact }, { phone: contact }] });
+    return await User.findOne({
+      $or: [{ email: contact }, { phone: contact }],
+    });
   }
 
   async findByEmailOrPhone(email, phone) {
@@ -25,11 +27,11 @@ class UserRepository {
   async updateLoginPoints(userId) {
     return await User.findByIdAndUpdate(
       userId,
-      { 
+      {
         $inc: { zoraPoints: 5 },
-        $set: { lastLoginDate: new Date() }
+        $set: { lastLoginDate: new Date() },
       },
-      { new: true }
+      { new: true },
     );
   }
 
@@ -41,24 +43,24 @@ class UserRepository {
     return await User.findOneAndUpdate(
       { _id: userId, coins: { $gte: amountNum } },
       { $inc: { coins: -amountNum } },
-      { session, new: true }
+      { session, new: true },
     );
   }
 
   async updateAdStats(userId, rewardAmount, isSameDay, limit, now) {
     const query = { _id: userId };
-    
+
     // If it's the same day, ensure we haven't hit the limit
     if (isSameDay) {
       query.dailyAdsWatched = { $lt: limit };
     }
 
     const update = {
-      $inc: { 
+      $inc: {
         coins: rewardAmount,
-        dailyAdsWatched: isSameDay ? 1 : 0 
+        dailyAdsWatched: isSameDay ? 1 : 0,
       },
-      $set: { lastAdWatchedAt: now }
+      $set: { lastAdWatchedAt: now },
     };
 
     // If it's a new day, reset dailyAdsWatched to 1

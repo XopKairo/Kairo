@@ -1,4 +1,4 @@
-import OTP from '../models/OTP.js';
+import OTP from "../models/OTP.js";
 
 class AuthRepository {
   async findOtpByContact(contact) {
@@ -9,7 +9,7 @@ class AuthRepository {
     return await OTP.findOneAndUpdate(
       { contact },
       { otp, expiresAt },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
   }
 

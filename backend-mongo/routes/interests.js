@@ -1,11 +1,11 @@
-import express from 'express';
+import express from "express";
 const router = express.Router();
-import InterestTag from '../models/InterestTag.js';
+import InterestTag from "../models/InterestTag.js";
 
 // GET all active interest tags (for Mobile App)
-router.get('/active', async (req, res) => {
+router.get("/active", async (req, res) => {
   try {
-    const tags = await InterestTag.find({ isActive: true }).sort('name');
+    const tags = await InterestTag.find({ isActive: true }).sort("name");
     res.json(tags);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -13,9 +13,9 @@ router.get('/active', async (req, res) => {
 });
 
 // GET all interest tags (for Admin)
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
-    const tags = await InterestTag.find({}).sort('-createdAt');
+    const tags = await InterestTag.find({}).sort("-createdAt");
     res.json(tags);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST new interest tag (Admin)
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, icon, isActive } = req.body;
     const tag = new InterestTag({ name, icon, isActive });
@@ -31,22 +31,22 @@ router.post('/', async (req, res) => {
     res.status(201).json(tag);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ message: 'Interest tag already exists' });
+      return res.status(400).json({ message: "Interest tag already exists" });
     }
     res.status(500).json({ message: error.message });
   }
 });
 
 // PUT update interest tag (Admin)
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const { name, icon, isActive } = req.body;
     const tag = await InterestTag.findByIdAndUpdate(
       req.params.id,
       { name, icon, isActive },
-      { new: true }
+      { new: true },
     );
-    if (!tag) return res.status(404).json({ message: 'Tag not found' });
+    if (!tag) return res.status(404).json({ message: "Tag not found" });
     res.json(tag);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -54,11 +54,11 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE interest tag (Admin)
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const tag = await InterestTag.findByIdAndDelete(req.params.id);
-    if (!tag) return res.status(404).json({ message: 'Tag not found' });
-    res.json({ message: 'Tag deleted successfully' });
+    if (!tag) return res.status(404).json({ message: "Tag not found" });
+    res.json({ message: "Tag deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

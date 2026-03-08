@@ -1,6 +1,6 @@
-import Payout from '../models/Payout.js';
-import CoinPackage from '../models/CoinPackage.js';
-import WalletLedger from '../models/WalletLedger.js';
+import Payout from "../models/Payout.js";
+import CoinPackage from "../models/CoinPackage.js";
+import WalletLedger from "../models/WalletLedger.js";
 
 class WalletRepository {
   async logLedgerEntry(data, session) {
@@ -12,10 +12,10 @@ class WalletRepository {
   }
 
   async findPayoutsByUserAndDate(userId, startOfDay, session) {
-    return await Payout.find({ 
-      user: userId, 
+    return await Payout.find({
+      user: userId,
       createdAt: { $gte: startOfDay },
-      status: { $ne: 'Rejected' }
+      status: { $ne: "Rejected" },
     }).session(session);
   }
 

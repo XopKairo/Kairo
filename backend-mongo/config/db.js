@@ -1,10 +1,12 @@
-import mongoose from 'mongoose';
-import 'dotenv/config';
+import mongoose from "mongoose";
+import "dotenv/config";
 
 const connectDB = async () => {
   try {
     if (!process.env.MONGO_URI) {
-      throw new Error('CRITICAL: MONGO_URI is missing in the .env file. Database connection aborted to prevent local fallback.');
+      throw new Error(
+        "CRITICAL: MONGO_URI is missing in the .env file. Database connection aborted to prevent local fallback.",
+      );
     }
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,

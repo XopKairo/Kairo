@@ -1,5 +1,5 @@
-import axios from 'axios';
-import crypto from 'crypto';
+import axios from "axios";
+import crypto from "crypto";
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
@@ -16,25 +16,32 @@ export const createCashfreeOrder = async (orderData) => {
         customer_details: {
           customer_id: orderData.userId,
           customer_phone: orderData.customerPhone || "9999999999", // Fallback if missing
-          customer_email: orderData.customerEmail || "test@cashfree.com"
+          customer_email: orderData.customerEmail || "test@cashfree.com",
         },
         order_meta: {
-          return_url: orderData.returnUrl || "https://kairo-sooty.vercel.app/payment-status?order_id={order_id}"
-        }
+          return_url:
+            orderData.returnUrl ||
+            "https://kairo-sooty.vercel.app/payment-status?order_id={order_id}",
+        },
       },
       {
         headers: {
-          'x-client-id': CASHFREE_APP_ID,
-          'x-client-secret': CASHFREE_SECRET_KEY,
-          'x-api-version': '2023-08-01',
-          'Content-Type': 'application/json'
-        }
-      }
+          "x-client-id": CASHFREE_APP_ID,
+          "x-client-secret": CASHFREE_SECRET_KEY,
+          "x-api-version": "2023-08-01",
+          "Content-Type": "application/json",
+        },
+      },
     );
     return response.data;
   } catch (error) {
-    console.error('Cashfree Order Creation Error:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to create Cashfree order');
+    console.error(
+      "Cashfree Order Creation Error:",
+      error.response?.data || error.message,
+    );
+    throw new Error(
+      error.response?.data?.message || "Failed to create Cashfree order",
+    );
   }
 };
 
@@ -43,20 +50,22 @@ export const verifyCashfreeSignature = (orderId, paymentId, signature) => {
 };
 
 export const getCashfreeOrderStatus = async (orderId) => {
-    try {
-        const response = await axios.get(
-          `${CASHFREE_ENDPOINT}/orders/${orderId}`,
-          {
-            headers: {
-              'x-client-id': CASHFREE_APP_ID,
-              'x-client-secret': CASHFREE_SECRET_KEY,
-              'x-api-version': '2023-08-01'
-            }
-          }
-        );
-        return response.data;
-      } catch (error) {
-        console.error('Cashfree Order Status Error:', error.response?.data || error.message);
-        throw new Error(error.response?.data?.message || 'Failed to fetch Cashfree order status');
-      }
-}
+  try {
+    const response = await axios.get(`${CASHFREE_ENDPOINT}/orders/${orderId}`, {
+      headers: {
+        "x-client-id": CASHFREE_APP_ID,
+        "x-client-secret": CASHFREE_SECRET_KEY,
+        "x-api-version": "2023-08-01",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Cashfree Order Status Error:",
+      error.response?.data || error.message,
+    );
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch Cashfree order status",
+    );
+  }
+};

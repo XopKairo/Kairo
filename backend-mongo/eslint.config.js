@@ -14,12 +14,12 @@ export default [
         clearTimeout: "readonly",
         setInterval: "readonly",
         clearInterval: "readonly",
-        Buffer: "readonly"
-      }
+        Buffer: "readonly",
+      },
     },
     rules: {
-      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-      "no-undef": "warn"
-    }
-  }
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "no-undef": "warn",
+    },
+  },
 ];

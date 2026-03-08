@@ -1,13 +1,24 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 const { Schema, model } = mongoose;
 
-const ticketSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  subject: { type: String, required: true },
-  message: { type: String, required: true },
-  priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
-  status: { type: String, enum: ['Open', 'In Progress', 'Resolved', 'Closed'], default: 'Open' },
-  adminResponse: { type: String, default: '' }
-}, { timestamps: true });
+const ticketSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    subject: { type: String, required: true },
+    message: { type: String, required: true },
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High"],
+      default: "Medium",
+    },
+    status: {
+      type: String,
+      enum: ["Open", "In Progress", "Resolved", "Closed"],
+      default: "Open",
+    },
+    adminResponse: { type: String, default: "" },
+  },
+  { timestamps: true },
+);
 
-export default model('Ticket', ticketSchema);
+export default model("Ticket", ticketSchema);

@@ -1,42 +1,48 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import os from 'os';
-import User from '../models/User.js';
-import Host from '../models/Host.js';
-import Payout from '../models/Payout.js';
-import Call from '../models/Call.js';
-import Transaction from '../models/Transaction.js';
+import express from "express";
+import mongoose from "mongoose";
+import os from "os";
+import User from "../models/User.js";
+import Host from "../models/Host.js";
+import Payout from "../models/Payout.js";
+import Call from "../models/Call.js";
+import Transaction from "../models/Transaction.js";
 
 const router = express.Router();
 
 // Real-time stats fetching from DB
-router.get('/stats', async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
     const verifiedHosts = await Host.countDocuments({ isVerified: true });
-    const pendingPayouts = await Payout.countDocuments({ status: 'Pending' });
+    const pendingPayouts = await Payout.countDocuments({ status: "Pending" });
     const totalReports = await User.countDocuments({ isVerified: false }); // Placeholder count
     const totalCalls = await Call.countDocuments();
-    const totalTransactions = await Transaction.countDocuments({ status: 'completed' });
-    
+    const totalTransactions = await Transaction.countDocuments({
+      status: "completed",
+    });
+
     // Active Users (Logged in today)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-    const activeUsersToday = await User.countDocuments({ lastLoginDate: { $gte: startOfToday } });
+    const activeUsersToday = await User.countDocuments({
+      lastLoginDate: { $gte: startOfToday },
+    });
 
     // Daily Revenue (Completed transactions today)
     const dailyRevenueResult = await Transaction.aggregate([
-      { $match: { status: 'completed', createdAt: { $gte: startOfToday } } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
+      { $match: { status: "completed", createdAt: { $gte: startOfToday } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
-    const dailyRevenue = dailyRevenueResult.length > 0 ? dailyRevenueResult[0].total : 0;
+    const dailyRevenue =
+      dailyRevenueResult.length > 0 ? dailyRevenueResult[0].total : 0;
 
     // Total Revenue (Lifetime)
     const totalRevenueResult = await Transaction.aggregate([
-      { $match: { status: 'completed' } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
+      { $match: { status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
-    const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
+    const totalRevenue =
+      totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
 
     res.json({
       totalUsers,
@@ -46,15 +52,17 @@ router.get('/stats', async (req, res) => {
       verifiedHosts,
       pendingPayouts,
       totalReports,
-      dailyRevenue: `₹${dailyRevenue.toLocaleString('en-IN')}`,
-      totalRevenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
+      dailyRevenue: `₹${dailyRevenue.toLocaleString("en-IN")}`,
+      totalRevenue: `₹${totalRevenue.toLocaleString("en-IN")}`,
       rawTotalRevenue: totalRevenue,
       system: {
-        cpuUsage: (os.loadavg()[0] * 10).toFixed(1) + '%',
-        memoryUsage: ((1 - os.freemem() / os.totalmem()) * 100).toFixed(1) + '%',
-        uptime: Math.floor(os.uptime() / 3600) + 'h',
-        dbStatus: mongoose.connection.readyState === 1 ? 'Healthy' : 'Disconnected'
-      }
+        cpuUsage: (os.loadavg()[0] * 10).toFixed(1) + "%",
+        memoryUsage:
+          ((1 - os.freemem() / os.totalmem()) * 100).toFixed(1) + "%",
+        uptime: Math.floor(os.uptime() / 3600) + "h",
+        dbStatus:
+          mongoose.connection.readyState === 1 ? "Healthy" : "Disconnected",
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -62,7 +70,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // Analytics Route for Chart
-router.get('/analytics', async (req, res) => {
+router.get("/analytics", async (req, res) => {
   try {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
@@ -74,28 +82,50 @@ router.get('/analytics', async (req, res) => {
       { $match: { createdAt: { $gte: sixMonthsAgo } } },
       {
         $group: {
-          _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
-          count: { $sum: 1 }
-        }
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1 } }
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
 
     // 2. Revenue Aggregation (using the ad-hoc collection)
-    const revenueCollection = mongoose.connection.db.collection('admin_revenues');
-    const revenueData = await revenueCollection.aggregate([
-      { $match: { createdAt: { $gte: sixMonthsAgo } } },
-      {
-        $group: {
-          _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
-          total: { $sum: "$adminEarning" }
-        }
-      },
-      { $sort: { "_id.year": 1, "_id.month": 1 } }
-    ]).toArray();
+    const revenueCollection =
+      mongoose.connection.db.collection("admin_revenues");
+    const revenueData = await revenueCollection
+      .aggregate([
+        { $match: { createdAt: { $gte: sixMonthsAgo } } },
+        {
+          $group: {
+            _id: {
+              month: { $month: "$createdAt" },
+              year: { $year: "$createdAt" },
+            },
+            total: { $sum: "$adminEarning" },
+          },
+        },
+        { $sort: { "_id.year": 1, "_id.month": 1 } },
+      ])
+      .toArray();
 
     // Map to last 6 months labels
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     const labels = [];
     const userCounts = [];
     const revenueTotals = [];
@@ -105,24 +135,28 @@ router.get('/analytics', async (req, res) => {
       d.setMonth(d.getMonth() - (5 - i));
       const m = d.getMonth() + 1;
       const y = d.getFullYear();
-      
-      labels.push(`${months[m-1]} ${y}`);
-      
-      const userMatch = userGrowthData.find(ug => ug._id.month === m && ug._id.year === y);
+
+      labels.push(`${months[m - 1]} ${y}`);
+
+      const userMatch = userGrowthData.find(
+        (ug) => ug._id.month === m && ug._id.year === y,
+      );
       userCounts.push(userMatch ? userMatch.count : 0);
 
-      const revMatch = revenueData.find(rd => rd._id.month === m && rd._id.year === y);
+      const revMatch = revenueData.find(
+        (rd) => rd._id.month === m && rd._id.year === y,
+      );
       revenueTotals.push(revMatch ? (revMatch.total * 0.1).toFixed(2) : 0); // Convert coins to INR
     }
 
     res.json({
       labels,
       userGrowth: userCounts,
-      revenueData: revenueTotals
+      revenueData: revenueTotals,
     });
   } catch (error) {
-     console.error('Analytics Error:', error);
-     res.status(500).json({ success: false, message: error.message });
+    console.error("Analytics Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

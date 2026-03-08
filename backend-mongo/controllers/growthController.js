@@ -1,4 +1,4 @@
-import growthService from '../services/growthService.js';
+import growthService from "../services/growthService.js";
 
 class GrowthController {
   async claimDailyReward(req, res) {
@@ -14,7 +14,7 @@ class GrowthController {
     try {
       const { type, period } = req.query; // type: hosts or spenders
       let result;
-      if (type === 'hosts') {
+      if (type === "hosts") {
         result = await growthService.getTopHosts(period);
       } else {
         result = await growthService.getTopSpenders(period);
@@ -32,7 +32,7 @@ class GrowthController {
         referralCode: user.referralCode,
         currentStreak: user.currentStreak,
         level: user.level,
-        vipLevel: user.vipLevel
+        vipLevel: user.vipLevel,
       });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
