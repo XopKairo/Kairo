@@ -45,7 +45,6 @@ import notificationsRoutes from "./routes/notifications.js";
 import verificationRoutes from "./routes/verification.js";
 
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import {
   httpRequestDurationMicroseconds,
   getMetrics,
@@ -57,7 +56,7 @@ const app = express();
 // Initialize Sentry
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  integrations: [nodeProfilingIntegration()],
+  integrations: [],
   tracesSampleRate: 1.0,
   profilesSampleRate: 1.0,
 });
@@ -95,6 +94,10 @@ const io = new Server(server, {
 // Phase 6: Socket.io Redis Adapter for Scalability
 try {
   const subClient = redisClient.duplicate();
+  subClient.on("error", (err) => {
+    // Suppress unhandled error crash
+  });
+  
   subClient
     .connect()
     .then(() => {
@@ -102,7 +105,7 @@ try {
       console.log("✅ Socket.io Redis Adapter connected");
     })
     .catch((err) => {
-      console.error("⚠️ Socket.io Redis SubClient failed:", err.message);
+      console.error("⚠️ Socket.io Redis SubClient failed. Running without Redis Adapter.");
     });
 } catch (err) {
   console.error("⚠️ Socket.io Redis Adapter Setup failed:", err.message);
