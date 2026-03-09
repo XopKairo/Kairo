@@ -29,9 +29,6 @@ router.post(
 // User Login
 router.post("/login", validateRequest(loginSchema), userAuthController.login);
 
-// Reset Password
-router.post("/reset-password", userAuthController.resetPassword);
-
 // Delete Account
 router.delete("/delete-account/:id", userAuthController.deleteAccount);
 

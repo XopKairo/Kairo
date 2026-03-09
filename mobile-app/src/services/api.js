@@ -120,19 +120,6 @@ export const verifyOtp = async (contact, otp) => {
   }
 };
 
-export const resetPassword = async (contact, newPassword, otpToken) => {
-  try {
-    const response = await API.post('/user/auth/reset-password', { 
-      contact, 
-      password: newPassword, 
-      otp_verified_token: otpToken 
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : error;
-  }
-};
-
 export const logoutUser = async () => {
   await AsyncStorage.removeItem('userToken');
   await AsyncStorage.removeItem('userData');
