@@ -9,6 +9,10 @@ const userSchema = new Schema(
     phone: { type: String, unique: true, sparse: true },
     password: { type: String, required: true },
     nickname: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    age: { type: Number },
+    languages: [{ type: String }],
+    photos: [{ type: String }],
     location: { type: String, default: "" },
     interests: [{ type: String }],
     coins: { type: Number, default: 0 },
@@ -16,6 +20,7 @@ const userSchema = new Schema(
     lastLoginDate: { type: Date },
     isBanned: { type: Boolean, default: false, index: true },
     isVerified: { type: Boolean, default: false },
+    isHost: { type: Boolean, default: false },
     profilePicture: { type: String, default: "" },
     gender: {
       type: String,

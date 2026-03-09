@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../../services/api';
@@ -10,6 +10,10 @@ import ZoraButton from '../../components/ZoraButton';
 const EditProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const [gender, setGender] = useState('');
+  const [bio, setBio] = useState('');
+  const [age, setAge] = useState('');
+  const [location, setLocation] = useState('');
+  const [languages, setLanguages] = useState('');
   const [selfie, setSelfie] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -25,6 +29,10 @@ const EditProfileScreen = ({ navigation }) => {
         const userData = JSON.parse(userDataStr);
         setUser(userData);
         setGender(userData.gender || '');
+        setBio(userData.bio || '');
+        setAge(userData.age ? userData.age.toString() : '');
+        setLocation(userData.location || '');
+        setLanguages(userData.languages ? userData.languages.join(', ') : '');
       }
     } catch (error) {
       console.error('Load User Error:', error);
@@ -69,6 +77,13 @@ const EditProfileScreen = ({ navigation }) => {
       const userId = user._id || user.id;
       const formData = new FormData();
       formData.append('gender', gender);
+      if (bio) formData.append('bio', bio);
+      if (age) formData.append('age', age);
+      if (location) formData.append('location', location);
+      if (languages) {
+        const langArray = languages.split(',').map(l => l.trim()).filter(Boolean);
+        langArray.forEach(l => formData.append('languages', l));
+      }
       
       if (selfie) {
         setUploading(true);
@@ -110,20 +125,6 @@ const EditProfileScreen = ({ navigation }) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.label}>Identity</Text>
-        <View style={styles.genderRow}>
-          {['Male', 'Female', 'Other'].map((g) => (
-            <TouchableOpacity 
-              key={g}
-              style={[styles.genderBtn, gender === g && styles.activeGender]} 
-              onPress={() => setGender(g)}
-            >
-              {gender === g && <CheckCircle2 size={14} color="#FFF" style={{marginRight: 6}} />}
-              <Text style={[styles.genderText, gender === g && { color: '#FFF' }]}>{g}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         <Text style={styles.label}>Profile Picture / Selfie</Text>
         <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
           {selfie ? (
@@ -138,7 +139,61 @@ const EditProfileScreen = ({ navigation }) => {
           )}
         </TouchableOpacity>
 
-        <ZoraButton title="Save Profile" onPress={handleUpdate} loading={loading || uploading} />
+        <Text style={styles.label}>Identity</Text>
+        <View style={styles.genderRow}>
+          {['Male', 'Female', 'Other'].map((g) => (
+            <TouchableOpacity 
+              key={g}
+              style={[styles.genderBtn, gender === g && styles.activeGender]} 
+              onPress={() => setGender(g)}
+            >
+              {gender === g && <CheckCircle2 size={14} color="#FFF" style={{marginRight: 6}} />}
+              <Text style={[styles.genderText, gender === g && { color: '#FFF' }]}>{g}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.label}>Bio</Text>
+        <TextInput
+          style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+          placeholder="Tell us about yourself..."
+          placeholderTextColor={COLORS.textGray}
+          value={bio}
+          onChangeText={setBio}
+          multiline
+        />
+
+        <Text style={styles.label}>Age</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your age"
+          placeholderTextColor={COLORS.textGray}
+          value={age}
+          onChangeText={setAge}
+          keyboardType="numeric"
+        />
+
+        <Text style={styles.label}>Location</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="E.g., New York, USA"
+          placeholderTextColor={COLORS.textGray}
+          value={location}
+          onChangeText={setLocation}
+        />
+
+        <Text style={styles.label}>Languages</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="E.g., English, Spanish, Hindi"
+          placeholderTextColor={COLORS.textGray}
+          value={languages}
+          onChangeText={setLanguages}
+        />
+
+        <View style={{ marginTop: 20 }}>
+          <ZoraButton title="Save Profile" onPress={handleUpdate} loading={loading || uploading} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -149,15 +204,25 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg },
   headerTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
   content: { padding: SPACING.lg },
-  label: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700', marginBottom: 15, marginTop: 10 },
-  genderRow: { flexDirection: 'row', gap: 10, marginBottom: 30 },
+  label: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700', marginBottom: 10, marginTop: 10 },
+  genderRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   genderBtn: { flex: 1, height: 50, borderRadius: 15, backgroundColor: COLORS.cardBackground, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)', flexDirection: 'row' },
   activeGender: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   genderText: { color: COLORS.textGray, fontWeight: 'bold' },
-  uploadBox: { width: '100%', height: 250, backgroundColor: COLORS.cardBackground, borderRadius: 24, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', marginBottom: 40, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  uploadBox: { width: '100%', height: 250, backgroundColor: COLORS.cardBackground, borderRadius: 24, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
   image: { width: '100%', height: '100%', resizeMode: 'cover' },
   placeholder: { alignItems: 'center' },
-  uploadText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' }
+  uploadText: { color: COLORS.textGray, marginTop: 10, fontWeight: '600' },
+  input: {
+    backgroundColor: COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: 'rgba(159, 103, 255, 0.1)',
+    borderRadius: 15,
+    padding: 15,
+    color: COLORS.textWhite,
+    fontSize: 16,
+    marginBottom: 15,
+  }
 });
 
 export default EditProfileScreen;

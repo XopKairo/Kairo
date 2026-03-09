@@ -72,8 +72,8 @@ class WalletService {
       const user = await userRepository.findById(userId, session);
       if (!user) throw new Error("User not found");
 
-      if (user.gender === "Male") {
-        throw new Error("Withdrawal is only available for Female Hosts");
+      if (!user.isHost) {
+        throw new Error("Withdrawal is only available for Hosts");
       }
 
       if (user.coins < amountNum) {

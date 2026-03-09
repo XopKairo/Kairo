@@ -91,12 +91,19 @@ router.post("/:id/status", async (req, res) => {
       await User.findByIdAndUpdate(request.userId, {
         isVerified: true,
         isGenderVerified: true,
+        isHost: true
       });
 
-      // Also update Host if exists
+      // Update or Create Host
       await Host.findOneAndUpdate(
         { email: user.email },
-        { isGenderVerified: true, isVerified: true },
+        { 
+          name: user.name,
+          email: user.email,
+          gender: user.gender || "Female",
+          isVerified: true 
+        },
+        { upsert: true, new: true }
       );
     } else {
       await User.findByIdAndUpdate(request.userId, { isGenderVerified: false });

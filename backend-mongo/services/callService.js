@@ -99,7 +99,7 @@ class CallService {
 
       // Host Earnings & Admin Revenue
       const isEarningEligible =
-        host && host.gender === "Female" && host.isGenderVerified;
+        host && host.isVerified;
       if (isEarningEligible) {
         host.earnings += hostShare;
         host.totalCalls += 1;

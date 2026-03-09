@@ -183,41 +183,35 @@ const WalletScreen = ({ navigation }) => {
            </View>
         </View>
 
-        <View style={styles.withdrawSection}>
-           <Text style={styles.sectionTitle}>Withdraw Funds</Text>
-           <ZoraInput 
-             label="Amount in Coins" 
-             placeholder="Min 5000" 
-             value={withdrawAmount} 
-             onChangeText={setWithdrawAmount} 
-             keyboardType="numeric" 
-           />
-           <ZoraInput 
-             label="UPI ID" 
-             placeholder="yourname@upi" 
-             value={upiId} 
-             onChangeText={setUpiId} 
-           />
-           
-           <View style={styles.calcBox}>
-              <Text style={styles.calcLabel}>You will receive:</Text>
-              <Text style={styles.calcValue}>₹{(Number(withdrawAmount) * COIN_TO_INR_RATE).toFixed(2)}</Text>
-           </View>
-
-           <ZoraButton 
-             title="Request Withdrawal" 
-             onPress={handleWithdraw} 
-             loading={loading}
-             disabled={user?.gender === 'Male' || !user?.isGenderVerified}
-           />
-           
-           {user?.gender === 'Male' && (
-             <View style={styles.warningBox}>
-                <ShieldInfo color={COLORS.error} size={16} />
-                <Text style={styles.warningText}>Withdrawal is for Female Hosts only.</Text>
+        {user?.isHost && (
+          <View style={styles.withdrawSection}>
+             <Text style={styles.sectionTitle}>Withdraw Funds</Text>
+             <ZoraInput 
+               label="Amount in Coins" 
+               placeholder="Min 5000" 
+               value={withdrawAmount} 
+               onChangeText={setWithdrawAmount} 
+               keyboardType="numeric" 
+             />
+             <ZoraInput 
+               label="UPI ID" 
+               placeholder="yourname@upi" 
+               value={upiId} 
+               onChangeText={setUpiId} 
+             />
+             
+             <View style={styles.calcBox}>
+                <Text style={styles.calcLabel}>You will receive:</Text>
+                <Text style={styles.calcValue}>₹{(Number(withdrawAmount) * COIN_TO_INR_RATE).toFixed(2)}</Text>
              </View>
-           )}
-        </View>
+
+             <ZoraButton 
+               title="Request Withdrawal" 
+               onPress={handleWithdraw} 
+               loading={loading}
+             />
+          </View>
+        )}
 
         <View style={styles.rules}>
            <Text style={styles.ruleTitle}>Rules & Limits</Text>
