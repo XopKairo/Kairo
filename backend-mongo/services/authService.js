@@ -1,4 +1,5 @@
 import admin from "firebase-admin";
+import jwt from "jsonwebtoken";
 import authRepository from "../repositories/authRepository.js";
 import userRepository from "../repositories/userRepository.js";
 import Post from "../models/Post.js";
