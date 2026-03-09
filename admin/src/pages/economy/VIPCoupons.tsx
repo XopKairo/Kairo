@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Crown, Tag, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Crown, Tag, Plus, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface VipPackage {
@@ -22,7 +22,6 @@ interface Coupon {
 export default function VIPCoupons() {
   const [vipPackages, setVipPackages] = useState<VipPackage[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -34,8 +33,6 @@ export default function VIPCoupons() {
       setCoupons(couponRes.data);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 

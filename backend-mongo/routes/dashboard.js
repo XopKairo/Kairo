@@ -65,7 +65,7 @@ router.get("/stats", async (req, res) => {
     const activeLast7Days = await User.countDocuments({ lastLoginDate: { $gte: sevenDaysAgo } });
     const retentionRate = totalUsers > 0 ? (activeLast7Days / totalUsers) * 100 : 0;
 
-    res.json({
+    const statsResult = {
       totalUsers,
       activeUsersToday,
       totalCalls,

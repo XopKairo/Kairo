@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { COLORS, SPACING } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
-import { sendOtp } from '../../services/api';
+import auth from '@react-native-firebase/auth';
 
 const LoginScreen = ({ navigation }) => {
   const [mobileNumber, setMobileNumber] = useState('');
@@ -38,12 +38,14 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
     try {
         const formattedContact = `+91${mobileNumber}`;
-        const res = await sendOtp(formattedContact);
-        if(res.success) {
-            navigation.navigate('OTP', { mobileNumber: formattedContact });
-        }
+        // Firebase Phone Auth
+        const confirmation = await auth().signInWithPhoneNumber(formattedContact);
+        navigation.navigate('OTP', { 
+          mobileNumber: formattedContact,
+          confirmation 
+        });
     } catch(err) {
-        Alert.alert("Error", err.message || "Failed to send OTP");
+        Alert.alert("Error", err.message || "Failed to send OTP. Check your Firebase settings.");
     } finally {
         setLoading(false);
     }

@@ -75,7 +75,7 @@ export default function Users() {
       await apiClient.post('/admin/users', addForm);
       alert('User created successfully');
       setIsAddModalOpen(false);
-      setAddForm({ name: '', email: '', phone: '', password: '', gender: 'Male' });
+      setAddForm({ name: '', phone: '', password: '', gender: 'Male' });
       fetchUsers();
     } catch (error) { 
       const e = error as { response?: { data?: { message?: string } } };
@@ -129,7 +129,6 @@ export default function Users() {
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (u.phone && u.phone.includes(searchQuery))
   );
 

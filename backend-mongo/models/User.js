@@ -39,6 +39,7 @@ const userSchema = new Schema(
     lastAdWatchedAt: { type: Date, default: null },
     status: { type: String, default: "offline", index: true },
     pushToken: { type: String, default: "" },
+    firebaseUid: { type: String, unique: true, sparse: true },
 
     // Privacy & Stealth Features
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],

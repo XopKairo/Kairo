@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Users, Wallet, CheckCircle, XCircle } from 'lucide-react';
+import { Building2, Plus } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Agency {
@@ -15,7 +15,6 @@ interface Agency {
 
 export default function Agencies() {
   const [agencies, setAgencies] = useState<Agency[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', ownerName: '', phone: '', password: '', commissionPercentage: 10 });
 
@@ -25,8 +24,6 @@ export default function Agencies() {
       setAgencies(res.data);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   };
 

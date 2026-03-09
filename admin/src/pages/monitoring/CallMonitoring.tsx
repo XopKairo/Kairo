@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShieldAlert, AlertTriangle, User, Video, Clock, Trash2 } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, User, Clock, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface FlaggedScreenshot {

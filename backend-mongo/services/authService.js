@@ -1,68 +1,46 @@
-import jwt from "jsonwebtoken";
-import twilio from "twilio";
-import nodemailer from "nodemailer";
+import admin from "firebase-admin";
 import authRepository from "../repositories/authRepository.js";
 import userRepository from "../repositories/userRepository.js";
 import Post from "../models/Post.js";
 import { getUserBadge } from "../utils/badgeSystem.js";
 
-const twilioClient =
-  process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-    ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-    : null;
+// Firebase Admin is already initialized in pushService.js, 
+// but we ensure it's accessible here.
 
 class AuthService {
   async sendOtp(contact) {
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    await authRepository.updateOtp(contact, otp, expiresAt);
-
-    console.log(`[LIVE OTP] Sent to ${contact}: ${otp}`);
-
-    if (twilioClient && contact.startsWith("+")) {
-      try {
-        await Promise.race([
-          twilioClient.messages.create({
-            body: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: contact,
-          }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Twilio Timeout")), 10000),
-          ),
-        ]);
-        return { success: true, message: "OTP sent via SMS" };
-      } catch (error) {
-        throw new Error(`SMS Error: ${error.message}`);
-      }
-    }
-
-    return { success: true, message: "OTP generated (Dev Mode)" };
+    // With Firebase Phone Auth, the client handles SMS sending.
+    // This backend route is now a placeholder or for custom logging.
+    console.log(`[FIREBASE OTP] Client will request OTP for ${contact}`);
+    return { success: true, message: "Please use Firebase Client SDK to send OTP" };
   }
 
-  async verifyOtp(contact, otp) {
-    const storedOtpData = await authRepository.findOtpByContact(contact);
+  async verifyOtp(contact, firebaseToken) {
+    try {
+      // Verify the ID Token from Firebase
+      const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+      const phone = decodedToken.phone_number;
 
-    if (!storedOtpData) throw new Error("OTP not requested or expired");
+      if (!phone || phone.replace(/\s+/g, '') !== contact.replace(/\s+/g, '')) {
+        throw new Error("Phone number mismatch with Firebase token");
+      }
 
-    if (Date.now() > new Date(storedOtpData.expiresAt).getTime()) {
-      throw new Error("OTP expired");
+      // Generate a short-lived internal token to proceed with Zora login/register
+      const otpVerifiedToken = jwt.sign(
+        { contact: phone, verified: true, firebaseUid: decodedToken.uid },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" },
+      );
+
+      return {
+        success: true,
+        message: "Firebase Token Verified",
+        otp_verified_token: otpVerifiedToken,
+      };
+    } catch (error) {
+      console.error("Firebase Verify Error:", error);
+      throw new Error("Invalid or expired Firebase token");
     }
-
-    if (storedOtpData.otp !== otp) throw new Error("Invalid OTP");
-
-    const otpVerifiedToken = jwt.sign(
-      { contact, verified: true },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" },
-    );
-
-    return {
-      success: true,
-      message: "OTP Verified",
-      otp_verified_token: otpVerifiedToken,
-    };
   }
 
   async register(data) {
@@ -77,17 +55,17 @@ class AuthService {
       if (!isWhitelisted) throw new Error("BETA_ONLY");
     }
 
-    if (!otp_verified_token) throw new Error("OTP token missing");
+    if (!otp_verified_token) throw new Error("Verification token missing");
 
     const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
     const registeredContact = phone.toString().trim();
     const decodedContact = decoded.contact.toString().trim();
 
     if (decodedContact !== registeredContact || !decoded.verified) {
-      throw new Error("OTP verification mismatch");
+      throw new Error("Verification mismatch");
     }
 
-    const userExists = await userRepository.findByContact(phone);
+    const userExists = await userRepository.findByPhone(phone);
     if (userExists) throw new Error("User already exists");
     
     // Calculate Age from DOB
@@ -107,6 +85,7 @@ class AuthService {
     const user = await userRepository.createUser({
       name: name.trim(),
       phone: phone ? phone.trim() : undefined,
+      firebaseUid: decoded.firebaseUid,
       gender,
       dob,
       age,
@@ -119,8 +98,6 @@ class AuthService {
       zoraPoints: 5,
       coins: 0,
     });
-
-    await authRepository.deleteOtp(decodedContact);
 
     const expiry = process.env.USER_JWT_EXPIRY || "30d";
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -143,14 +120,14 @@ class AuthService {
   }
 
   async login(contact, otp_verified_token) {
-    if (!otp_verified_token) throw new Error("OTP token missing");
+    if (!otp_verified_token) throw new Error("Verification token missing");
 
     const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
     if (decoded.contact.toString().trim() !== contact.toString().trim() || !decoded.verified) {
-      throw new Error("OTP verification mismatch");
+      throw new Error("Verification mismatch");
     }
 
-    const user = await userRepository.findByContact(contact);
+    const user = await userRepository.findByPhone(contact);
 
     if (user) {
       if (user.isBanned) throw new Error("Account is banned");
@@ -164,8 +141,6 @@ class AuthService {
       if (today > lastLogin || !user.lastLoginDate) {
         updatedUser = await userRepository.updateLoginPoints(user._id);
       }
-
-      await authRepository.deleteOtp(contact);
 
       const badge = getUserBadge(updatedUser.zoraPoints);
       const expiry = process.env.USER_JWT_EXPIRY || "30d";
