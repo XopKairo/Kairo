@@ -11,8 +11,10 @@ import Users from './pages/users/Users';
 import Hosts from './pages/hosts/Hosts';
 import Agencies from './pages/agencies/Agencies';
 import Economy from './pages/economy/Economy';
+import VIPCoupons from './pages/economy/VIPCoupons';
 import Reports from './pages/reports/Reports';
 import Calls from './pages/calls/Calls';
+import CallMonitoring from './pages/monitoring/CallMonitoring';
 import Settings from './pages/settings/Settings';
 import AuditLogs from './pages/settings/AuditLogs';
 import Blacklist from './pages/settings/Blacklist';
@@ -44,7 +46,9 @@ function App() {
             <Route path="/hosts" element={<ProtectedRoute><Layout><Hosts /></Layout></ProtectedRoute>} />
             <Route path="/agencies" element={<ProtectedRoute><Layout><Agencies /></Layout></ProtectedRoute>} />
             <Route path="/economy" element={<ProtectedRoute><Layout><Economy /></Layout></ProtectedRoute>} />
+            <Route path="/vip-coupons" element={<ProtectedRoute><Layout><VIPCoupons /></Layout></ProtectedRoute>} />
             <Route path="/calls" element={<ProtectedRoute><Layout><Calls /></Layout></ProtectedRoute>} />
+            <Route path="/monitoring" element={<ProtectedRoute><Layout><CallMonitoring /></Layout></ProtectedRoute>} />
             <Route path="/payouts" element={<ProtectedRoute><Layout><Payouts /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
             <Route path="/banners" element={<ProtectedRoute><Layout><Banners /></Layout></ProtectedRoute>} />

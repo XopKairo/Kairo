@@ -6,12 +6,17 @@ import Host from "../models/Host.js";
 import Payout from "../models/Payout.js";
 import Call from "../models/Call.js";
 import Transaction from "../models/Transaction.js";
+import redisClient from "../config/redis.js";
 
 const router = express.Router();
 
 // Real-time stats fetching from DB
 router.get("/stats", async (req, res) => {
   try {
+    const cacheKey = "admin_dashboard_stats";
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) return res.json(JSON.parse(cachedData));
+
     const totalUsers = await User.countDocuments();
     const verifiedHosts = await Host.countDocuments({ isVerified: true });
     const pendingPayouts = await Payout.countDocuments({ status: "Pending" });
@@ -44,6 +49,22 @@ router.get("/stats", async (req, res) => {
     const totalRevenue =
       totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
 
+    // --- New Advanced Analytics ---
+    
+    // 1. Peak Hours Calculation
+    const peakHoursData = await User.aggregate([
+      { $match: { lastLoginDate: { $ne: null } } },
+      { $project: { hour: { $hour: "$lastLoginDate" } } },
+      { $group: { _id: "$hour", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 2. Retention Rate Simulation (Last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const activeLast7Days = await User.countDocuments({ lastLoginDate: { $gte: sevenDaysAgo } });
+    const retentionRate = totalUsers > 0 ? (activeLast7Days / totalUsers) * 100 : 0;
+
     res.json({
       totalUsers,
       activeUsersToday,
@@ -54,6 +75,8 @@ router.get("/stats", async (req, res) => {
       totalReports,
       dailyRevenue: `₹${dailyRevenue.toLocaleString("en-IN")}`,
       totalRevenue: `₹${totalRevenue.toLocaleString("en-IN")}`,
+      retentionRate: retentionRate.toFixed(2) + "%",
+      peakHours: peakHoursData,
       rawTotalRevenue: totalRevenue,
       system: {
         cpuUsage: (os.loadavg()[0] * 10).toFixed(1) + "%",
@@ -63,7 +86,12 @@ router.get("/stats", async (req, res) => {
         dbStatus:
           mongoose.connection.readyState === 1 ? "Healthy" : "Disconnected",
       },
-    });
+    };
+
+    // Cache for 2 minutes
+    await redisClient.setEx(cacheKey, 120, JSON.stringify(statsResult));
+
+    res.json(statsResult);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

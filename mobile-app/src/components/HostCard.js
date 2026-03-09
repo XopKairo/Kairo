@@ -1,42 +1,61 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Text, Avatar } from 'react-native-paper';
-import { Star } from 'lucide-react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { Text } from 'react-native-paper';
+import { ShieldCheck, MapPin, Globe2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/theme';
 
 const { width } = Dimensions.get('window');
 
-const HostCard = React.memo(({ item, currentUser, navigation, appSettings }) => {
+const HostCard = React.memo(({ item, currentUser, navigation }) => {
+  const languagesStr = item.languages && item.languages.length > 0 ? item.languages.join(', ') : 'English';
+  const locationStr = item.location || 'Unknown Location';
+  
   return (
     <TouchableOpacity 
       style={styles.hostCard}
       activeOpacity={0.9}
       onPress={() => {
         if (!currentUser) return;
-        navigation.navigate('VideoCall', {
-          userId: currentUser.id || currentUser._id,
-          userName: currentUser.name || 'User',
-          hostId: item._id,
-          hostName: item.name,
-          callId: 'call_' + Date.now(),
-          callRatePerMinute: appSettings.callRate || 30
-        });
+        navigation.navigate('HostProfile', { hostId: item._id });
       }}
     >
-      <View style={styles.hostImageContainer}>
-        <Avatar.Image size={120} source={{ uri: item.profilePicture || 'https://via.placeholder.com/120' }} />
+      <View style={styles.imageWrapper}>
+        <Image 
+          source={{ uri: item.profilePicture || 'https://via.placeholder.com/200x250' }} 
+          style={styles.hostImage}
+          resizeMode="cover"
+        />
         <View style={[styles.statusDot, { backgroundColor: item.status === 'Online' ? COLORS.success : COLORS.error }]} />
-        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.hostOverlay}>
-           <View style={styles.ratingBadge}>
-              <Star size={10} fill="#FFD700" color="#FFD700" />
-              <Text style={styles.ratingText}>{item.rating || '4.8'}</Text>
-           </View>
+        <LinearGradient 
+          colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']} 
+          style={styles.hostOverlay}
+        >
+          <View style={styles.infoContainer}>
+            <View style={styles.nameRow}>
+              <Text style={styles.hostName} numberOfLines={1}>
+                {item.name} {item.age ? `, ${item.age}` : ''}
+              </Text>
+              {item.isVerified && (
+                <ShieldCheck color="#10B981" size={16} fill="#10B981" style={styles.verifiedBadge} />
+              )}
+            </View>
+            
+            <View style={styles.detailRow}>
+              <Globe2 color={COLORS.textGray} size={12} />
+              <Text style={styles.detailText} numberOfLines={1}>{languagesStr}</Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <MapPin color={COLORS.textGray} size={12} />
+              <Text style={styles.detailText} numberOfLines={1}>{locationStr}</Text>
+            </View>
+            
+            {item.bio ? (
+               <Text style={styles.bioText} numberOfLines={2}>{item.bio}</Text>
+            ) : null}
+          </View>
         </LinearGradient>
-      </View>
-      <View style={styles.hostInfo}>
-        <Text style={styles.hostName}>{item.name}</Text>
-        <Text style={styles.hostPrice}>{appSettings.callRate || 30} coins/min</Text>
       </View>
     </TouchableOpacity>
   );
@@ -45,65 +64,77 @@ const HostCard = React.memo(({ item, currentUser, navigation, appSettings }) => 
 const styles = StyleSheet.create({
   hostCard: {
     flex: 1,
-    backgroundColor: COLORS.cardBackground,
-    margin: 8,
-    borderRadius: 24,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(159, 103, 255, 0.1)',
-  },
-  hostImageContainer: {
+    margin: 6,
     borderRadius: 20,
     overflow: 'hidden',
-    alignItems: 'center',
+    backgroundColor: COLORS.cardBackground,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  imageWrapper: {
+    width: '100%',
+    aspectRatio: 0.75, // Makes it a nice portrait rectangle
+    position: 'relative',
+  },
+  hostImage: {
+    width: '100%',
+    height: '100%',
   },
   statusDot: {
     position: 'absolute',
-    right: 15,
-    top: 15,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    top: 10,
+    right: 10,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     borderWidth: 2,
-    borderColor: COLORS.cardBackground,
+    borderColor: '#000',
+    zIndex: 10,
   },
   hostOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 40,
+    height: '60%', // Gradient covers bottom half
     justifyContent: 'flex-end',
-    padding: 8,
+    padding: 12,
   },
-  ratingBadge: {
+  infoContainer: {
+    width: '100%',
+  },
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    gap: 4,
-  },
-  ratingText: {
-    color: '#FFD700',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  hostInfo: {
-    marginTop: 10,
-    alignItems: 'center',
+    marginBottom: 4,
   },
   hostName: {
     color: COLORS.textWhite,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    flexShrink: 1, // prevents text from pushing badge out
   },
-  hostPrice: {
-    color: COLORS.accentGlow,
-    fontSize: 12,
-    marginTop: 2,
+  verifiedBadge: {
+    marginLeft: 6,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+    opacity: 0.8,
+  },
+  detailText: {
+    color: COLORS.textWhite,
+    fontSize: 11,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  bioText: {
+    color: COLORS.textGray,
+    fontSize: 11,
+    marginTop: 6,
+    lineHeight: 14,
+    fontStyle: 'italic',
   }
 });
 

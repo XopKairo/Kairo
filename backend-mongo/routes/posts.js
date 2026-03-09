@@ -103,7 +103,7 @@ router.get("/admin", async (req, res) => {
   try {
     const now = new Date();
     const posts = await Post.find({ expiresAt: { $gt: now } })
-      .populate("userId", "name email")
+      .populate("userId", "name phone")
       .sort("-createdAt");
     res.json(posts);
   } catch (error) {

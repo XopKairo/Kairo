@@ -1,120 +1,101 @@
 import { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { Building2, Plus, Users, Wallet, CheckCircle, XCircle } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Agency {
-  id?: string;
-  _id?: string;
-  name?: string;
-  code?: string;
-  hosts?: number;
-  revenue?: string;
-  status?: string;
+  _id: string;
+  name: string;
+  ownerName: string;
+  phone: string;
+  commissionPercentage: number;
+  totalHosts: number;
+  balance: number;
+  isActive: boolean;
 }
 
 export default function Agencies() {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', ownerName: '', phone: '', password: '', commissionPercentage: 10 });
 
   const fetchAgencies = async () => {
     try {
-      setLoading(true);
-      const response = await apiClient.get('/admin/agencies');
-      setAgencies(response.data);
-    } catch (error) {
-      console.error('Error fetching agencies:', error);
+      const res = await apiClient.get('/api/admin/agencies');
+      setAgencies(res.data);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAgencies();
-  }, []);
+  useEffect(() => { fetchAgencies(); }, []);
 
-  const handleDeleteAgency = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this agency?')) return;
+  const handleAddAgency = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await apiClient.delete(`/admin/agencies/${id}`);
+      await apiClient.post('/api/admin/agencies', formData);
+      setIsAddModalOpen(false);
       fetchAgencies();
-    } catch (error) {
-      alert('Failed to delete agency');
-    }
+    } catch (e) { alert('Failed'); }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Agencies</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage agency partners and their hosts.</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm shadow-brand-500/20">
-          <Plus className="w-4 h-4" />
-          Add Agency
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Agency Management</h1>
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2"
+        >
+          <Plus size={20}/> New Agency
         </button>
       </div>
 
-      <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search agencies..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-surface-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-shadow dark:text-white border-transparent"
-            />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {agencies.map(a => (
+          <div key={a._id} className="bg-white dark:bg-surface-900 p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-2xl">
+                <Building2 className="text-brand-600" />
+              </div>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${a.isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                {a.isActive ? 'ACTIVE' : 'INACTIVE'}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{a.name}</h3>
+            <p className="text-sm text-gray-500 mb-6">Owner: {a.ownerName}</p>
+            
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50 dark:border-gray-800">
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase">Hosts</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">{a.totalHosts}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase">Commission</p>
+                <p className="text-lg font-bold text-brand-600">{a.commissionPercentage}%</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8 border border-white/10">
+            <h2 className="text-2xl font-bold mb-6">Register Agency</h2>
+            <form onSubmit={handleAddAgency} className="space-y-4">
+              <input required placeholder="Agency Name" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              <input required placeholder="Owner Name" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl" value={formData.ownerName} onChange={e => setFormData({...formData, ownerName: e.target.value})} />
+              <input required placeholder="Phone Number" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+              <input required type="password" placeholder="Password" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              <button className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold mt-4">Create Agency</button>
+              <button type="button" onClick={() => setIsAddModalOpen(false)} className="w-full py-2 text-gray-500">Cancel</button>
+            </form>
           </div>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 dark:text-gray-400 text-sm font-medium">
-                <th className="py-4 px-6 font-medium">Agency Name</th>
-                <th className="py-4 px-6 font-medium">Code</th>
-                <th className="py-4 px-6 font-medium">Hosts</th>
-                <th className="py-4 px-6 font-medium">Total Revenue</th>
-                <th className="py-4 px-6 font-medium">Status</th>
-                <th className="py-4 px-6 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-              {loading ? (
-                <tr><td colSpan={6} className="py-4 text-center text-gray-500">Loading...</td></tr>
-              ) : agencies.length === 0 ? (
-                <tr><td colSpan={6} className="py-8 text-center text-gray-500">No agencies found.</td></tr>
-              ) : agencies.map((agency) => {
-                const agencyId = agency._id || agency.id || '';
-                return (
-                <tr key={agencyId} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                  <td className="py-4 px-6 font-medium text-gray-900 dark:text-white">{agency.name || 'Unknown'}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300 font-mono">{agency.code || 'N/A'}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.hosts || 0}</td>
-                  <td className="py-4 px-6 text-gray-600 dark:text-gray-300">{agency.revenue || '$0'}</td>
-                  <td className="py-4 px-6">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400">
-                      {agency.status || 'Active'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right flex justify-end gap-2">
-                    <button 
-                      onClick={() => handleDeleteAgency(agencyId)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                      title="Delete Agency"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                    <button className="text-gray-400 hover:text-brand-500 transition-colors">
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              )})}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

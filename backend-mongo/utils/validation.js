@@ -2,25 +2,30 @@ import Joi from "joi";
 
 export const registerSchema = Joi.object({
   name: Joi.string().required(),
-  email: Joi.string().email(),
-  phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/),
-  password: Joi.string().min(6).required(),
+  phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required(),
+  password: Joi.string().min(6).optional(),
   nickname: Joi.string().allow(""),
   location: Joi.string().allow(""),
+  gender: Joi.string().valid("Male", "Female", "Other").optional(),
+  dob: Joi.date().iso().optional(),
+  state: Joi.string().allow("").optional(),
+  district: Joi.string().allow("").optional(),
+  profilePicture: Joi.string().allow("").optional(),
+  languages: Joi.array().items(Joi.string()).optional(),
   // Optional for mobile app registration flow
   otp_verified_token: Joi.string(),
-}).or("email", "phone");
+});
 
 export const loginSchema = Joi.object({
-  email: Joi.string().email(),
   phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/),
-  contact: Joi.string(),
-  password: Joi.string().required(),
-}).or("email", "phone", "contact");
+  contact: Joi.string().required(),
+  otp_verified_token: Joi.string(),
+  password: Joi.string().optional(),
+});
 
 export const verifyOTPSchema = Joi.object({
   contact: Joi.string().required(),
-  otp: Joi.string().length(6).required(),
+  otp: Joi.string().length(4).required(),
 });
 
 export const createOrderSchema = Joi.object({

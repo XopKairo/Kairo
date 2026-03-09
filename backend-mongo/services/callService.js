@@ -29,10 +29,20 @@ class CallService {
     let settings = await Settings.findOne();
     if (!settings) settings = { callRate: 30 };
 
-    const minRequired = settings.callRate;
     const user = await userRepository.findById(userId);
+    if (!user) throw new Error("User not found");
 
-    if (!user || user.coins < minRequired) {
+    const host = await Host.findById(hostId);
+    if (!host) throw new Error("Host not found");
+
+    if (host.isVipOnly && !user.isVip) {
+      throw new Error("This host accepts calls from VIP members only.");
+    }
+
+    const isFreeCall = user.freeCallsRemaining > 0;
+    const minRequired = settings.callRate;
+
+    if (!isFreeCall && user.coins < minRequired) {
       throw new Error(`Minimum ${minRequired} coins required to start a call`);
     }
 
@@ -42,9 +52,10 @@ class CallService {
       callId,
       status: "Active",
       startTime: new Date(),
+      isFreeCall // Track if this specific call was free
     });
 
-    return { success: true, call, user };
+    return { success: true, call, user, isFreeCall };
   }
 
   async endCall(callId, durationInMinutes) {
@@ -55,74 +66,77 @@ class CallService {
       const call = await callRepository.findActiveCallByCallId(callId, session);
       if (!call) throw new Error("Active call not found");
 
-      const host = await Host.findById(call.hostId).session(session);
-      if (!host) throw new Error("Host not found");
-
-      let settings = await Settings.findOne().session(session);
-      if (!settings) settings = { callRate: 30, commission: 30 };
-
-      const callRatePerMinute = settings.callRate;
-      const totalCoinsDeducted = durationInMinutes * callRatePerMinute;
-      const hostCommissionPercent = settings.commission;
-      const hostShare =
-        totalCoinsDeducted * ((100 - hostCommissionPercent) / 100);
-      const adminShare = totalCoinsDeducted * (hostCommissionPercent / 100);
-
       const user = await userRepository.findById(call.userId, session);
-      if (!user || user.coins < totalCoinsDeducted) {
-        throw new Error("Insufficient coins to end call properly");
-      }
+      if (!user) throw new Error("User not found");
 
-      const balanceBefore = user.coins;
-      const updatedUser = await userRepository.updateCoinsAtomics(
-        call.userId,
-        totalCoinsDeducted,
-        session,
-      );
-
-      if (!updatedUser) throw new Error("Failed to deduct coins");
-
-      // LEDGER LOGGING
-      await walletRepository.logLedgerEntry(
-        {
-          userId: call.userId,
-          type: "DEBIT",
-          amount: totalCoinsDeducted,
-          balanceBefore,
-          balanceAfter: updatedUser.coins,
-          transactionType: "CALL_CHARGE",
-          description: `Call duration: ${durationInMinutes} mins`,
-          referenceId: call._id,
-        },
-        session,
-      );
-
-      // Host Earnings & Admin Revenue
-      const isEarningEligible =
-        host && host.isVerified;
-      if (isEarningEligible) {
-        host.earnings += hostShare;
-        host.totalCalls += 1;
-        host.totalMinutes += durationInMinutes;
-        host.status = "Online";
-        await host.save({ session });
-
-        const adminShareINR = Number((adminShare * 0.1).toFixed(2));
-        await Admin.findOneAndUpdate(
-          {},
-          { $inc: { totalRevenue: adminShareINR } },
-        ).session(session);
+      let totalCoinsDeducted = 0;
+      if (call.isFreeCall) {
+         // Consume one free call
+         await User.findByIdAndUpdate(user._id, { $inc: { freeCallsRemaining: -1 } }).session(session);
       } else {
-        host.status = "Online";
-        await host.save({ session });
-        const totalAmountINR = Number((totalCoinsDeducted * 0.1).toFixed(2));
-        await Admin.findOneAndUpdate(
-          {},
-          { $inc: { totalRevenue: totalAmountINR } },
-        ).session(session);
+         let settings = await Settings.findOne().session(session);
+         if (!settings) settings = { callRate: 30, commission: 30 };
+         totalCoinsDeducted = durationInMinutes * settings.callRate;
+         
+         if (user.coins < totalCoinsDeducted) throw new Error("Insufficient coins");
+         await userRepository.updateCoinsAtomics(user._id, totalCoinsDeducted, session);
       }
 
-      // Update Call
+      const host = await Host.findById(call.hostId).session(session);
+      let hostShare = 0;
+      let agencyShare = 0;
+      let adminShare = totalCoinsDeducted;
+
+      if (host && host.isVerified && !call.isFreeCall) {
+         let settings = await Settings.findOne().session(session);
+         const hostCommissionPercent = settings?.commission || 30;
+         const hostTotalShare = totalCoinsDeducted * ((100 - hostCommissionPercent) / 100);
+         adminShare = totalCoinsDeducted * (hostCommissionPercent / 100);
+
+         if (host.agencyId) {
+            const subAgency = await Agency.findById(host.agencyId).session(session);
+            if (subAgency) {
+               const totalAgencyShare = hostTotalShare * (subAgency.commissionPercentage / 100);
+               
+               if (subAgency.parentAgencyId) {
+                  const masterAgency = await Agency.findById(subAgency.parentAgencyId).session(session);
+                  if (masterAgency) {
+                     // Master Agency takes 20% of Sub-Agency's commission by default
+                     const masterShare = totalAgencyShare * 0.2; 
+                     agencyShare = totalAgencyShare - masterShare;
+                     
+                     masterAgency.balance += masterShare;
+                     masterAgency.totalEarnings += masterShare;
+                     await masterAgency.save({ session });
+                  } else {
+                     agencyShare = totalAgencyShare;
+                  }
+               } else {
+                  agencyShare = totalAgencyShare;
+               }
+
+               hostShare = hostTotalShare - totalAgencyShare;
+               subAgency.balance += agencyShare;
+               subAgency.totalEarnings += agencyShare;
+               await subAgency.save({ session });
+            } else {
+               hostShare = hostTotalShare;
+            }
+         } else {
+            hostShare = hostTotalShare;
+         }
+
+         host.earnings += hostShare;
+         host.totalCalls += 1;
+         host.totalMinutes += durationInMinutes;
+         await host.save({ session });
+      }
+
+      // Update Admin Total Revenue
+      const adminShareINR = Number((adminShare * 0.1).toFixed(2));
+      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } }).session(session);
+
+      // Finalize Call Record
       call.status = "Completed";
       call.durationInMinutes = durationInMinutes;
       call.coinsDeducted = totalCoinsDeducted;
@@ -131,22 +145,8 @@ class CallService {
       call.endTime = new Date();
       await call.save({ session });
 
-      // Revenue Master Sync
-      await mongoose.connection.db.collection("admin_revenues").insertOne(
-        {
-          callId: call._id,
-          adminEarning: adminShare,
-          createdAt: new Date(),
-        },
-        { session },
-      );
-
       await session.commitTransaction();
-
-      // GROWTH FEATURE: Update Spent coins and potentially Level up
-      await growthService.updateSpentAndLevel(call.userId, totalCoinsDeducted);
-
-      return { totalCoinsDeducted, hostShare, adminShare };
+      return { totalCoinsDeducted, hostShare, agencyShare, adminShare };
     } catch (error) {
       if (session.inTransaction()) await session.abortTransaction();
       throw error;

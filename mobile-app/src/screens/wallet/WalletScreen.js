@@ -10,6 +10,9 @@ import { Wallet, Play, ArrowUpRight, History, ShieldInfo, Info } from 'lucide-re
 
 const COIN_TO_INR_RATE = 0.1;
 
+import RazorpayCheckout from 'react-native-razorpay';
+import { Tag, CheckCircle2 } from 'lucide-react-native';
+
 const WalletScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const [packages, setPackages] = useState([]);
@@ -18,79 +21,69 @@ const WalletScreen = ({ navigation }) => {
   const [upiId, setUpiId] = useState('');
   const [loading, setLoading] = useState(false);
   const [adLoading, setAdLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-  useEffect(() => {
-    let adCleanup = () => {};
-    
-    const startAds = async () => {
-      adCleanup = await initRewardedAd(
-        () => setAdLoading(false),
-        async (rewardAmount) => {
-          try {
-            const userDataStr = await AsyncStorage.getItem('userData');
-            const userData = JSON.parse(userDataStr || '{}');
-            const uid = userData._id || userData.id;
-            
-            const res = await api.post('/wallet/earn-ad', { 
-              userId: uid,
-              clientRequestId: `ad_${Date.now()}_${uid}`
-            });
-            if (res.data.success) {
-              Alert.alert('Reward Earned!', `You received ${rewardAmount} coins.`);
-              fetchUserData();
-            }
-          } catch (err) {
-            console.error('Reward error:', err);
-          }
-        }
-      );
-    };
-
-    fetchUserData();
-    fetchPackages();
-    startAds();
-
-    return () => { if (typeof adCleanup === 'function') adCleanup(); };
-  }, []);
-
-  const fetchUserData = async () => {
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
     try {
-      const storedUser = await AsyncStorage.getItem('userData');
-      const parsedUser = JSON.parse(storedUser || '{}');
-      const response = await api.get(`/users/${parsedUser.id || parsedUser._id}`);
-      setUser(response.data);
-      if (response.data.paymentMethods?.upiId) setUpiId(response.data.paymentMethods.upiId);
-    } catch (error) {}
-  };
-
-  const fetchPackages = async () => {
-    try {
-      const res = await api.get('/wallet/coin-packages');
-      setPackages(res.data);
-    } catch (error) {}
+      const res = await api.post('/user/payments/validate-coupon', {
+        code: couponCode,
+        amount: 100 // placeholder amount for validation
+      });
+      if (res.data.success) {
+        setAppliedCoupon(res.data);
+        Alert.alert('Coupon Applied!', `You saved ₹${res.data.discount}`);
+      }
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Invalid Coupon');
+    }
   };
 
   const handlePurchase = async (pkg) => {
+    const finalPrice = appliedCoupon ? Math.max(pkg.priceINR - appliedCoupon.discount, 1) : pkg.priceINR;
+    
     Alert.alert(
       'Confirm Purchase',
-      `Buy ${pkg.coins} coins ${pkg.bonus ? `+ ${pkg.bonus} bonus` : ''} for ₹${pkg.priceINR}?`,
+      `Buy ${pkg.coins} coins for ₹${finalPrice}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Buy Now', 
+          text: 'Pay with Razorpay', 
           onPress: async () => {
             setLoading(true);
             try {
-              const res = await api.post('/user/payments/create-order', {
-                amount: pkg.priceINR,
+              const res = await api.post('/user/payments/create-razorpay-order', {
+                amount: finalPrice,
                 currency: 'INR'
               });
-              if (res.data.paymentLink) {
-                Linking.openURL(res.data.paymentLink);
-                Alert.alert('Payment Started', 'Complete the payment in your browser to get coins.');
-              } else {
-                throw new Error('Failed to create payment link');
-              }
+              
+              const options = {
+                description: `Purchase ${pkg.coins} Coins`,
+                image: 'https://i.imgur.com/3g7nmJC.png',
+                currency: 'INR',
+                key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID, 
+                amount: res.data.order.amount,
+                name: 'ZORA App',
+                order_id: res.data.order.id,
+                prefill: {
+                  email: `${user.phone}@zora.com`,
+                  contact: user.phone,
+                  name: user.name
+                },
+                theme: { color: COLORS.primary }
+              };
+
+              RazorpayCheckout.open(options).then(async (data) => {
+                const verifyRes = await api.post('/user/payments/verify-razorpay', data);
+                if (verifyRes.data.success) {
+                  Alert.alert('Success', 'Coins added to your wallet!');
+                  fetchUserData();
+                }
+              }).catch((error) => {
+                Alert.alert('Error', `Payment failed: ${error.description}`);
+              });
+
             } catch (err) {
               Alert.alert('Purchase Failed', err.response?.data?.message || 'Try again later.');
             } finally {
@@ -157,6 +150,30 @@ const WalletScreen = ({ navigation }) => {
           </View>
           {adLoading ? <ActivityIndicator color={COLORS.accentGlow} /> : <ArrowUpRight color={COLORS.accentGlow} size={24} />}
         </TouchableOpacity>
+
+        {/* Coupon Section */}
+        <View style={styles.couponSection}>
+           <Text style={styles.sectionTitle}>Apply Coupon</Text>
+           <View style={styles.couponInputRow}>
+              <View style={{ flex: 1 }}>
+                <ZoraInput 
+                  placeholder="Enter Code (e.g. ZORA50)" 
+                  value={couponCode} 
+                  onChangeText={setCouponCode}
+                  autoCapitalize="characters"
+                />
+              </View>
+              <TouchableOpacity 
+                style={[styles.applyBtn, appliedCoupon && styles.appliedBtn]} 
+                onPress={handleApplyCoupon}
+              >
+                {appliedCoupon ? <CheckCircle2 color="#FFF" size={20} /> : <Text style={styles.applyBtnText}>Apply</Text>}
+              </TouchableOpacity>
+           </View>
+           {appliedCoupon && (
+             <Text style={styles.couponHint}>Coupon applied! Discount: ₹{appliedCoupon.discount}</Text>
+           )}
+        </View>
 
         {/* Coin Store */}
         <View style={styles.storeSection}>
@@ -240,6 +257,12 @@ const styles = StyleSheet.create({
   playBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   adTitle: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700' },
   adSubtitle: { color: COLORS.textGray, fontSize: 12, marginTop: 2 },
+  couponSection: { backgroundColor: 'rgba(255,255,255,0.03)', padding: 20, borderRadius: 24, marginBottom: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  couponInputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  applyBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 20, height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  appliedBtn: { backgroundColor: COLORS.success },
+  applyBtnText: { color: '#FFF', fontWeight: 'bold' },
+  couponHint: { color: COLORS.success, fontSize: 12, marginTop: 10, fontWeight: '600' },
   storeSection: { marginBottom: 30 },
   packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   packageCard: { width: '30%', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)', position: 'relative' },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -8,96 +8,44 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  TextInput
+  TextInput,
+  ActivityIndicator
 } from 'react-native';
 import { COLORS, SPACING } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
-import ZoraInput from '../../components/ZoraInput';
-import { useAuth } from '../../context/AuthContext';
-import { sendOtp, resetPassword, verifyOtp } from '../../services/api';
-import { registerForPushNotificationsAsync } from '../../services/pushService';
+import { sendOtp } from '../../services/api';
 
 const LoginScreen = ({ navigation }) => {
-  const { signIn } = useAuth();
-  const [contact, setContact] = useState('');
-  const [password, setPassword] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Forgot Password States
-  const [fpModalVisible, setFpModalVisible] = useState(false);
-  const [fpContact, setFpContact] = useState('');
-  const [fpOtp, setFpOtp] = useState('');
-  const [fpNewPassword, setFpNewPassword] = useState('');
-  const [fpStep, setFpStep] = useState(1); 
-  const [fpLoading, setFpLoading] = useState(false);
-
-  const handleLogin = async () => {
-    if (!contact || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+  const handleGetOTP = async () => {
+    if (!mobileNumber) {
+      Alert.alert('Error', 'Please enter your mobile number');
+      return;
+    }
+    if (mobileNumber.length < 10) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+    if (!isTermsAccepted) {
+      Alert.alert('Terms and Conditions', 'Please accept the Terms and Conditions to proceed.');
       return;
     }
 
     setLoading(true);
     try {
-      let formattedContact = contact.trim();
-      if (/^\d{10}$/.test(formattedContact)) {
-        formattedContact = `+91${formattedContact}`;
-      }
-
-      const result = await signIn(formattedContact, password.trim());
-      if (result.success && result.user) {
-        registerForPushNotificationsAsync(result.user.id || result.user._id);
-        navigation.replace('Main');
-      } else {
-        Alert.alert('Login Failed', result.message || 'Invalid credentials');
-      }
-    } catch (error) {
-      Alert.alert('Error', error.message || 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSendFpOtp = async () => {
-    if (!fpContact) {
-      Alert.alert('Error', 'Please enter your registered contact');
-      return;
-    }
-    setFpLoading(true);
-    try {
-      const response = await sendOtp(fpContact);
-      if (response.success) {
-        setFpStep(2);
-        Alert.alert('OTP Sent', 'Check your messages or email for the OTP.');
-      }
-    } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to send OTP');
-    } finally {
-      setFpLoading(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!fpOtp || !fpNewPassword) {
-      Alert.alert('Error', 'Please enter OTP and new password');
-      return;
-    }
-    setFpLoading(true);
-    try {
-      const verifyRes = await verifyOtp(fpContact, fpOtp);
-      if (verifyRes.success && verifyRes.otp_verified_token) {
-        const resetRes = await resetPassword(fpContact, fpNewPassword, verifyRes.otp_verified_token);
-        if (resetRes.success) {
-          Alert.alert('Success', 'Password reset successfully. You can now login.');
-          setFpModalVisible(false);
+        const formattedContact = `+91${mobileNumber}`;
+        const res = await sendOtp(formattedContact);
+        if(res.success) {
+            navigation.navigate('OTP', { mobileNumber: formattedContact });
         }
-      }
-    } catch (error) {
-      Alert.alert('Error', error.message || 'Invalid OTP or failed to reset password');
+    } catch(err) {
+        Alert.alert("Error", err.message || "Failed to send OTP");
     } finally {
-      setFpLoading(false);
+        setLoading(false);
     }
   };
 
@@ -114,67 +62,49 @@ const LoginScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.formCard}>
-            <ZoraInput
-              label="Email or Phone"
-              placeholder="Enter your contact"
-              value={contact}
-              onChangeText={setContact}
-              autoCapitalize="none"
-            />
-            <ZoraInput
-              label="Password"
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            
+            {/* Input Box with Neon Border */}
+            <View style={[styles.inputWrapper, isFocused && styles.neonBorder]}>
+              <View style={styles.prefixContainer}>
+                <Text style={styles.flag}>🇮🇳</Text>
+                <Text style={styles.prefix}>+91</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your mobile number"
+                placeholderTextColor={COLORS.textGray}
+                keyboardType="phone-pad"
+                value={mobileNumber}
+                onChangeText={setMobileNumber}
+                maxLength={10}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+              />
+            </View>
 
+            {/* Terms and Conditions Checkbox */}
             <TouchableOpacity 
-              onPress={() => { setFpModalVisible(true); setFpStep(1); }}
-              style={styles.forgotBtn}
+              style={styles.checkboxContainer} 
+              onPress={() => setIsTermsAccepted(!isTermsAccepted)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.forgotText}>Forgot Password?</Text>
+              <View style={[styles.checkbox, isTermsAccepted && styles.checkboxChecked]}>
+                {isTermsAccepted && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.termsText}>
+                I agree to the <Text style={styles.termsLink}>Terms and Conditions</Text>
+              </Text>
             </TouchableOpacity>
 
             <ZoraButton
-              title="Sign In"
-              onPress={handleLogin}
+              title="Get OTP"
+              onPress={handleGetOTP}
               loading={loading}
               style={{ marginTop: SPACING.md }}
             />
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>New to Zora? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.signUpText}>Join Now</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <Modal visible={fpModalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Reset Password</Text>
-            {fpStep === 1 ? (
-              <>
-                <ZoraInput label="Contact" placeholder="Enter Phone or Email" value={fpContact} onChangeText={setFpContact} />
-                <ZoraButton title="Send OTP" onPress={handleSendFpOtp} loading={fpLoading} />
-              </>
-            ) : (
-              <>
-                <ZoraInput label="OTP" placeholder="6-Digit OTP" value={fpOtp} onChangeText={setFpOtp} keyboardType="number-pad" />
-                <ZoraInput label="New Password" placeholder="••••••••" value={fpNewPassword} onChangeText={setFpNewPassword} secureTextEntry />
-                <ZoraButton title="Reset Password" onPress={handleResetPassword} loading={fpLoading} />
-              </>
-            )}
-            <TouchableOpacity onPress={() => setFpModalVisible(false)} style={styles.closeBtn}>
-              <Text style={{color: COLORS.primary, fontWeight: 'bold', marginTop: 15}}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -211,50 +141,81 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(159, 103, 255, 0.1)',
   },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: SPACING.md,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    height: 60,
+    marginBottom: 20,
+    paddingHorizontal: 15,
   },
-  forgotText: {
-    color: COLORS.accentGlow,
-    fontSize: 14,
+  neonBorder: {
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.accentGlow,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  prefixContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255, 255, 255, 0.2)',
+    paddingRight: 10,
+  },
+  flag: {
+    fontSize: 20,
+    marginRight: 4,
+  },
+  prefix: {
+    color: COLORS.textWhite,
+    fontSize: 16,
     fontWeight: '600',
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  footerText: {
-    color: COLORS.textGray,
-  },
-  signUpText: {
-    color: COLORS.accentGlow,
-    fontWeight: 'bold',
-  },
-  modalOverlay: {
+  input: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(159, 103, 255, 0.2)',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
     color: COLORS.textWhite,
-    marginBottom: 20,
-    textAlign: 'center',
+    fontSize: 16,
+    height: '100%',
   },
-  closeBtn: {
+  checkboxContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-  }
+    marginBottom: 24,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.textGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  checkmark: {
+    color: COLORS.textWhite,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  termsText: {
+    color: COLORS.textGray,
+    fontSize: 14,
+    flex: 1,
+  },
+  termsLink: {
+    color: COLORS.accentGlow,
+    fontWeight: '600',
+  },
 });
 
 export default LoginScreen;

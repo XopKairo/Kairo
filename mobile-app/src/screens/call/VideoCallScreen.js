@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, View, Alert, TouchableOpacity, Text } from 'react-native';
 import { ZegoUIKitPrebuiltCall, ONE_ON_ONE_VIDEO_CALL_CONFIG } from '@zegocloud/zego-uikit-prebuilt-call-rn';
-import { ShieldAlert } from 'lucide-react-native';
+import { ShieldAlert, Gift } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
 
@@ -9,22 +10,49 @@ const VideoCallScreen = ({ route, navigation }) => {
   const { userId, userName, hostId, callId, callRatePerMinute } = route.params;
   const [isAllowed, setIsAllowed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userCoins, setUserCoins] = useState(0);
+  const [showGiftAnim, setShowGiftAnim] = useState(false);
   const zegoRef = useRef(null);
 
   useEffect(() => {
     socketService.connect(userId);
     
+    socketService.setGiftReceivedHandler((data) => {
+      setShowGiftAnim(true);
+      setTimeout(() => setShowGiftAnim(false), 4000);
+    });
+
     socketService.setCallTerminatedHandler((data) => {
       Alert.alert('Call Terminated', data.reason || 'This call has been ended by administrator or insufficient balance.');
       handleCallEnd();
     });
 
-    // RULE 1: Minimum coins required to start a call: 30
+    const checkBalance = async () => {
+      try {
+        const res = await api.get(`/users/${userId}`);
+        const coins = res.data.coins;
+        setUserCoins(coins);
+        
+        // If coins are very low (less than 1 minute remaining based on callRatePerMinute)
+        if (coins < callRatePerMinute && coins > 0) {
+           Alert.alert('Low Balance', 'You have less than 1 minute of call time remaining. Recharge now to continue!');
+        }
+      } catch (e) {
+        console.error('Balance check failed:', e);
+      }
+    };
+
+    // Rule 1: Initial Start
     api.post(`/calls/start`, { hostId, callId })
       .then(res => {
         if (res.data.success) {
           setIsAllowed(true);
+          setUserCoins(res.data.user.coins);
           socketService.notifyCallStarted({ callId, userId, hostId });
+          
+          // Start balance monitoring every 30s
+          const balanceInterval = setInterval(checkBalance, 30000);
+          return () => clearInterval(balanceInterval);
         } else {
           Alert.alert('Error', res.data.message || 'Call not allowed');
           navigation.goBack();
@@ -85,7 +113,7 @@ const VideoCallScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <ZegoUIKitPrebuiltCall
-        appID={Number(process.env.EXPO_PUBLIC_ZEGO_APP_ID) || 1106955329}
+        appID={Number(process.env.EXPO_PUBLIC_ZEGO_APP_ID)}
         appSign={process.env.EXPO_PUBLIC_ZEGO_APP_SIGN}
         userID={userId}
         userName={userName}
@@ -95,6 +123,18 @@ const VideoCallScreen = ({ route, navigation }) => {
           onHangUp: handleCallEnd,
         }}
       />
+
+      {/* Gift Animation Overlay */}
+      {showGiftAnim && (
+        <View style={styles.lottieOverlay} pointerEvents="none">
+           <LottieView 
+             source={{ uri: 'https://assets10.lottiefiles.com/packages/lf20_snowfall.json' }} 
+             autoPlay 
+             loop={false}
+             style={styles.fullLottie} 
+           />
+        </View>
+      )}
 
       {/* Floating Report Button */}
       <TouchableOpacity 
@@ -127,6 +167,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  lottieOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  fullLottie: {
+    width: '100%',
+    height: '100%',
   }
 });
 

@@ -13,7 +13,7 @@ const twilioClient =
 
 class AuthService {
   async sendOtp(contact) {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await authRepository.updateOtp(contact, otp, expiresAt);
@@ -35,30 +35,6 @@ class AuthService {
         return { success: true, message: "OTP sent via SMS" };
       } catch (error) {
         throw new Error(`SMS Error: ${error.message}`);
-      }
-    }
-
-    if (contact.includes("@")) {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-      });
-
-      try {
-        await Promise.race([
-          transporter.sendMail({
-            from: `"Zora Support" <${process.env.EMAIL_USER}>`,
-            to: contact,
-            subject: "Zora Verification Code",
-            text: `Your Zora verification code is: ${otp}. Valid for 10 minutes.`,
-          }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Email Timeout")), 20000),
-          ),
-        ]);
-        return { success: true, message: "OTP sent to email" };
-      } catch (error) {
-        throw new Error(`Email Error: ${error.message}`);
       }
     }
 
@@ -90,36 +66,55 @@ class AuthService {
   }
 
   async register(data) {
-    const { name, email, phone, password, otp_verified_token } = data;
+    const { name, phone, otp_verified_token, gender, dob, state, district, profilePicture, languages } = data;
 
     // Beta Check
     if (process.env.APP_MODE === "beta") {
       const whitelist = (process.env.BETA_WHITELIST || "")
         .split(",")
         .map((i) => i.trim());
-      const isWhitelisted =
-        whitelist.includes(email) || whitelist.includes(phone);
+      const isWhitelisted = whitelist.includes(phone);
       if (!isWhitelisted) throw new Error("BETA_ONLY");
     }
 
     if (!otp_verified_token) throw new Error("OTP token missing");
 
     const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
-    const registeredContact = (email || phone).toString().trim();
+    const registeredContact = phone.toString().trim();
     const decodedContact = decoded.contact.toString().trim();
 
     if (decodedContact !== registeredContact || !decoded.verified) {
       throw new Error("OTP verification mismatch");
     }
 
-    const userExists = await userRepository.findByEmailOrPhone(email, phone);
+    const userExists = await userRepository.findByContact(phone);
     if (userExists) throw new Error("User already exists");
+    
+    // Calculate Age from DOB
+    let age = null;
+    if (dob) {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    const locationString = (district && state) ? `${district}, ${state}` : state || district || "";
 
     const user = await userRepository.createUser({
       name: name.trim(),
-      password,
-      email: email ? email.trim() : undefined,
       phone: phone ? phone.trim() : undefined,
+      gender,
+      dob,
+      age,
+      state,
+      district,
+      location: locationString,
+      profilePicture,
+      languages,
       lastLoginDate: new Date(),
       zoraPoints: 5,
       coins: 0,
@@ -139,7 +134,6 @@ class AuthService {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email,
         phone: user.phone,
         coins: user.coins,
         zoraPoints: user.zoraPoints,
@@ -148,10 +142,17 @@ class AuthService {
     };
   }
 
-  async login(contact, password) {
+  async login(contact, otp_verified_token) {
+    if (!otp_verified_token) throw new Error("OTP token missing");
+
+    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
+    if (decoded.contact.toString().trim() !== contact.toString().trim() || !decoded.verified) {
+      throw new Error("OTP verification mismatch");
+    }
+
     const user = await userRepository.findByContact(contact);
 
-    if (user && (await user.matchPassword(password))) {
+    if (user) {
       if (user.isBanned) throw new Error("Account is banned");
 
       const today = new Date().setHours(0, 0, 0, 0);
@@ -163,6 +164,8 @@ class AuthService {
       if (today > lastLogin || !user.lastLoginDate) {
         updatedUser = await userRepository.updateLoginPoints(user._id);
       }
+
+      await authRepository.deleteOtp(contact);
 
       const badge = getUserBadge(updatedUser.zoraPoints);
       const expiry = process.env.USER_JWT_EXPIRY || "30d";
@@ -176,7 +179,6 @@ class AuthService {
         user: {
           id: updatedUser._id,
           name: updatedUser.name,
-          email: updatedUser.email,
           phone: updatedUser.phone,
           coins: updatedUser.coins,
           zoraPoints: updatedUser.zoraPoints,
@@ -184,7 +186,7 @@ class AuthService {
         },
       };
     }
-    throw new Error("Invalid credentials");
+    throw new Error("User not found. Please register.");
   }
 
   async resetPassword(data) {

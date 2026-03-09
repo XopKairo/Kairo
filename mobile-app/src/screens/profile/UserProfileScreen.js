@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Avatar } from 'react-native-paper';
-import { Settings, Wallet, ShieldCheck, Heart, LogOut, ChevronRight, User as UserIcon } from 'lucide-react-native';
+import { Settings, Wallet, ShieldCheck, Heart, LogOut, ChevronRight, User as UserIcon, Crown, Gift, Trash2 } from 'lucide-react-native';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
@@ -20,6 +21,29 @@ const UserProfileScreen = ({ navigation }) => {
       }
     } catch (error) {
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.delete(`/users/${user._id || user.id}`);
+              await AsyncStorage.clear();
+              navigation.replace('Login');
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete account');
+            }
+          }
+        }
+      ]
+    );
   };
 
   useEffect(() => {
@@ -88,6 +112,23 @@ const UserProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionLabel}>PREMIUM FEATURES</Text>
+          <ProfileItem 
+            icon={Crown} 
+            title="VIP Club" 
+            value={user?.isVip ? `Active: ${user.vipLevel}` : 'Join VIP'} 
+            onPress={() => navigation.navigate('VIP')} 
+            color="#FCD34D"
+          />
+          <ProfileItem 
+            icon={Gift} 
+            title="Scratch & Win" 
+            onPress={() => navigation.navigate('ScratchCard')} 
+            color={COLORS.primary}
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionLabel}>ACCOUNT</Text>
           <ProfileItem 
             icon={Settings} 
@@ -105,6 +146,12 @@ const UserProfileScreen = ({ navigation }) => {
             icon={Heart} 
             title="My Interests" 
             onPress={() => navigation.navigate('SelectInterests')} 
+          />
+          <ProfileItem 
+            icon={Trash2} 
+            title="Delete Account" 
+            onPress={handleDeleteAccount} 
+            color={COLORS.error}
           />
         </View>
 

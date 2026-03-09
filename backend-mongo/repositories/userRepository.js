@@ -8,16 +8,11 @@ class UserRepository {
   }
 
   async findByContact(contact) {
-    return await User.findOne({
-      $or: [{ email: contact }, { phone: contact }],
-    });
+    return await User.findOne({ phone: contact });
   }
 
-  async findByEmailOrPhone(email, phone) {
-    const query = [];
-    if (email) query.push({ email: email.trim() });
-    if (phone) query.push({ phone: phone.trim() });
-    return await User.findOne({ $or: query });
+  async findByPhone(phone) {
+    return await User.findOne({ phone: phone.trim() });
   }
 
   async createUser(userData) {

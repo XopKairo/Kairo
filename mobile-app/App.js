@@ -7,6 +7,9 @@ import { Home, Search as SearchIcon, PlaySquare, Bell as BellIcon, User as UserI
 import { View, ActivityIndicator, Platform, Image, Text } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
+import { Camera } from 'expo-camera';
+import * as Location from 'expo-location';
+import { Audio } from 'expo-av';
 import mobileAds from 'react-native-google-mobile-ads';
 
 // Context
@@ -16,6 +19,8 @@ import { AuthProvider } from './src/context/AuthContext';
 import SplashScreen from './src/screens/SplashScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import LoginScreen from './src/screens/auth/LoginScreen';
+import OTPScreen from './src/screens/auth/OTPScreen';
+import WelcomeScreen from './src/screens/WelcomeScreen';
 import UserRegisterScreen from './src/screens/auth/UserRegisterScreen';
 import HomeScreen from './src/screens/home/HomeScreen';
 import FeedScreen from './src/screens/home/FeedScreen';
@@ -24,11 +29,14 @@ import UserProfileScreen from './src/screens/profile/UserProfileScreen';
 import HostProfileScreen from './src/screens/profile/HostProfileScreen';
 import VerificationScreen from './src/screens/profile/VerificationScreen';
 import EditProfileScreen from './src/screens/profile/EditProfileScreen';
+import VipScreen from './src/screens/profile/VipScreen';
+import ScratchCardScreen from './src/screens/profile/ScratchCardScreen';
 import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
 import WalletScreen from './src/screens/wallet/WalletScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
+import GamesScreen from './src/screens/home/GamesScreen';
 import MaintenanceScreen from './src/screens/system/MaintenanceScreen';
 import NetworkBanner from './src/components/NetworkBanner';
 import { useAuth } from './src/context/AuthContext';
@@ -49,15 +57,17 @@ const HeaderLogo = () => (
   </View>
 );
 
+import { MessageCircle } from 'lucide-react-native';
+
 function MainTabs() {
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let IconComponent;
           if (route.name === 'Home') IconComponent = Home;
-          else if (route.name === 'Discovery') IconComponent = SearchIcon;
-          else if (route.name === 'Feed') IconComponent = PlaySquare;
+          else if (route.name === 'ChatMain') IconComponent = MessageCircle;
           else if (route.name === 'Notifications') IconComponent = BellIcon;
           else if (route.name === 'Profile') IconComponent = UserIcon;
           
@@ -97,9 +107,8 @@ function MainTabs() {
         headerShown: false,
       })}
     >
+      <Tab.Screen name="ChatMain" component={ChatScreen} />
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Discovery" component={DiscoveryScreen} />
-      <Tab.Screen name="Feed" component={FeedScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={UserProfileScreen} />
     </Tab.Navigator>
@@ -127,6 +136,8 @@ function NavigationStack() {
         <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="OTP" component={OTPScreen} options={{ headerShown: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="HostProfile" component={HostProfileScreen} options={{ headerShown: false }} />
@@ -143,7 +154,10 @@ function NavigationStack() {
         </Stack.Screen>
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="VIP" component={VipScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ScratchCard" component={ScratchCardScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Wallet" component={WalletScreen} />
+        <Stack.Screen name="Games" component={GamesScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Verification" component={VerificationScreen} />
         <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
@@ -155,6 +169,15 @@ function NavigationStack() {
 export default function App() {
   useEffect(() => {
     async function initApp() {
+      // Request Permissions on Startup
+      try {
+        await Camera.requestCameraPermissionsAsync();
+        await Audio.requestPermissionsAsync();
+        await Location.requestForegroundPermissionsAsync();
+      } catch (pe) {
+        console.warn('Permission request failed', pe);
+      }
+
       if (Platform.OS === 'android') {
         try {
           await NavigationBar.setVisibilityAsync('hidden');

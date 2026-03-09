@@ -19,7 +19,11 @@ import redisClient from "./config/redis.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import { checkMaintenance } from "./middleware/maintenanceMiddleware.js";
 import { protectAdmin, protectUser } from "./middleware/authMiddleware.js";
+import Call from "./models/Call.js";
+import Agency from "./models/Agency.js";
+import CallScreenshot from "./models/CallScreenshot.js";
 import setupSockets from "./sockets/socket.js";
+import "./services/cronService.js";
 
 // Route Imports
 import authRoutes from "./routes/auth.js";
@@ -41,7 +45,9 @@ import growthRoutes from "./routes/growth.js";
 import interactionRoutes from "./routes/interactions.js";
 import callRoutes from "./routes/calls.js";
 import paymentsRoutes from "./routes/payments.js";
+import vipRoutes from "./routes/vip.js";
 import notificationsRoutes from "./routes/notifications.js";
+import reviewRoutes from "./routes/reviews.js";
 import verificationRoutes from "./routes/verification.js";
 
 import * as Sentry from "@sentry/node";
@@ -217,7 +223,9 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/growth", growthRoutes);
+app.use("/api/vip", vipRoutes);
 app.use("/api/calls", callRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/interactions", interactionRoutes);
 
 // Compatibility route for users

@@ -1,7 +1,38 @@
 import express from "express";
 import LiveCall from "../models/LiveCall.js";
+import CallScreenshot from "../models/CallScreenshot.js";
+import { protectAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// @desc    Store a screenshot during call
+router.post("/screenshots", async (req, res) => {
+  try {
+    const screenshot = await CallScreenshot.create(req.body);
+    // Basic nudity check simulation
+    if (screenshot.imageUrl.includes("flagged") || (screenshot.confidenceScore && screenshot.confidenceScore > 0.8)) {
+       screenshot.isFlagged = true;
+       await screenshot.save();
+       // In a real app, trigger call cut socket here
+    }
+    res.status(201).json(screenshot);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Get flagged screenshots for admin
+router.get("/flagged-screenshots", protectAdmin, async (req, res) => {
+  try {
+    const flagged = await CallScreenshot.find({ isFlagged: true })
+      .populate("hostId", "name")
+      .populate("userId", "name")
+      .sort("-createdAt");
+    res.json(flagged);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // GET all active calls (Admin Monitoring)
 router.get("/active", async (req, res) => {

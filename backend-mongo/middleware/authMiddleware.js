@@ -79,7 +79,7 @@ export const protectUser = async (req, res, next) => {
 
       // If not in cache, fallback to Database
       const user = await User.findById(decoded.id).select(
-        "isBanned name email phone coins zoraPoints gender",
+        "isBanned name phone coins zoraPoints gender",
       );
 
       if (!user) {
@@ -104,7 +104,6 @@ export const protectUser = async (req, res, next) => {
       const userData = {
         isBanned: false,
         name: user.name,
-        email: user.email,
         phone: user.phone,
         coins: user.coins,
         zoraPoints: user.zoraPoints,

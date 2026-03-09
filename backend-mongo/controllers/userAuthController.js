@@ -51,11 +51,11 @@ class UserAuthController {
 
   async login(req, res) {
     try {
-      const { contact, password } = req.body;
-      const result = await authService.login(contact, password);
+      const { contact, otp_verified_token } = req.body;
+      const result = await authService.login(contact, otp_verified_token);
       res.status(200).json(result);
     } catch (error) {
-      if (error.message === "Invalid credentials") {
+      if (error.message === "User not found. Please register." || error.message === "OTP verification mismatch" || error.message === "OTP token missing") {
         return res.status(401).json({ success: false, message: error.message });
       }
       if (error.message === "Account is banned") {

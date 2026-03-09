@@ -4,7 +4,7 @@ const { Schema, model } = mongoose;
 const hostSchema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    phone: { type: String, required: true, unique: true },
     status: {
       type: String,
       enum: ["Online", "Busy", "Offline"],
@@ -19,6 +19,18 @@ const hostSchema = new Schema(
       default: "Female",
     },
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    agencyId: { type: Schema.Types.ObjectId, ref: "Agency" },
+    hostId: { type: String, unique: true }, // Visual ID like 887766
+    shortVideoUrl: { type: String },
+    receivedGifts: [{
+      giftId: { type: Schema.Types.ObjectId, ref: "Gift" },
+      count: { type: Number, default: 1 }
+    }],
+    isVipOnly: { type: Boolean, default: false },
+    avgRating: { type: Number, default: 0 },
+    totalReviews: { type: Number, default: 0 },
+    rankingScore: { type: Number, default: 0 },
+    isBoosted: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
     callRatePerMinute: { type: Number, default: 30 },
   },

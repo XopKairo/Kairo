@@ -30,7 +30,7 @@ const SplashScreen = ({ navigation }) => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        duration: 300,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
@@ -42,7 +42,7 @@ const SplashScreen = ({ navigation }) => {
 
     const checkTokenAndNavigate = async () => {
       try {
-        const minDelay = new Promise(resolve => setTimeout(resolve, 2500));
+        const minDelay = new Promise(resolve => setTimeout(resolve, 500));
         const settingsReq = API.get('/settings').catch(() => null);
 
         const [_, settingsRes] = await Promise.all([minDelay, settingsReq]);

@@ -5,15 +5,17 @@ import bcrypt from "bcryptjs";
 const userSchema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, unique: true, sparse: true },
     phone: { type: String, unique: true, sparse: true },
-    password: { type: String, required: true },
+    password: { type: String },
     nickname: { type: String, default: "" },
     bio: { type: String, default: "" },
     age: { type: Number },
     languages: [{ type: String }],
     photos: [{ type: String }],
     location: { type: String, default: "" },
+    state: { type: String, default: "" },
+    district: { type: String, default: "" },
+    dob: { type: Date },
     interests: [{ type: String }],
     coins: { type: Number, default: 0 },
     zoraPoints: { type: Number, default: 0 },
@@ -56,6 +58,11 @@ const userSchema = new Schema(
       enum: ["None", "Bronze", "Silver", "Gold", "Platinum"],
       default: "None",
     },
+    vipExpiry: { type: Date },
+    isVip: { type: Boolean, default: false },
+    favoriteHosts: [{ type: Schema.Types.ObjectId, ref: "Host" }],
+    freeCallsRemaining: { type: Number, default: 2 }, // New users get 2 free calls
+    blockedUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

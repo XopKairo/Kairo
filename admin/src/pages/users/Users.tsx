@@ -5,8 +5,11 @@ import apiClient from '../../api/apiClient';
 interface User {
   _id: string;
   name: string;
-  email: string;
   phone: string;
+  gender: string;
+  age?: number;
+  location?: string;
+  languages?: string[];
   coins: number;
   cashBalance: number;
   isBanned: boolean;
@@ -26,7 +29,7 @@ export default function Users() {
   const [editForm, setEditForm] = useState<Partial<User>>({});
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', email: '', phone: '', password: '', gender: 'Male' });
+  const [addForm, setAddForm] = useState({ name: '', phone: '', password: '', gender: 'Male' });
 
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [banForm, setBanForm] = useState({ reason: '', duration: '1' });
@@ -180,7 +183,7 @@ export default function Users() {
                       <img src={u.profilePicture || 'https://ui-avatars.com/api/?name='+u.name} className="w-10 h-10 rounded-xl border border-gray-100 dark:border-gray-700" />
                       <div>
                         <p className="font-bold text-gray-900 dark:text-white">{u.name}</p>
-                        <p className="text-xs text-gray-400">{u.email || u.phone}</p>
+                        <p className="text-xs text-gray-400">{u.phone} • {u.gender}</p>
                       </div>
                     </div>
                   </td>
@@ -244,16 +247,10 @@ export default function Users() {
                     <option value="Other">Other</option>
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
-                <input type="email" value={addForm.email} onChange={e => setAddForm({...addForm, email: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="john@example.com" />
-              </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Phone Number</label>
-                <input value={addForm.phone} onChange={e => setAddForm({...addForm, phone: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="+919876543210" />
+                <input required value={addForm.phone} onChange={e => setAddForm({...addForm, phone: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="+919876543210" />
               </div>
-              <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Login Password</label>
                 <input required type="password" value={addForm.password} onChange={e => setAddForm({...addForm, password: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="••••••••" />
               </div>
@@ -271,14 +268,22 @@ export default function Users() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Profile: {editingUser?.name}</h2>
               <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-full transition-colors"><X size={20}/></button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Full Name</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Display Name</label>
                 <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Email</label>
-                <input value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" />
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Phone Number</label>
+                <input value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Gender</label>
+                <select value={editForm.gender} onChange={e => setEditForm({...editForm, gender: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Coin Balance</label>

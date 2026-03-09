@@ -5,7 +5,29 @@ import Host from "../models/Host.js";
 // GET all hosts
 router.get("/", async (req, res) => {
   try {
-    const hosts = await Host.find({});
+    const { targetGender, tabFilter, userId } = req.query;
+    let query = {};
+    
+    // Only show active hosts
+    query.status = { $in: ["Online", "Busy"] };
+
+    if (targetGender) {
+      query.gender = targetGender;
+    }
+
+    // Exclude blocked users if userId is provided
+    if (userId) {
+      const user = await User.findById(userId);
+      if (user && user.blockedUsers && user.blockedUsers.length > 0) {
+        query._id = { $nin: user.blockedUsers };
+      }
+    }
+
+    // Additional tab filters can be added here if needed
+    // e.g. if (tabFilter === 'New') query.createdAt = { $gte: ... }
+
+    const hosts = await Host.find(query)
+      .sort({ isBoosted: -1, rankingScore: -1, createdAt: -1 });
     res.json(hosts);
   } catch (error) {
     res.status(500).json({ message: error.message });

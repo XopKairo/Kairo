@@ -12,6 +12,8 @@ interface Host {
   totalCalls?: number;
   totalMinutes?: number;
   isVerified?: boolean;
+  isBoosted?: boolean;
+  rankingScore?: number;
   profilePicture?: string;
   verificationSelfie?: string;
 }
@@ -121,8 +123,20 @@ export default function Hosts() {
           <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8">
             <h2 className="text-xl font-bold mb-6">Edit Host</h2>
             <div className="space-y-4">
+              <label className="block text-xs font-bold text-gray-400 uppercase">Host Name</label>
               <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full p-3 border rounded-xl" />
-              <button onClick={handleUpdateHost} className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold">Save</button>
+              
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl">
+                 <input type="checkbox" checked={editForm.isBoosted} onChange={e => setEditForm({...editForm, isBoosted: e.target.checked})} className="w-5 h-5 accent-brand-600" />
+                 <span className="text-sm font-bold text-gray-700 dark:text-gray-200">🚀 BOOST HOST</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Ranking Score</label>
+                <input type="number" value={editForm.rankingScore} onChange={e => setEditForm({...editForm, rankingScore: parseInt(e.target.value) || 0})} className="w-full p-3 border rounded-xl" />
+              </div>
+
+              <button onClick={handleUpdateHost} className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold">Save Changes</button>
               <button onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500">Cancel</button>
             </div>
           </div>

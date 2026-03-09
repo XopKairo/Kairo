@@ -17,6 +17,8 @@ export default function Dashboard() {
     pendingPayouts: 0,
     dailyRevenue: '₹0',
     totalRevenue: '₹0',
+    retentionRate: '0%',
+    peakHours: [],
     system: {
       cpuUsage: '0%',
       memoryUsage: '0%',
@@ -82,7 +84,8 @@ export default function Dashboard() {
           { title: 'Total Users', value: stats.totalUsers, icon: Users, trend: 'Active: ' + stats.activeUsersToday, isUp: true, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
           { title: 'Total Revenue', value: stats.totalRevenue, icon: Receipt, trend: 'Daily: ' + stats.dailyRevenue, isUp: true, color: 'text-brand-500', bg: 'bg-brand-50 dark:bg-brand-500/10' },
           { title: 'Verified Hosts', value: stats.verifiedHosts, icon: Users, trend: 'Calls: ' + stats.totalCalls, isUp: true, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
-          { title: 'Pending Payouts', value: stats.pendingPayouts, icon: Clock, trend: 'Transactions: ' + stats.totalTransactions, isUp: false, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-500/10' },
+          { title: 'Pending Payouts', value: stats.pendingPayouts, icon: Clock, trend: 'Requests pending', isUp: false, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
+          { title: 'Retention Rate', value: stats.retentionRate, icon: Users, trend: 'Last 7 Days', isUp: true, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-500/10' },
         ].map((stat, i) => (
           <div key={i} className="bg-white dark:bg-surface-900 rounded-[24px] p-6 shadow-soft border border-gray-100 dark:border-gray-800">
             <div className="flex justify-between items-start mb-4">
@@ -155,6 +158,21 @@ export default function Dashboard() {
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} />
                 <Tooltip cursor={{fill: 'transparent'}} />
                 <Bar dataKey="revenue" fill="#7C3AED" radius={[4, 4, 0, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-surface-900 rounded-[24px] p-6 shadow-soft border border-gray-100 dark:border-gray-800 lg:col-span-3">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Peak Usage Hours (24h)</h3>
+          <div className="h-[200px] w-full">
+             <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.peakHours.map((h: any) => ({ hour: `${h._id}h`, count: h.count }))}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10}} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#F59E0B" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

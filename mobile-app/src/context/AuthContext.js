@@ -80,8 +80,8 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const signIn = async (contact, password) => {
-    const data = await loginUser(contact, password);
+  const signIn = async (contact, otpToken) => {
+    const data = await loginUser(contact, otpToken);
     if (data.success) {
       setUser(data.user);
       socketService.connect(data.user.id);
@@ -89,8 +89,8 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const signUp = async (name, contact, password, isPhone, otpToken) => {
-    const data = await registerUser(name, contact, password, isPhone, otpToken);
+  const signUp = async (name, contact, password, otpToken, additionalData) => {
+    const data = await registerUser(name, contact, password, otpToken, additionalData);
     if (data.success) {
       setUser(data.user);
       socketService.connect(data.user.id);

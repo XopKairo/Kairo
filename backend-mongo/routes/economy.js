@@ -1,18 +1,54 @@
 import express from "express";
 import CoinPackage from "../models/CoinPackage.js";
 import Gift from "../models/Gift.js";
+import VipPackage from "../models/VipPackage.js";
+import Coupon from "../models/Coupon.js";
 import multer from "multer";
 import path from "path";
 
 const router = express.Router();
 
-// Configure multer for file uploads (Gifts)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/gifts/"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + path.extname(file.originalname)),
+// ... existing code ...
+
+// --- VIP Packages ---
+router.get("/vip", async (req, res) => {
+  res.json(await VipPackage.find({}));
 });
-const upload = multer({ storage });
+
+router.post("/vip", async (req, res) => {
+  const pkg = await VipPackage.create(req.body);
+  res.json(pkg);
+});
+
+router.put("/vip/:id", async (req, res) => {
+  const pkg = await VipPackage.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(pkg);
+});
+
+router.delete("/vip/:id", async (req, res) => {
+  await VipPackage.findByIdAndDelete(req.params.id);
+  res.json({ message: "VIP Package deleted" });
+});
+
+// --- Coupons ---
+router.get("/coupons", async (req, res) => {
+  res.json(await Coupon.find({}).sort({ createdAt: -1 }));
+});
+
+router.post("/coupons", async (req, res) => {
+  const coupon = await Coupon.create(req.body);
+  res.json(coupon);
+});
+
+router.put("/coupons/:id", async (req, res) => {
+  const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(coupon);
+});
+
+router.delete("/coupons/:id", async (req, res) => {
+  await Coupon.findByIdAndDelete(req.params.id);
+  res.json({ message: "Coupon deleted" });
+});
 
 // --- Coin Packages ---
 router.get("/coins", async (req, res) => {

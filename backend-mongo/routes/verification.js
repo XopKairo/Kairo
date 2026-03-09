@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
   try {
     const requests = await VerificationRequest.find({}).populate(
       "userId",
-      "name email nickname isVerified",
+      "name phone nickname isVerified",
     );
     res.json(requests);
   } catch (error) {
@@ -96,10 +96,10 @@ router.post("/:id/status", async (req, res) => {
 
       // Update or Create Host
       await Host.findOneAndUpdate(
-        { email: user.email },
+        { phone: user.phone },
         { 
           name: user.name,
-          email: user.email,
+          phone: user.phone,
           gender: user.gender || "Female",
           isVerified: true 
         },

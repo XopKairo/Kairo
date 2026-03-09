@@ -58,9 +58,9 @@ API.interceptors.response.use(
 );
 
 // Compatibility logic for older calls
-export const loginUser = async (contact, password) => {
+export const loginUser = async (contact, otpToken) => {
   try {
-    const response = await API.post('/user/auth/login', { contact, password });
+    const response = await API.post('/user/auth/login', { contact, otp_verified_token: otpToken });
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -71,18 +71,16 @@ export const loginUser = async (contact, password) => {
   }
 };
 
-export const registerUser = async (name, contact, password, isPhone, otpToken) => {
+export const registerUser = async (name, contact, _, otpToken, additionalData = {}) => {
   try {
-    const payload = { 
-      name, 
-      password, 
-      otp_verified_token: otpToken
+    const payload = {
+      name,
+      otp_verified_token: otpToken,
+      phone: contact,
+      ...additionalData
     };
-    if (isPhone) payload.phone = contact;
-    else payload.email = contact;
 
-    const response = await API.post('/user/auth/register', payload);
-    if (response.data.token) {
+    const response = await API.post('/user/auth/register', payload);    if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }

@@ -35,11 +35,10 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { name, email, phone, password, gender } = req.body;
+    const { name, phone, password, gender } = req.body;
 
     // Build query to check duplicates only for provided values
     const query = [];
-    if (email && email.trim() !== "") query.push({ email: email.trim() });
     if (phone && phone.trim() !== "") query.push({ phone: phone.trim() });
 
     if (query.length > 0) {
@@ -47,7 +46,7 @@ router.post("/", async (req, res) => {
       if (existing) {
         return res
           .status(400)
-          .json({ success: false, message: "Email or Phone already exists" });
+          .json({ success: false, message: "Phone already exists" });
       }
     }
 
@@ -57,7 +56,6 @@ router.post("/", async (req, res) => {
       gender: gender || "Male",
     };
 
-    if (email && email.trim() !== "") userData.email = email.trim();
     if (phone && phone.trim() !== "") userData.phone = phone.trim();
 
     const user = await User.create(userData);
@@ -96,12 +94,60 @@ router.put("/:id/profile", upload.single("image"), async (req, res) => {
   }
 });
 
+// Configure Multer for multiple uploads
+const profileUpload = multer({ 
+  storage: getStorage("profiles"),
+}).fields([
+  { name: "image", maxCount: 1 },
+  { name: "moments", maxCount: 6 },
+  { name: "video", maxCount: 1 }
+]);
+
+router.put("/me/profile", protectUser, profileUpload, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { name, bio, age, location, gender, languages, isVipOnly, callRatePerMinute } = req.body;
+
+    const updateData = { 
+      name, bio, age, location, gender, 
+      languages: Array.isArray(languages) ? languages : languages ? languages.split(',') : [],
+      isVipOnly: isVipOnly === "true",
+      callRatePerMinute: parseInt(callRatePerMinute) || 30
+    };
+
+    if (req.files["image"]) updateData.profilePicture = req.files["image"][0].path;
+    if (req.files["moments"]) updateData.photos = req.files["moments"].map(f => f.path);
+    if (req.files["video"]) updateData.shortVideoUrl = req.files["video"][0].path;
+
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    
+    // Also update Host model if it exists
+    await Host.findOneAndUpdate(
+      { phone: user.phone }, 
+      { ...updateData, profilePicture: user.profilePicture, photos: user.photos }, 
+      { new: true }
+    );
+
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post("/block/:targetId", protectUser, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $addToSet: { blockedUsers: req.params.targetId } });
+    res.json({ success: true, message: "User blocked" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Generic Admin Update
 router.put("/:id", async (req, res) => {
   try {
     const updateData = { ...req.body };
     // Prevent empty strings from causing unique index issues
-    if (updateData.email === "") delete updateData.email;
     if (updateData.phone === "") delete updateData.phone;
 
     const user = await User.findByIdAndUpdate(req.params.id, updateData, {

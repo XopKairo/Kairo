@@ -5,7 +5,7 @@ import Ticket from "../models/Ticket.js";
 // GET all tickets
 router.get("/", async (req, res) => {
   try {
-    const tickets = await Ticket.find({}).populate("userId", "name email");
+    const tickets = await Ticket.find({}).populate("userId", "name phone");
     res.json(tickets);
   } catch (error) {
     res.status(500).json({ message: error.message });

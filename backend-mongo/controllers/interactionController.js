@@ -2,22 +2,18 @@ import Gift from "../models/Gift.js";
 import Follow from "../models/Follow.js";
 import Rating from "../models/Rating.js";
 import User from "../models/User.js";
+import Host from "../models/Host.js";
+import Agency from "../models/Agency.js";
+import Settings from "../models/Settings.js";
 import WalletLedger from "../models/WalletLedger.js";
+import Admin from "../models/Admin.js";
 import mongoose from "mongoose";
 
 class InteractionController {
-  // --- Gifting ---
-  async getGifts(req, res) {
-    try {
-      const gifts = await Gift.find({ isActive: true });
-      res.json(gifts);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
+  // ... existing code ...
 
   async sendGift(req, res) {
-    const { giftId, receiverId, callId } = req.body;
+    const { giftId, receiverId } = req.body;
     const senderId = req.user._id;
 
     const session = await mongoose.startSession();
@@ -29,36 +25,57 @@ class InteractionController {
       const sender = await User.findById(senderId).session(session);
       if (sender.coins < gift.coinCost) throw new Error("Insufficient coins");
 
-      const receiver = await User.findById(receiverId).session(session);
-      if (!receiver) throw new Error("Receiver not found");
+      const receiverHost = await Host.findById(receiverId).session(session);
+      if (!receiverHost) throw new Error("Host not found");
 
-      // Deduct from sender
-      sender.coins -= gift.coinCost;
+      let settings = await Settings.findOne().session(session);
+      const adminCommissionPercent = settings?.giftCommission || 30;
+      
+      const giftTotalValue = gift.coinCost;
+      const adminShare = giftTotalValue * (adminCommissionPercent / 100);
+      const hostTotalShare = giftTotalValue - adminShare;
+
+      let hostFinalShare = hostTotalShare;
+      let agencyShare = 0;
+
+      if (receiverHost.agencyId) {
+         const agency = await Agency.findById(receiverHost.agencyId).session(session);
+         if (agency) {
+            agencyShare = hostTotalShare * (agency.commissionPercentage / 100);
+            hostFinalShare = hostTotalShare - agencyShare;
+            
+            agency.balance += agencyShare;
+            agency.totalEarnings += agencyShare;
+            await agency.save({ session });
+         }
+      }
+
+      // Update Balances
+      sender.coins -= giftTotalValue;
       await sender.save({ session });
 
-      // Add to receiver (Host) - usually a percentage or full
-      // For now, full amount as earnings
-      receiver.earnings += gift.coinCost;
-      await receiver.save({ session });
+      receiverHost.earnings += hostFinalShare;
+      await receiverHost.save({ session });
+
+      // Update Admin Revenue
+      const adminShareINR = Number((adminShare * 0.1).toFixed(2));
+      await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } }).session(session);
 
       // Log transactions
-      await WalletLedger.create(
-        [
-          {
-            userId: senderId,
-            type: "DEBIT",
-            amount: gift.coinCost,
-            transactionType: "GIFT_SENT",
-            details: `Sent ${gift.name} to ${receiver.name}`,
-          },
-        ],
-        { session },
-      );
+      await WalletLedger.create([
+        {
+          userId: senderId,
+          type: "DEBIT",
+          amount: giftTotalValue,
+          transactionType: "GIFT_SENT",
+          details: `Sent ${gift.name} to ${receiverHost.name}`,
+        }
+      ], { session });
 
       await session.commitTransaction();
-      res.json({ success: true, newBalance: sender.coins });
+      res.json({ success: true, newBalance: sender.coins, reward: hostFinalShare });
     } catch (error) {
-      await session.abortTransaction();
+      if (session.inTransaction()) await session.abortTransaction();
       res.status(400).json({ success: false, message: error.message });
     } finally {
       session.endSession();

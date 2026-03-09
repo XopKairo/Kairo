@@ -8,9 +8,9 @@ import { processTransfer } from "../utils/payoutProvider.js";
 router.get("/", async (req, res) => {
   try {
     const payouts = await Payout.find({})
-      .populate("user", "name email phone gender")
-      .populate("host", "name email")
-      .sort("-createdAt");
+      .populate("user", "name phone gender")
+      .populate("host", "name phone")
+      .sort({ createdAt: -1 });
     res.json(payouts);
   } catch (error) {
     res.status(500).json({ message: error.message });
