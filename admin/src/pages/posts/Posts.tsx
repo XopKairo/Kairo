@@ -38,7 +38,7 @@ export default function Posts() {
     try {
       await apiClient.put('/admin/posts/' + id + '/feature', { isFeatured: !current });
       fetchPosts();
-    } catch {
+    } catch (e: any) {
       console.error('Failed to toggle feature', e);
       alert('Failed to update post status');
     }
@@ -49,7 +49,7 @@ export default function Posts() {
     try {
       await apiClient.delete('/admin/posts/' + id);
       fetchPosts();
-    } catch {
+    } catch (e: any) {
       console.error('Failed to delete post', e);
       alert('Failed to delete post');
     }

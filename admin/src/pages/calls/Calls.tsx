@@ -21,7 +21,7 @@ export default function Calls() {
     try {
       const res = await apiClient.get('/calls/active');
       setActiveCalls(res.data);
-    } catch {
+    } catch (e: any) {
       console.error('Failed to fetch active calls:', e);
     } finally {
       setLoading(false);

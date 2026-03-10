@@ -39,7 +39,7 @@ export default function Banners() {
       setLoading(true);
       const response = await apiClient.get('/admin/banners');
       setBanners(response.data);
-    } catch {
+    } catch (error: any) {
       console.error('Failed to fetch banners:', error);
     } finally {
       setLoading(false);

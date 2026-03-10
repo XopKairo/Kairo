@@ -20,7 +20,7 @@ export default function CallMonitoring() {
     try {
       const res = await apiClient.get('/admin/monitoring/flagged-screenshots');
       setScreenshots(res.data);
-    } catch {
+    } catch (e: any) {
       console.error(e);
     } finally {
       setLoading(false);

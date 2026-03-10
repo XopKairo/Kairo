@@ -21,7 +21,7 @@ export default function Reports() {
     try {
       const response = await apiClient.get('/admin/reports');
       setReports(response.data);
-    } catch {
+    } catch (error: any) {
       console.error('Failed to fetch reports:', error);
     } finally {
       setLoading(false);

@@ -22,7 +22,7 @@ export default function Agencies() {
     try {
       const res = await apiClient.get('/api/admin/agencies');
       setAgencies(res.data);
-    } catch {
+    } catch (e: any) {
       console.error(e);
     }
   };

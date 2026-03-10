@@ -31,7 +31,7 @@ export default function VIPCoupons() {
       ]);
       setVipPackages(vipRes.data);
       setCoupons(couponRes.data);
-    } catch {
+    } catch (e: any) {
       console.error(e);
     }
   };

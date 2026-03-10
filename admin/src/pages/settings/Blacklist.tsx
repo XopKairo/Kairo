@@ -20,7 +20,7 @@ export default function Blacklist() {
     try {
       const res = await apiClient.get('/admin/blacklist');
       setList(res.data);
-    } catch {
+    } catch (e: any) {
       console.error('Failed to fetch blacklist:', e);
     } finally {
       setLoading(false);

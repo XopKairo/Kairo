@@ -36,7 +36,7 @@ export default function Economy() {
       ]);
       setCoins(coinsRes.data);
       setTransactions(transRes.data);
-    } catch {
+    } catch (e: any) {
       console.error('Failed to fetch economy data:', e);
     }
   };

@@ -30,7 +30,7 @@ export default function Hosts() {
     try {
       const response = await apiClient.get('/admin/hosts');
       setHosts(response.data);
-    } catch {
+    } catch (error: any) {
       console.error('Failed to fetch hosts', error);
     }
   };
@@ -55,7 +55,7 @@ export default function Hosts() {
       await apiClient.post('/admin/hosts/' + id + '/verify', { isVerified });
       fetchHosts();
       setActiveMenu(null);
-    } catch {
+    } catch (error: any) {
       console.error('Failed to verify host', error);
       alert('Failed to verify host');
     }
