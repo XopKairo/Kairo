@@ -107,8 +107,8 @@ try {
       io.adapter(createAdapter(redisClient, subClient));
       console.log("✅ Socket.io Redis Adapter connected");
     })
-    .catch(() => {
-      console.error("⚠️ Socket.io Redis SubClient failed. Running without Redis Adapter.");
+    .catch((err) => {
+      console.error(`⚠️ Socket.io Redis SubClient failed: ${err.message}. Running without Redis Adapter.`);
     });
     } catch {
     console.error("⚠️ Socket.io Redis Adapter Setup failed.");

@@ -5,19 +5,18 @@ const isTls = redisUrl.startsWith("rediss://");
 
 const redisClient = createClient({
   url: redisUrl,
+  pingInterval: 30000, // Send PING every 30 seconds to keep connection alive
   socket: {
     reconnectStrategy: (retries) => {
-      // Exponential backoff with a cap
       const delay = Math.min(retries * 500, 5000);
-      if (retries > 10) {
+      if (retries > 20) {
         return new Error("Redis connection retries exhausted");
       }
       return delay;
     },
-    tls: isTls,
-    rejectUnauthorized: false, // Often needed for self-signed certificates on managed Redis
+    // TLS options should be nested for node-redis v4
+    ...(isTls ? { tls: { rejectUnauthorized: false } } : {}),
     connectTimeout: 10000,
-    keepAlive: 5000,
   },
 });
 
@@ -42,8 +41,12 @@ redisClient.on("error", (err) => {
 });
 
 redisClient.on("connect", () => {
+  console.log("✅ Redis Connected (TCP)");
+});
+
+redisClient.on("ready", () => {
   logSpamBlocked = false;
-  console.log("✅ Redis Connected");
+  console.log("🚀 Redis Ready (Authenticated)");
 });
 
 // Improved connection with error handling to prevent startup crash
@@ -67,6 +70,7 @@ connectRedis();
 const safeClient = new Proxy(redisClient, {
   get(target, prop) {
     if (typeof target[prop] === "function") {
+      // Methods that should not be wrapped in error suppression
       if (
         [
           "connect",
@@ -82,11 +86,15 @@ const safeClient = new Proxy(redisClient, {
       ) {
         return target[prop].bind(target);
       }
+      // Wrap other methods (get, set, etc.) with error suppression
       return async (...args) => {
-        if (!target.isOpen) return null;
         try {
           return await target[prop](...args);
-        } catch {
+        } catch (err) {
+          // Only log if it's a real error and not just a missing connection
+          if (err && err.message && !logSpamBlocked) {
+             // Optional: log or ignore
+          }
           return null;
         }
       };
