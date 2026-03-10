@@ -8,6 +8,12 @@ import path from "path";
 
 const router = express.Router();
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "public/uploads/gifts"),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+});
+const upload = multer({ storage });
+
 // ... existing code ...
 
 // --- VIP Packages ---
