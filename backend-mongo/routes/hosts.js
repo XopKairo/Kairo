@@ -6,7 +6,7 @@ import User from "../models/User.js";
 // GET all hosts
 router.get("/", async (req, res) => {
   try {
-    const { targetGender, tabFilter, userId } = req.query;
+    const { targetGender, userId } = req.query;
     let query = {};
     
     // Only show active hosts

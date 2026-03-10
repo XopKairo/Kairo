@@ -25,7 +25,7 @@ const setupSockets = (io) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.userId = decoded.id;
       next();
-    } catch (err) {
+    } catch {
       next(new Error("Authentication error: Invalid token"));
     }
   });
@@ -44,7 +44,7 @@ const setupSockets = (io) => {
     });
 
     // Rate Limiter Middleware for events
-    socket.use(([event, ...args], next) => {
+    socket.use(([_event, ..._args], next) => {
       const now = Date.now();
       const limit = 20; // 20 events per 10 seconds
       const window = 10000;

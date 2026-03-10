@@ -4,7 +4,6 @@ import { protectUser } from "../middleware/authMiddleware.js";
 import VipPackage from "../models/VipPackage.js";
 import ScratchCard from "../models/ScratchCard.js";
 import User from "../models/User.js";
-import Transaction from "../models/Transaction.js";
 
 // @desc    Get all active VIP packages
 router.get("/packages", async (req, res) => {

@@ -4,7 +4,6 @@ import Gift from "../models/Gift.js";
 import VipPackage from "../models/VipPackage.js";
 import Coupon from "../models/Coupon.js";
 import multer from "multer";
-import path from "path";
 
 const router = express.Router();
 

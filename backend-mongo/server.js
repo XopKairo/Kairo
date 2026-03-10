@@ -19,9 +19,6 @@ import redisClient from "./config/redis.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import { checkMaintenance } from "./middleware/maintenanceMiddleware.js";
 import { protectAdmin, protectUser } from "./middleware/authMiddleware.js";
-import Call from "./models/Call.js";
-import Agency from "./models/Agency.js";
-import CallScreenshot from "./models/CallScreenshot.js";
 import setupSockets from "./sockets/socket.js";
 import "./services/cronService.js";
 
@@ -100,7 +97,7 @@ const io = new Server(server, {
 // Phase 6: Socket.io Redis Adapter for Scalability
 try {
   const subClient = redisClient.duplicate();
-  subClient.on("error", (err) => {
+  subClient.on("error", (_err) => {
     // Suppress unhandled error crash
   });
   
@@ -110,13 +107,12 @@ try {
       io.adapter(createAdapter(redisClient, subClient));
       console.log("✅ Socket.io Redis Adapter connected");
     })
-    .catch((err) => {
+    .catch(() => {
       console.error("⚠️ Socket.io Redis SubClient failed. Running without Redis Adapter.");
     });
-} catch (err) {
-  console.error("⚠️ Socket.io Redis Adapter Setup failed:", err.message);
-}
-
+    } catch {
+    console.error("⚠️ Socket.io Redis Adapter Setup failed.");
+    }
 setupSockets(io);
 
 // Middleware

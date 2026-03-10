@@ -44,7 +44,7 @@ const connectRedis = async () => {
     if (!redisClient.isOpen) {
       await redisClient.connect();
     }
-  } catch (err) {
+  } catch {
     if (!logSpamBlocked) {
       console.error("⚠️ Redis Connection Failed. Falling back to DB only.");
     }
@@ -76,7 +76,7 @@ const safeClient = new Proxy(redisClient, {
         if (!target.isOpen) return null;
         try {
           return await target[prop](...args);
-        } catch (error) {
+        } catch {
           return null;
         }
       };

@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import walletRepository from "../repositories/walletRepository.js";
-import userRepository from "../repositories/userRepository.js";
 
 class GrowthService {
   // 1. Daily Streak System

@@ -19,7 +19,7 @@ class CallRepository {
     return await query;
   }
 
-  async updateCall(callId, updateData, session) {
+  async updateCall(callId, updateData, _session) {
     const call = await Call.findOneAndUpdate({ callId }, updateData, { new: true });
     if (call) {
        if (call.status !== "Active") {

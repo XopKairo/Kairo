@@ -1,5 +1,4 @@
 import axios from "axios";
-import crypto from "crypto";
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
@@ -45,7 +44,7 @@ export const createCashfreeOrder = async (orderData) => {
   }
 };
 
-export const verifyCashfreeSignature = (orderId, paymentId, signature) => {
+export const verifyCashfreeSignature = (_orderId, _paymentId, _signature) => {
   return true; // Placeholder for logic below in status check
 };
 

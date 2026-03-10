@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import callRepository from "../repositories/callRepository.js";
 import userRepository from "../repositories/userRepository.js";
-import walletRepository from "../repositories/walletRepository.js";
-import growthService from "./growthService.js";
 import Host from "../models/Host.js";
 import User from "../models/User.js";
 import Agency from "../models/Agency.js";
@@ -10,7 +8,7 @@ import Settings from "../models/Settings.js";
 import Admin from "../models/Admin.js";
 
 class CallService {
-  async generateToken(userId, roomId) {
+  async generateToken(_userId, _roomId) {
     const appId = parseInt(process.env.ZEGO_APP_ID);
     const serverSecret = process.env.ZEGO_SERVER_SECRET;
 
@@ -167,7 +165,6 @@ class CallService {
       event,
       room_id,
       user_id,
-      stream_id,
       snapshot_url,
       moderation_result,
     } = eventData;

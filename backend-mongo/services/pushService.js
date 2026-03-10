@@ -15,7 +15,7 @@ if (rawEnv) {
 
     try {
       serviceAccount = JSON.parse(current);
-    } catch (e) {
+    } catch {
       // Fix literal newlines in private_key field often seen in env vars
       const fixed = current.replace(
         /"private_key"\s*:\s*"(.*?)"/s,

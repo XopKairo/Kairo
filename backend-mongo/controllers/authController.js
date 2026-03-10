@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import Admin from "../models/Admin.js";
-import User from "../models/User.js";
 import OTP from "../models/OTP.js";
 import logger from "../utils/logger.js";
 import nodemailer from "nodemailer";
@@ -108,7 +107,7 @@ export const refreshTokens = async (req, res) => {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     const newAccessToken = generateAccessToken(decoded.id, decoded.role);
     res.json({ accessToken: newAccessToken });
-  } catch (error) {
+  } catch {
     res.status(403).json({ message: "Invalid refresh token" });
   }
 };
@@ -229,7 +228,7 @@ export const getAdminProfile = async (req, res) => {
         role: "ADMIN",
       },
     });
-  } catch (error) {
+  } catch {
     res
       .status(500)
       .json({ success: false, message: "Server error fetching profile" });

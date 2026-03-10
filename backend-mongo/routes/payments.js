@@ -69,7 +69,7 @@ router.post("/create-razorpay-order", protectUser, async (req, res) => {
 // @desc    Verify Razorpay Payment
 router.post("/verify-razorpay", protectUser, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id } = req.body;
     const userId = req.user._id;
 
     // In a real app, verify signature here using crypto

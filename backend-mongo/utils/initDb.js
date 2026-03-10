@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import "dotenv/config";
 import Admin from "../models/Admin.js";
 import logger from "../utils/logger.js";
