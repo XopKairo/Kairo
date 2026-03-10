@@ -11,7 +11,17 @@ router.get("/", async (req, res) => {
       .populate("user", "name phone gender")
       .populate("host", "name phone")
       .sort({ createdAt: -1 });
-    res.json(payouts);
+
+    // Optional: Filter out payouts with missing user/host or mark them
+    const sanitizedPayouts = payouts.map(p => {
+      const payoutObj = p.toObject();
+      if (!payoutObj.user && !payoutObj.host) {
+         payoutObj.user = { name: "Deleted User", phone: "N/A" };
+      }
+      return payoutObj;
+    });
+
+    res.json(sanitizedPayouts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
