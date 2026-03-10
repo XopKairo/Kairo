@@ -1,15 +1,23 @@
 import { createClient } from "redis";
 
+const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+const isTls = redisUrl.startsWith("rediss://");
+
 const redisClient = createClient({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
+  url: redisUrl,
   socket: {
     reconnectStrategy: (retries) => {
-      // Limit retries to prevent log spam
-      if (retries > 3) {
+      // Exponential backoff with a cap
+      const delay = Math.min(retries * 500, 5000);
+      if (retries > 10) {
         return new Error("Redis connection retries exhausted");
       }
-      return Math.min(retries * 100, 1000);
+      return delay;
     },
+    tls: isTls,
+    rejectUnauthorized: false, // Often needed for self-signed certificates on managed Redis
+    connectTimeout: 10000,
+    keepAlive: 5000,
   },
 });
 
@@ -40,13 +48,15 @@ redisClient.on("connect", () => {
 
 // Improved connection with error handling to prevent startup crash
 const connectRedis = async () => {
+  if (redisClient.isOpen) return;
+  
   try {
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
-    }
-  } catch {
+    await redisClient.connect();
+  } catch (err) {
     if (!logSpamBlocked) {
-      console.error("⚠️ Redis Connection Failed. Falling back to DB only.");
+      console.error("⚠️ Redis Initial Connection Failed:", err.message);
+      console.error("ℹ️ App will continue in DB-only mode and retry in background.");
+      logSpamBlocked = true;
     }
   }
 };
