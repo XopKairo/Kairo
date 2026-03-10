@@ -10,7 +10,14 @@ import Admin from "../models/Admin.js";
 import mongoose from "mongoose";
 
 class InteractionController {
-  // ... existing code ...
+  async getGifts(req, res) {
+    try {
+      const gifts = await Gift.find({ isActive: true });
+      res.json(gifts);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 
   async sendGift(req, res) {
     const { giftId, receiverId } = req.body;
