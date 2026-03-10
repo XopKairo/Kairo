@@ -89,6 +89,7 @@ const OnboardingScreen = ({ navigation }) => {
         <ZoraButton 
           title={currentIndex === DATA.length - 1 ? "Get Started" : "Next"} 
           onPress={handleNext} 
+          loading={false}
         />
         
         <TouchableOpacity 

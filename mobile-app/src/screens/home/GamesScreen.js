@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, SafeAreaView, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, SafeAreaView, Dimensions, Alert, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
 import { ChevronLeft, Trophy, Play, Users, Coins } from 'lucide-react-native';
 import LottieView from 'lottie-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../theme/theme';
 
 const { width } = Dimensions.get('window');
@@ -88,9 +89,6 @@ const GamesScreen = ({ navigation }) => {
     </SafeAreaView>
   );
 };
-
-import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView } from 'react-native-gesture-handler';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.backgroundDark },

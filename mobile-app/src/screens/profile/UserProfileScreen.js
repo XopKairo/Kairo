@@ -53,7 +53,10 @@ const UserProfileScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
-  const ProfileItem = ({ icon: Icon, title, value, onPress, color = COLORS.textWhite }) => (
+  /**
+   * @param {{ icon: any, title: string, value?: string, onPress: any, color?: string }} props
+   */
+  const ProfileItem = ({ icon: Icon, title, value = null, onPress, color = COLORS.textWhite }) => (
     <TouchableOpacity style={styles.item} onPress={onPress}>
       <View style={styles.itemLeft}>
         <View style={styles.iconBox}><Icon color={color} size={20} /></View>
@@ -159,6 +162,7 @@ const UserProfileScreen = ({ navigation }) => {
           title="Sign Out" 
           variant="outline" 
           style={styles.logoutBtn} 
+          loading={false}
           onPress={async () => {
             await AsyncStorage.clear();
             navigation.replace('Login');

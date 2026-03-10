@@ -2,6 +2,9 @@ import React from 'react';
 import { View, TextInput, StyleSheet, Text } from 'react-native';
 import { COLORS, BORDER_RADIUS, SPACING } from '../theme/theme';
 
+/**
+ * @param {{ label?: string, error?: string, [key: string]: any }} props
+ */
 const ZoraInput = ({ label, error, ...props }) => {
   return (
     <View style={styles.container}>

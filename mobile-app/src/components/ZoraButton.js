@@ -3,7 +3,10 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, BORDER_RADIUS, SPACING } from '../theme/theme';
 
-const ZoraButton = ({ title, onPress, loading, variant = 'primary', style }) => {
+/**
+ * @param {{ title: string, onPress: any, loading?: boolean, variant?: string, style?: any }} props
+ */
+const ZoraButton = ({ title, onPress, loading, variant = 'primary', style = {} }) => {
   const isOutline = variant === 'outline';
 
   return (

@@ -11,8 +11,8 @@ const API = axios.create({
 });
 
 // Subscription mechanism for maintenance events
-let onMaintenanceTrigger = () => {};
-let onBlacklistTrigger = () => {};
+let onMaintenanceTrigger = (status) => {};
+let onBlacklistTrigger = (message) => {};
 
 export const setMaintenanceHandler = (handler) => {
   onMaintenanceTrigger = handler;

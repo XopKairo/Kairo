@@ -4,10 +4,12 @@ import { BASE_URL } from './api';
 const SOCKET_URL = BASE_URL;
 
 class SocketService {
+  /** @type {any} */
   socket = null;
   onBanHandler = null;
   onCallTerminatedHandler = null;
   onBalanceUpdateHandler = null;
+  onGiftReceivedHandler = null;
 
   connect(userId = null) {
     if (!this.socket) {
@@ -32,6 +34,10 @@ class SocketService {
       this.socket.on('balanceUpdated', (data) => {
         if (this.onBalanceUpdateHandler) this.onBalanceUpdateHandler(data);
       });
+
+      this.socket.on('giftReceived', (data) => {
+        if (this.onGiftReceivedHandler) this.onGiftReceivedHandler(data);
+      });
     }
   }
 
@@ -45,6 +51,10 @@ class SocketService {
 
   setBalanceUpdateHandler(handler) {
     this.onBalanceUpdateHandler = handler;
+  }
+
+  setGiftReceivedHandler(handler) {
+    this.onGiftReceivedHandler = handler;
   }
 
   disconnect() {

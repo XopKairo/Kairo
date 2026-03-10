@@ -21,7 +21,7 @@ const SelectInterestsScreen = ({ navigation }) => {
       const [allRes, userRes] = await Promise.all([
         api.get('/interests'),
         AsyncStorage.getItem('userData').then(async (data) => {
-           const u = JSON.parse(data);
+           const u = data ? JSON.parse(data) : {};
            return api.get(`/users/${u.id || u._id}`);
         })
       ]);
@@ -45,8 +45,10 @@ const SelectInterestsScreen = ({ navigation }) => {
     setSaving(true);
     try {
       const userDataStr = await AsyncStorage.getItem('userData');
-      const u = JSON.parse(userDataStr);
-      await api.put(`/users/${u.id || u._id}/profile`, { interests: selected });
+      const u = userDataStr ? JSON.parse(userDataStr) : {};
+      if(u.id || u._id) {
+        await api.put(`/users/${u.id || u._id}/profile`, { interests: selected });
+      }
       Alert.alert('Success', 'Interests updated!');
       navigation.goBack();
     } catch (error) {

@@ -6,7 +6,7 @@ import { initRewardedAd, showRewardedAd } from '../../services/adService';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
-import { Wallet, Play, ArrowUpRight, History, ShieldInfo, Info } from 'lucide-react-native';
+import { Wallet, Play, ArrowUpRight, History, Info } from 'lucide-react-native';
 
 const COIN_TO_INR_RATE = 0.1;
 
@@ -23,6 +23,26 @@ const WalletScreen = ({ navigation }) => {
   const [adLoading, setAdLoading] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+
+  const fetchUserData = async () => {
+    try {
+      const userDataStr = await AsyncStorage.getItem('userData');
+      if (userDataStr) {
+        const u = JSON.parse(userDataStr);
+        const res = await api.get(`/user/${u.id || u._id}`);
+        setUser(res.data);
+      }
+      
+      const pkgRes = await api.get('/user/payments/packages');
+      setPackages(pkgRes.data || []);
+    } catch (err) {
+      console.log('Error fetching wallet data', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;

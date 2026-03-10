@@ -1,4 +1,4 @@
-import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
+import { RewardedAd, RewardedAdEventType, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 import { getAppSettings } from './api';
 
 let rewardedAd = null;
@@ -9,7 +9,7 @@ export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
     // Use test ID if no ID is provided in settings
     const adUnitId = settings.adMobId || TestIds.REWARDED;
 
-    rewardedAd = RewardedAd.createForAdUnitId(adUnitId, {
+    rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
 
@@ -26,7 +26,7 @@ export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
     );
 
     const unsubscribeClosed = rewardedAd.addAdEventListener(
-      RewardedAdEventType.CLOSED,
+      AdEventType.CLOSED,
       () => {
         if (onAdDismissed) onAdDismissed();
         rewardedAd.load(); // Load next

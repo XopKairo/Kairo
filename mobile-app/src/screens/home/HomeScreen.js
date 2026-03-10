@@ -20,7 +20,7 @@ import api, { BASE_URL } from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import HostCard from '../../components/HostCard';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 import Swiper from 'react-native-deck-swiper';
 import LottieView from 'lottie-react-native';
@@ -138,9 +138,9 @@ const HomeScreen = ({ navigation }) => {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
           
           {/* Banners (Hidden in Swipe mode to save space) */}
-          {activeTab !== 'For You' && activeBanners.length > 0 && (
+          {activeTab !== 'For You' && banners.length > 0 && (
             <FlatList
-              data={activeBanners}
+              data={banners}
               renderItem={({ item }) => (
                 <View style={styles.bannerContainer}>
                   <Image source={{ uri: item.imageUrl.startsWith('http') ? item.imageUrl : `${BASE_URL}/${item.imageUrl}` }} style={styles.bannerImage} resizeMode="cover" />

@@ -1,0 +1,346 @@
+App.js(1,50): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+App.js(43,36): error TS1323: Dynamic imports are only supported when the '--module' flag is set to 'es2020', 'es2022', 'esnext', 'commonjs', 'amd', 'system', 'umd', 'node16', 'node18', 'node20', or 'nodenext'.
+App.js(51,23): error TS2307: Cannot find module './assets/icon.png' or its corresponding type declarations.
+App.js(64,25): error TS7031: Binding element 'route' implicitly has an 'any' type.
+App.js(65,24): error TS7031: Binding element 'focused' implicitly has an 'any' type.
+App.js(65,33): error TS7031: Binding element 'color' implicitly has an 'any' type.
+App.js(65,40): error TS7031: Binding element 'size' implicitly has an 'any' type.
+App.js(123,6): error TS2322: Type '{}' is not assignable to type 'NavigationContainerProps & { initialState?: Readonly<Partial<Omit<Readonly<{ key: string; index: number; routeNames: string[]; history?: unknown[] | undefined; routes: NavigationRoute<ParamListBase, string>[]; type: string; stale: false; }>, "routes" | "stale">> & { ...; }> | undefined; direction?: LocaleDirection |...'.
+  Property 'children' is missing in type '{}' but required in type 'NavigationContainerProps'.
+App.js(141,10): error TS2322: Type '{ name: "VideoCall"; options: { headerShown: false; }; }' is not assignable to type 'RouteConfig<ParamListBase, "VideoCall", StackNavigationState<ParamListBase>, NativeStackNavigationOptions, NativeStackNavigationEventMap, NativeStackNavigationProp<...>>'.
+  Type '{ name: "VideoCall"; options: { headerShown: false; }; }' is not assignable to type 'RouteConfigProps<ParamListBase, "VideoCall", StackNavigationState<ParamListBase>, NativeStackNavigationOptions, NativeStackNavigationEventMap, NativeStackNavigationProp<...>> & { ...; }'.
+    Property 'children' is missing in type '{ name: "VideoCall"; options: { headerShown: false; }; }' but required in type '{ children: (props: { route: RouteProp<ParamListBase, "VideoCall">; navigation: any; }) => React.ReactNode; component?: undefined; getComponent?: undefined; }'.
+App.js(142,13): error TS7006: Parameter 'props' implicitly has an 'any' type.
+App.js(198,6): error TS2741: Property 'children' is missing in type '{}' but required in type '{ children: any; }'.
+App.js(199,8): error TS2741: Property 'children' is missing in type '{}' but required in type 'Props'.
+babel.config.js(1,27): error TS7006: Parameter 'api' implicitly has an 'any' type.
+generate-icon-backup.js(21,54): error TS18046: 'err' is of type 'unknown'.
+generate-icon-backup.js(43,54): error TS18046: 'err' is of type 'unknown'.
+optimize-assets.js(6,26): error TS2307: Cannot find module 'imagemin' or its corresponding type declarations.
+optimize-assets.js(7,22): error TS2307: Cannot find module 'imagemin-webp' or its corresponding type declarations.
+plugins/withManifestFix.js(3,26): error TS7006: Parameter 'config' implicitly has an 'any' type.
+plugins/withManifestFix.js(5,25): error TS18048: 'config.modResults.manifest.application' is possibly 'undefined'.
+plugins/withManifestFix.js(6,28): error TS2741: Property ''android:name'' is missing in type '{}' but required in type 'ManifestApplicationAttributes'.
+plugins/withManifestFix.js(13,29): error TS7006: Parameter 'config' implicitly has an 'any' type.
+plugins/withManifestFix.js(54,19): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/components/HostCard.js(1,19): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/components/HostCard.js(10,32): error TS7031: Binding element 'item' implicitly has an 'any' type.
+src/components/HostCard.js(10,38): error TS7031: Binding element 'currentUser' implicitly has an 'any' type.
+src/components/HostCard.js(10,51): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/components/NetworkBanner.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/components/NetworkBanner.js(40,6): error TS2604: JSX element type 'Animated.View' does not have any construct or call signatures.
+src/components/SwipeCard.js(1,19): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/components/SwipeCard.js(10,22): error TS7031: Binding element 'item' implicitly has an 'any' type.
+src/components/SwipeCard.js(10,28): error TS7031: Binding element 'onCall' implicitly has an 'any' type.
+src/components/SwipeCard.js(10,36): error TS7031: Binding element 'onChat' implicitly has an 'any' type.
+src/components/ZoraButton.js(1,19): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/components/ZoraButton.js(6,23): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/components/ZoraButton.js(6,30): error TS7031: Binding element 'onPress' implicitly has an 'any' type.
+src/components/ZoraButton.js(6,39): error TS7031: Binding element 'loading' implicitly has an 'any' type.
+src/components/ZoraInput.js(1,19): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/context/AuthContext.js(1,71): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/context/AuthContext.js(9,32): error TS7031: Binding element 'children' implicitly has an 'any' type.
+src/context/AuthContext.js(19,26): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/context/AuthContext.js(25,34): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/context/AuthContext.js(30,44): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/context/AuthContext.js(31,15): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/context/AuthContext.js(63,11): error TS18046: 'error' is of type 'unknown'.
+src/context/AuthContext.js(83,25): error TS7006: Parameter 'contact' implicitly has an 'any' type.
+src/context/AuthContext.js(83,34): error TS7006: Parameter 'otpToken' implicitly has an 'any' type.
+src/context/AuthContext.js(92,25): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/context/AuthContext.js(92,31): error TS7006: Parameter 'contact' implicitly has an 'any' type.
+src/context/AuthContext.js(92,40): error TS7006: Parameter 'password' implicitly has an 'any' type.
+src/context/AuthContext.js(92,50): error TS7006: Parameter 'otpToken' implicitly has an 'any' type.
+src/context/AuthContext.js(92,60): error TS7006: Parameter 'additionalData' implicitly has an 'any' type.
+src/context/userStore.js(7,20): error TS7006: Parameter 'user' implicitly has an 'any' type.
+src/screens/OnboardingScreen.js(1,41): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/OnboardingScreen.js(35,29): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/OnboardingScreen.js(52,25): error TS7031: Binding element 'item' implicitly has an 'any' type.
+src/screens/OnboardingScreen.js(70,31): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/screens/OnboardingScreen.js(73,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/screens/SplashScreen.js(1,42): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/SplashScreen.js(12,25): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/SplashScreen.js(82,8): error TS2604: JSX element type 'Animated.View' does not have any construct or call signatures.
+src/screens/WelcomeScreen.js(1,52): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/WelcomeScreen.js(26,26): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/WelcomeScreen.js(51,22): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/screens/WelcomeScreen.js(66,8): error TS2604: JSX element type 'Animated.View' does not have any construct or call signatures.
+src/screens/WelcomeScreen.js(73,12): error TS2604: JSX element type 'Animated.View' does not have any construct or call signatures.
+src/screens/auth/LoginScreen.js(1,33): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/auth/LoginScreen.js(18,24): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/auth/LoginScreen.js(48,30): error TS18046: 'err' is of type 'unknown'.
+src/screens/auth/OTPScreen.js(1,52): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/auth/OTPScreen.js(19,22): error TS7031: Binding element 'route' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(19,29): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(32,19): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(52,28): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(52,35): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(62,27): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(62,30): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(95,17): error TS18046: 'loginErr' is of type 'unknown'.
+src/screens/auth/OTPScreen.js(98,46): error TS18046: 'loginErr' is of type 'unknown'.
+src/screens/auth/OTPScreen.js(127,25): error TS7006: Parameter 'digit' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(127,32): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(130,24): error TS7006: Parameter 'ref' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(133,34): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/screens/auth/OTPScreen.js(134,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(1,33): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/auth/UserRegisterScreen.js(24,25): error TS7031: Binding element 'label' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(24,32): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(24,39): error TS7031: Binding element 'options' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(24,48): error TS7031: Binding element 'onSelect' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(24,58): error TS7031: Binding element 'placeholder' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(45,29): error TS7006: Parameter 'opt' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(45,34): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(68,31): error TS7031: Binding element 'route' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(68,38): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(100,27): error TS7006: Parameter 'lang' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(102,37): error TS7006: Parameter 'l' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(156,42): error TS18046: 'error' is of type 'unknown'.
+src/screens/auth/UserRegisterScreen.js(194,25): error TS2322: Type 'string' is not assignable to type 'null | undefined'.
+src/screens/auth/UserRegisterScreen.js(224,28): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/screens/auth/UserRegisterScreen.js(232,28): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ Kerala: string[]; "Tamil Nadu": string[]; Karnataka: string[]; Maharashtra: string[]; Delhi: string[]; }'.
+src/screens/call/VideoCallScreen.js(1,52): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/call/VideoCallScreen.js(9,28): error TS7031: Binding element 'route' implicitly has an 'any' type.
+src/screens/call/VideoCallScreen.js(9,35): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/call/VideoCallScreen.js(20,19): error TS2339: Property 'setGiftReceivedHandler' does not exist on type 'SocketService'.
+src/screens/call/VideoCallScreen.js(20,43): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/screens/call/VideoCallScreen.js(25,45): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/screens/call/VideoCallScreen.js(98,31): error TS7006: Parameter 'reason' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(1,52): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/chat/ChatScreen.js(18,23): error TS7031: Binding element 'route' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(18,30): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(29,5): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(29,44): error TS7006: Parameter 'message' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(30,19): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(33,5): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(34,5): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(37,7): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(38,7): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(39,7): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(62,5): error TS18047: 'socketService.socket' is possibly 'null'.
+src/screens/chat/ChatScreen.js(67,19): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(73,28): error TS7031: Binding element 'item' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(103,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/screens/chat/ChatScreen.js(103,30): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/screens/home/GamesScreen.js(1,33): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/home/GamesScreen.js(11,24): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(1,66): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/home/HomeScreen.js(29,23): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(85,23): error TS7006: Parameter 'host' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(97,23): error TS7006: Parameter 'host' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(107,34): error TS2307: Cannot find module '../../../assets/icon.png' or its corresponding type declarations.
+src/screens/home/HomeScreen.js(144,30): error TS7031: Binding element 'item' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(149,29): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(169,30): error TS7006: Parameter 'card' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(170,32): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(171,33): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(172,31): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/screens/home/HomeScreen.js(173,34): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/screens/notifications/NotificationsScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/notifications/NotificationsScreen.js(14,28): error TS2339: Property 'on' does not exist on type 'never'.
+src/screens/notifications/NotificationsScreen.js(14,48): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/screens/notifications/NotificationsScreen.js(22,26): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/screens/notifications/NotificationsScreen.js(26,54): error TS2339: Property 'off' does not exist on type 'never'.
+src/screens/notifications/NotificationsScreen.js(30,23): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/screens/notifications/NotificationsScreen.js(38,25): error TS7031: Binding element 'item' implicitly has an 'any' type.
+src/screens/notifications/NotificationsScreen.js(57,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/EditProfileScreen.js(10,30): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(45,61): error TS7006: Parameter 'url' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(88,18): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(name: string, value: string | Blob): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+  Overload 2 of 3, '(name: string, value: string): void', gave the following error.
+    Argument of type '{ uri: any; name: any; type: any; }' is not assignable to parameter of type 'string'.
+  Overload 3 of 3, '(name: string, blobValue: Blob, filename?: string | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+src/screens/profile/EditProfileScreen.js(96,18): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(name: string, value: string | Blob): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+  Overload 2 of 3, '(name: string, value: string): void', gave the following error.
+    Argument of type '{ uri: any; name: any; type: any; }' is not assignable to parameter of type 'string'.
+  Overload 3 of 3, '(name: string, blobValue: Blob, filename?: string | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+src/screens/profile/EditProfileScreen.js(104,26): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(104,29): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(106,22): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(name: string, value: string | Blob): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+  Overload 2 of 3, '(name: string, value: string): void', gave the following error.
+    Argument of type '{ uri: any; name: string; type: string; }' is not assignable to parameter of type 'string'.
+  Overload 3 of 3, '(name: string, blobValue: Blob, filename?: string | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+src/screens/profile/EditProfileScreen.js(124,36): error TS18046: 'error' is of type 'unknown'.
+src/screens/profile/EditProfileScreen.js(124,69): error TS18046: 'error' is of type 'unknown'.
+src/screens/profile/EditProfileScreen.js(155,26): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(155,29): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(158,102): error TS7006: Parameter '_' implicitly has an 'any' type.
+src/screens/profile/EditProfileScreen.js(158,105): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/HostProfileScreen.js(40,30): error TS7031: Binding element 'route' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(40,37): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(151,35): error TS7006: Parameter 'img' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(151,40): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(196,73): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(196,78): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(206,74): error TS7006: Parameter 'g' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(206,77): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(220,47): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/screens/profile/HostProfileScreen.js(220,50): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/profile/ScratchCardScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/ScratchCardScreen.js(11,30): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/ScratchCardScreen.js(31,32): error TS7006: Parameter 'card' implicitly has an 'any' type.
+src/screens/profile/ScratchCardScreen.js(82,26): error TS7006: Parameter 'card' implicitly has an 'any' type.
+src/screens/profile/SelectInterestsScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/SelectInterestsScreen.js(9,34): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/SelectInterestsScreen.js(24,33): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/screens/profile/SelectInterestsScreen.js(36,27): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/screens/profile/SelectInterestsScreen.js(38,35): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/profile/SelectInterestsScreen.js(48,28): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/screens/profile/SelectInterestsScreen.js(78,27): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/screens/profile/UserProfileScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/UserProfileScreen.js(11,30): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/UserProfileScreen.js(56,32): error TS7031: Binding element 'Icon' implicitly has an 'any' type.
+src/screens/profile/UserProfileScreen.js(56,38): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/screens/profile/UserProfileScreen.js(56,59): error TS7031: Binding element 'onPress' implicitly has an 'any' type.
+src/screens/profile/UserProfileScreen.js(77,85): error TS2307: Cannot find module '../../../assets/icon.png' or its corresponding type declarations.
+src/screens/profile/UserProfileScreen.js(108,13): error TS2322: Type 'string' is not assignable to type 'null | undefined'.
+src/screens/profile/UserProfileScreen.js(119,13): error TS2322: Type 'string' is not assignable to type 'null | undefined'.
+src/screens/profile/UserProfileScreen.js(141,13): error TS2322: Type 'string' is not assignable to type 'null | undefined'.
+src/screens/profile/VerificationScreen.js(1,33): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/VerificationScreen.js(10,31): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/VerificationScreen.js(15,28): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/screens/profile/VerificationScreen.js(57,16): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(name: string, value: string | Blob): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+  Overload 2 of 3, '(name: string, value: string): void', gave the following error.
+    Argument of type '{ uri: any; name: any; type: any; }' is not assignable to parameter of type 'string'.
+  Overload 3 of 3, '(name: string, blobValue: Blob, filename?: string | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+src/screens/profile/VerificationScreen.js(63,16): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(name: string, value: string | Blob): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+  Overload 2 of 3, '(name: string, value: string): void', gave the following error.
+    Argument of type '{ uri: any; name: any; type: any; }' is not assignable to parameter of type 'string'.
+  Overload 3 of 3, '(name: string, blobValue: Blob, filename?: string | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'uri' does not exist in type 'Blob'.
+src/screens/profile/VerificationScreen.js(75,44): error TS18046: 'error' is of type 'unknown'.
+src/screens/profile/VerificationScreen.js(75,68): error TS18046: 'error' is of type 'unknown'.
+src/screens/profile/VipScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/profile/VipScreen.js(10,22): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/profile/VipScreen.js(30,31): error TS7006: Parameter 'pkg' implicitly has an 'any' type.
+src/screens/profile/VipScreen.js(47,36): error TS18046: 'err' is of type 'unknown'.
+src/screens/profile/VipScreen.js(86,24): error TS7006: Parameter 'pkg' implicitly has an 'any' type.
+src/screens/profile/VipScreen.js(99,96): error TS7006: Parameter 'feat' implicitly has an 'any' type.
+src/screens/profile/VipScreen.js(99,102): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/screens/settings/SettingsScreen.js(1,33): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/settings/SettingsScreen.js(7,27): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/settings/SettingsScreen.js(11,32): error TS7031: Binding element 'Icon' implicitly has an 'any' type.
+src/screens/settings/SettingsScreen.js(11,38): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/screens/system/MaintenanceScreen.js(1,19): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/system/MaintenanceScreen.js(7,30): error TS7031: Binding element 'onRefresh' implicitly has an 'any' type.
+src/screens/wallet/WalletScreen.js(1,44): error TS7016: Could not find a declaration file for module 'react'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/screens/wallet/WalletScreen.js(13,30): error TS7016: Could not find a declaration file for module 'react-native-razorpay'. '/data/data/com.termux/files/home/kairo/mobile-app/node_modules/react-native-razorpay/RazorpayCheckout.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-native-razorpay` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-native-razorpay';`
+src/screens/wallet/WalletScreen.js(16,25): error TS7031: Binding element 'navigation' implicitly has an 'any' type.
+src/screens/wallet/WalletScreen.js(59,28): error TS18046: 'err' is of type 'unknown'.
+src/screens/wallet/WalletScreen.js(63,33): error TS7006: Parameter 'pkg' implicitly has an 'any' type.
+src/screens/wallet/WalletScreen.js(97,58): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/screens/wallet/WalletScreen.js(103,25): error TS7006: Parameter 'error' implicitly has an 'any' type.
+src/screens/wallet/WalletScreen.js(108,46): error TS18046: 'err' is of type 'unknown'.
+src/screens/wallet/WalletScreen.js(138,29): error TS18046: 'error' is of type 'unknown'.
+src/screens/wallet/WalletScreen.js(202,30): error TS7006: Parameter 'pkg' implicitly has an 'any' type.
+src/screens/wallet/WalletScreen.js(227,16): error TS2322: Type 'string' is not assignable to type 'null | undefined'.
+src/screens/wallet/WalletScreen.js(234,16): error TS2322: Type 'string' is not assignable to type 'null | undefined'.
+src/services/adService.js(4,5): error TS7034: Variable 'rewardedAd' implicitly has type 'any' in some locations where its type cannot be determined.
+src/services/adService.js(6,38): error TS7006: Parameter 'onAdDismissed' implicitly has an 'any' type.
+src/services/adService.js(6,53): error TS7006: Parameter 'onRewardEarned' implicitly has an 'any' type.
+src/services/adService.js(12,29): error TS2339: Property 'createForAdUnitId' does not exist on type 'typeof RewardedAd'.
+src/services/adService.js(22,7): error TS7006: Parameter 'reward' implicitly has an 'any' type.
+src/services/adService.js(29,27): error TS2339: Property 'CLOSED' does not exist on type 'typeof RewardedAdEventType'.
+src/services/adService.js(32,9): error TS7005: Variable 'rewardedAd' implicitly has an 'any' type.
+src/services/adService.js(50,7): error TS7005: Variable 'rewardedAd' implicitly has an 'any' type.
+src/services/adService.js(53,9): error TS7005: Variable 'rewardedAd' implicitly has an 'any' type.
+src/services/api.js(17,39): error TS7006: Parameter 'handler' implicitly has an 'any' type.
+src/services/api.js(21,37): error TS7006: Parameter 'handler' implicitly has an 'any' type.
+src/services/api.js(46,30): error TS2554: Expected 0 arguments, but got 1.
+src/services/api.js(48,28): error TS2554: Expected 0 arguments, but got 1.
+src/services/api.js(61,33): error TS7006: Parameter 'contact' implicitly has an 'any' type.
+src/services/api.js(61,42): error TS7006: Parameter 'otpToken' implicitly has an 'any' type.
+src/services/api.js(70,11): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(70,28): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(74,36): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/services/api.js(74,42): error TS7006: Parameter 'contact' implicitly has an 'any' type.
+src/services/api.js(74,51): error TS7006: Parameter '_' implicitly has an 'any' type.
+src/services/api.js(74,54): error TS7006: Parameter 'otpToken' implicitly has an 'any' type.
+src/services/api.js(89,11): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(89,28): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(93,41): error TS7006: Parameter 'userId' implicitly has an 'any' type.
+src/services/api.js(93,49): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/services/api.js(101,11): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(101,28): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(105,31): error TS7006: Parameter 'contact' implicitly has an 'any' type.
+src/services/api.js(110,11): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(110,28): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(114,33): error TS7006: Parameter 'contact' implicitly has an 'any' type.
+src/services/api.js(114,42): error TS7006: Parameter 'otp' implicitly has an 'any' type.
+src/services/api.js(119,11): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(119,28): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(133,11): error TS18046: 'error' is of type 'unknown'.
+src/services/api.js(133,28): error TS18046: 'error' is of type 'unknown'.
+src/services/mediaService.js(3,35): error TS7006: Parameter 'base64' implicitly has an 'any' type.
+src/services/pushService.js(6,57): error TS7006: Parameter 'userId' implicitly has an 'any' type.
+src/services/socketService.js(14,7): error TS2322: Type 'Socket<DefaultEventsMap, DefaultEventsMap>' is not assignable to type 'null'.
+src/services/socketService.js(17,7): error TS2531: Object is possibly 'null'.
+src/services/socketService.js(20,11): error TS2531: Object is possibly 'null'.
+src/services/socketService.js(24,7): error TS2531: Object is possibly 'null'.
+src/services/socketService.js(24,37): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/services/socketService.js(25,37): error TS2349: This expression is not callable.
+  Type 'never' has no call signatures.
+src/services/socketService.js(28,7): error TS2531: Object is possibly 'null'.
+src/services/socketService.js(28,41): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/services/socketService.js(29,48): error TS2349: This expression is not callable.
+  Type 'never' has no call signatures.
+src/services/socketService.js(32,7): error TS2531: Object is possibly 'null'.
+src/services/socketService.js(32,41): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/services/socketService.js(33,47): error TS2349: This expression is not callable.
+  Type 'never' has no call signatures.
+src/services/socketService.js(38,17): error TS7006: Parameter 'handler' implicitly has an 'any' type.
+src/services/socketService.js(42,28): error TS7006: Parameter 'handler' implicitly has an 'any' type.
+src/services/socketService.js(46,27): error TS7006: Parameter 'handler' implicitly has an 'any' type.
+src/services/socketService.js(52,19): error TS2339: Property 'disconnect' does not exist on type 'never'.
+src/services/socketService.js(57,21): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/services/socketService.js(60,19): error TS2339: Property 'emit' does not exist on type 'never'.
+src/services/socketService.js(64,19): error TS7006: Parameter 'callId' implicitly has an 'any' type.
+src/services/socketService.js(66,19): error TS2339: Property 'emit' does not exist on type 'never'.

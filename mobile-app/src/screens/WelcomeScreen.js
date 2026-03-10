@@ -6,7 +6,8 @@ import {
   Animated, 
   Dimensions,
   Image,
-  SafeAreaView
+  SafeAreaView,
+  Platform
 } from 'react-native';
 import { COLORS, SPACING } from '../theme/theme';
 import ZoraButton from '../components/ZoraButton';
@@ -92,6 +93,7 @@ const WelcomeScreen = ({ navigation }) => {
           title="Continue to App"
           onPress={handleContinue}
           style={styles.continueBtn}
+          loading={false}
         />
       </View>
     </SafeAreaView>

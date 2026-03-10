@@ -84,33 +84,33 @@ const EditProfileScreen = ({ navigation }) => {
       formData.append('languages', languages);
       formData.append('isVipOnly', isVipOnly ? 'true' : 'false');
       formData.append('callRatePerMinute', callRate);
-      
       if (selfie) {
         formData.append('image', {
           uri: Platform.OS === 'android' ? selfie.uri : selfie.uri.replace('file://', ''),
-          name: selfie.name,
-          type: selfie.type
+          name: selfie.name || 'image.jpg',
+          type: selfie.type || 'image/jpeg'
         });
       }
-      
+
       if (video) {
         formData.append('video', {
           uri: Platform.OS === 'android' ? video.uri : video.uri.replace('file://', ''),
-          name: video.name,
-          type: video.type
+          name: video.name || 'video.mp4',
+          type: video.type || 'video/mp4'
         });
       }
-      
-      moments.forEach((m, index) => {
-        if (!m.isRemote) {
-          formData.append('moments', {
-            uri: Platform.OS === 'android' ? m.uri : m.uri.replace('file://', ''),
-            name: `moment_${index}.jpg`,
-            type: 'image/jpeg'
-          });
-        }
-      });
 
+      if (moments.length > 0) {
+        moments.forEach((m, index) => {
+          if (m.uri) {
+            formData.append('moments', {
+              uri: Platform.OS === 'android' ? m.uri : m.uri.replace('file://', ''),
+              name: `moment_${index}.jpg`,
+              type: 'image/jpeg'
+            });
+          }
+        });
+      }
       const response = await api.put('/users/me/profile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });

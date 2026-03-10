@@ -44,7 +44,7 @@ async function runBackup() {
     }
   }
 
-✨ Backup Complete! All icons are ready for branding use.');
+  console.log('✨ Backup Complete! All icons are ready for branding use.');
 }
 
 runBackup();

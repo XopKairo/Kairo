@@ -56,14 +56,14 @@ const VerificationScreen = ({ navigation }) => {
       
       formData.append('selfie', {
         uri: Platform.OS === 'android' ? selfie.uri : selfie.uri.replace('file://', ''),
-        name: selfie.name,
-        type: selfie.type
+        name: selfie.name || 'selfie.jpg',
+        type: selfie.type || 'image/jpeg'
       });
 
       formData.append('idProof', {
         uri: Platform.OS === 'android' ? idProof.uri : idProof.uri.replace('file://', ''),
-        name: idProof.name,
-        type: idProof.type
+        name: idProof.name || 'idproof.jpg',
+        type: idProof.type || 'image/jpeg'
       });
 
       await api.post(`/verification/submit`, formData, { 

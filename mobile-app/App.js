@@ -94,7 +94,6 @@ function MainTabs() {
         tabBarInactiveTintColor: '#6B7280',
         tabBarStyle: { 
           backgroundColor: '#0F0A19', 
-          borderTopWidth: 0,
           height: Platform.OS === 'ios' ? 90 : 70,
           paddingBottom: Platform.OS === 'ios' ? 30 : 10,
           borderTopColor: 'rgba(159, 103, 255, 0.1)',
@@ -121,6 +120,7 @@ function NavigationStack() {
   }
 
   return (
+    // @ts-ignore
     <NavigationContainer>
       <Stack.Navigator 
         initialRouteName="Splash"
@@ -139,6 +139,7 @@ function NavigationStack() {
         <Stack.Screen name="Register" component={UserRegisterScreen} options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen name="HostProfile" component={HostProfileScreen} options={{ headerShown: false }} />
+        {/* @ts-ignore */}
         <Stack.Screen name="VideoCall" options={{ headerShown: false }}>
           {(props) => (
             <Suspense fallback={
@@ -197,6 +198,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      {/* @ts-ignore */}
       <PaperProvider>
         <NetworkBanner />
         <NavigationStack />

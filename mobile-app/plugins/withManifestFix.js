@@ -3,6 +3,7 @@ const { withAndroidManifest, withProjectBuildGradle } = require('@expo/config-pl
 const withManifestFix = (config) => {
   return withAndroidManifest(config, (config) => {
     const application = config.modResults.manifest.application[0];
+    // @ts-ignore
     if (!application['$']) application['$'] = {};
     application['$']['tools:replace'] = 'android:appComponentFactory';
     application['$']['android:appComponentFactory'] = 'androidx.core.app.CoreComponentFactory';

@@ -8,7 +8,7 @@ const SettingsScreen = ({ navigation }) => {
   const [notifs, setNotifs] = useState(true);
   const [isDark, setIsDark] = useState(true);
 
-  const SettingItem = ({ icon: Icon, title, right, onPress, color = COLORS.textWhite }) => (
+  const SettingItem = ({ icon: Icon, title, right = null, onPress = () => {}, color = COLORS.textWhite }) => (
     <TouchableOpacity style={styles.item} onPress={onPress} disabled={!onPress}>
       <View style={styles.left}>
         <View style={styles.iconBox}><Icon color={color} size={20} /></View>

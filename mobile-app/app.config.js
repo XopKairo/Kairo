@@ -1,7 +1,7 @@
 export default {
   "expo": {
     "name": "Zora",
-    "owner": "ajilomalloor77",
+    "owner": "ajilomalloor11",
     "slug": "zora",
     "version": "1.0.0",
     "newArchEnabled": false,
@@ -62,8 +62,8 @@ export default {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
             "kotlinCompilerArgs": [
               "-Xskip-metadata-version-check"
             ]
@@ -71,6 +71,8 @@ export default {
         }
       ],
       "./plugins/withManifestFix",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
       "expo-notifications",
       "expo-image-picker",
       "expo-asset",
@@ -89,7 +91,7 @@ export default {
     },
     "extra": {
       "eas": {
-        "projectId": "7c0bb517-c5d6-4ce7-9c19-afad7984df8b"
+        "projectId": "619c0b3d-0f03-4e90-a614-59ea4859221d"
       }
     }
   },
