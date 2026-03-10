@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 import Host from "../models/Host.js";
+import User from "../models/User.js";
 
 // GET all hosts
 router.get("/", async (req, res) => {

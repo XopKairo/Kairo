@@ -1,9 +1,12 @@
 import express from "express";
 import User from "../models/User.js";
+import Host from "../models/Host.js";
+import { protectUser } from "../middleware/authMiddleware.js";
 import redisClient from "../config/redis.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { getStorage } from "../config/cloudinaryConfig.js";
 
 const router = express.Router();
 
