@@ -60,3 +60,5 @@ export const sendPushNotification = async (token, title, body, data = {}) => {
     return null;
   }
 };
+
+export default admin;

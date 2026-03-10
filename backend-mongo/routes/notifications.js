@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { firebaseAdmin } from "../utils/pushNotification.js";
+import admin from "../services/pushService.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 
@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
       };
 
       try {
-        const response = await firebaseAdmin.messaging().sendEachForMulticast({
+        const response = await admin.messaging().sendEachForMulticast({
           tokens: tokens,
           notification: payload.notification,
           data: payload.data,
