@@ -5,17 +5,12 @@ const isTls = redisUrl.startsWith("rediss://");
 
 const redisClient = createClient({
   url: redisUrl,
-  pingInterval: 30000, // Send PING every 30 seconds to keep connection alive
   socket: {
+    family: 4, // Force IPv4 to avoid Render/Upstash connection drops
     reconnectStrategy: (retries) => {
-      const delay = Math.min(retries * 500, 5000);
-      if (retries > 20) {
-        return new Error("Redis connection retries exhausted");
-      }
-      return delay;
+      return Math.min(retries * 500, 5000);
     },
-    // TLS options should be nested for node-redis v4
-    ...(isTls ? { tls: { rejectUnauthorized: false } } : {}),
+    tls: isTls ? {} : undefined, // Let the library handle TLS from URL but ensure it's enabled
     connectTimeout: 10000,
   },
 });
