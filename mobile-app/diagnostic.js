@@ -14,7 +14,7 @@ console.log("\n🛠️  EAS Build Diagnostic CLI Starting...\n");
 try {
     const gradleVersion = execSync('./android/gradlew -v').toString();
     console.log("✅ SDK & Gradle Info:\n", gradleVersion.split('\n').slice(0,5).join('\n'));
-} catch (e) {
+} catch (_e) {
     console.error("❌ Could not detect SDK or Gradle. Make sure Android SDK is installed locally.");
 }
 
@@ -23,7 +23,7 @@ console.log("\n🔍 Listing native dependencies...");
 try {
     const deps = execSync('./android/gradlew app:dependencies').toString();
     console.log(deps.split('\n').filter(line => line.includes('---') || line.includes('com.google')).join('\n'));
-} catch(e) {
+} catch(_e) {
     console.error("❌ Failed to fetch dependencies. Run './gradlew app:dependencies' manually.");
 }
 

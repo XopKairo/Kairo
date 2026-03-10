@@ -85,6 +85,7 @@ const EditProfileScreen = ({ navigation }) => {
       formData.append('isVipOnly', isVipOnly ? 'true' : 'false');
       formData.append('callRatePerMinute', callRate);
       if (selfie) {
+        // @ts-ignore
         formData.append('image', {
           uri: Platform.OS === 'android' ? selfie.uri : selfie.uri.replace('file://', ''),
           name: selfie.name || 'image.jpg',
@@ -93,6 +94,7 @@ const EditProfileScreen = ({ navigation }) => {
       }
 
       if (video) {
+        // @ts-ignore
         formData.append('video', {
           uri: Platform.OS === 'android' ? video.uri : video.uri.replace('file://', ''),
           name: video.name || 'video.mp4',
@@ -103,6 +105,7 @@ const EditProfileScreen = ({ navigation }) => {
       if (moments.length > 0) {
         moments.forEach((m, index) => {
           if (m.uri) {
+            // @ts-ignore
             formData.append('moments', {
               uri: Platform.OS === 'android' ? m.uri : m.uri.replace('file://', ''),
               name: `moment_${index}.jpg`,

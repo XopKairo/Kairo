@@ -63,7 +63,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@eslint/js": "^10.0.1",
     "@react-native/codegen": "0.76.9",
+    "eslint-plugin-react": "^7.37.5",
     "patch-package": "^8.0.1"
   },
   "expo": {

@@ -54,12 +54,14 @@ const VerificationScreen = ({ navigation }) => {
       const formData = new FormData();
       formData.append('userId', userId);
       
+      // @ts-ignore
       formData.append('selfie', {
         uri: Platform.OS === 'android' ? selfie.uri : selfie.uri.replace('file://', ''),
         name: selfie.name || 'selfie.jpg',
         type: selfie.type || 'image/jpeg'
       });
 
+      // @ts-ignore
       formData.append('idProof', {
         uri: Platform.OS === 'android' ? idProof.uri : idProof.uri.replace('file://', ''),
         name: idProof.name || 'idproof.jpg',

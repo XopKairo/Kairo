@@ -19,7 +19,7 @@ export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
 
     const unsubscribeEarned = rewardedAd.addAdEventListener(
       RewardedAdEventType.EARNED_REWARD,
-      reward => {
+      _reward => {
         const rewardAmount = settings.rewardPerAd || 5;
         if (onRewardEarned) onRewardEarned(rewardAmount);
       },

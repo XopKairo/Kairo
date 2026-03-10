@@ -21,10 +21,12 @@ export const registerForPushNotificationsAsync = async (userId) => {
     if (userId) {
       try {
         await api.post(`/users/${userId}/push-token`, { pushToken: token });
-      } catch (e) {
+      } catch (_e) {
+        // Silently ignore
       }
     }
   } else {
+    // Not a physical device
   }
 
   if (Platform.OS === 'android') {

@@ -54,7 +54,7 @@ const UserProfileScreen = ({ navigation }) => {
   }, [navigation]);
 
   /**
-   * @param {{ icon: any, title: string, value?: string, onPress: any, color?: string }} props
+   * @param {{ icon: any, title: string, value?: string|null, onPress: any, color?: string }} props
    */
   const ProfileItem = ({ icon: Icon, title, value = null, onPress, color = COLORS.textWhite }) => (
     <TouchableOpacity style={styles.item} onPress={onPress}>

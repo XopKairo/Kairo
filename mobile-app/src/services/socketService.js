@@ -6,10 +6,10 @@ const SOCKET_URL = BASE_URL;
 class SocketService {
   /** @type {any} */
   socket = null;
-  onBanHandler = null;
-  onCallTerminatedHandler = null;
-  onBalanceUpdateHandler = null;
-  onGiftReceivedHandler = null;
+  onBanHandler = () => {};
+  onCallTerminatedHandler = () => {};
+  onBalanceUpdateHandler = () => {};
+  onGiftReceivedHandler = () => {};
 
   connect(userId = null) {
     if (!this.socket) {

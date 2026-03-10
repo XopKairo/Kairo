@@ -7,7 +7,7 @@ import { Alert } from 'react-native';
 const AuthContext = createContext({});
 
 /**
- * @param {{ children: React.ReactNode }} props
+ * @param {{ children?: any }} props
  */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
