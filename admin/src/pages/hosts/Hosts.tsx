@@ -30,7 +30,7 @@ export default function Hosts() {
     try {
       const response = await apiClient.get('/admin/hosts');
       setHosts(response.data);
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch hosts', error);
     }
   };
@@ -47,7 +47,7 @@ export default function Hosts() {
       await apiClient.put('/admin/hosts/' + (editingHost._id || editingHost.id), editForm);
       fetchHosts();
       setIsEditModalOpen(false);
-    } catch (e) { alert('Failed'); }
+    } catch { alert('Failed'); }
   };
 
   const handleVerify = async (id: string, isVerified: boolean) => {
@@ -55,7 +55,7 @@ export default function Hosts() {
       await apiClient.post('/admin/hosts/' + id + '/verify', { isVerified });
       fetchHosts();
       setActiveMenu(null);
-    } catch (error) {
+    } catch {
       console.error('Failed to verify host', error);
       alert('Failed to verify host');
     }

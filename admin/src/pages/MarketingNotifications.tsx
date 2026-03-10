@@ -27,7 +27,7 @@ export default function MarketingNotifications() {
     try {
       const response = await apiClient.get('/admin/notifications');
       setLogs(response.data);
-    } catch (e) {
+    } catch {
       console.error('Failed to fetch logs:', e);
     } finally {
       setLoading(false);
@@ -46,7 +46,7 @@ export default function MarketingNotifications() {
       alert('Notification sent to ' + formData.targetAudience);
       setFormData({ title: '', message: '', targetAudience: 'All', type: 'Info' });
       fetchLogs();
-    } catch (e) {
+    } catch {
       alert('Failed to send notification');
     } finally { setSaving(false); }
   };

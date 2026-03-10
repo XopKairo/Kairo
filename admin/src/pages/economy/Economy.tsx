@@ -36,7 +36,7 @@ export default function Economy() {
       ]);
       setCoins(coinsRes.data);
       setTransactions(transRes.data);
-    } catch (e) {
+    } catch {
       console.error('Failed to fetch economy data:', e);
     }
   };
@@ -55,7 +55,7 @@ export default function Economy() {
         setCoins(prev => [...prev, response.data]);
       }
       setIsEditModalOpen(false);
-    } catch (e) {
+    } catch {
       alert('Failed to save package');
     } finally { setSaving(false); }
   };

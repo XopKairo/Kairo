@@ -167,7 +167,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Peak Usage Hours (24h)</h3>
           <div className="h-[200px] w-full">
              <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.peakHours.map((h: any) => ({ hour: `${h._id}h`, count: h.count }))}>
+              <BarChart data={stats.peakHours.map((h: { _id: number; count: number }) => ({ hour: `${h._id}h`, count: h.count }))}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
                 <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10}} />

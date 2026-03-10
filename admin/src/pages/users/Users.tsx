@@ -50,7 +50,7 @@ export default function Users() {
       fetchUsers();
       setIsWalletModalOpen(false);
       setWalletForm({ amount: '', type: 'ADD', reason: '' });
-    } catch (error) {
+    } catch {
       const e = error as { response?: { data?: { message?: string } } };
       alert('Adjustment failed: ' + (e.response?.data?.message || 'Unknown error'));
     }
@@ -60,7 +60,7 @@ export default function Users() {
     try {
       const res = await apiClient.get('/admin/users');
       setUsers(res.data);
-    } catch (e) {
+    } catch {
       console.error('Fetch users failed:', e);
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export default function Users() {
       setIsAddModalOpen(false);
       setAddForm({ name: '', phone: '', password: '', gender: 'Male' });
       fetchUsers();
-    } catch (error) { 
+    } catch { 
       const e = error as { response?: { data?: { message?: string } } };
       const msg = e.response?.data?.message || 'Creation failed. User might already exist.';
       alert(msg); 
@@ -90,7 +90,7 @@ export default function Users() {
       await apiClient.put('/admin/users/' + editingUser._id, editForm);
       fetchUsers();
       setIsEditModalOpen(false);
-    } catch (e) { alert('Update failed'); }
+    } catch { alert('Update failed'); }
   };
 
   const handleBanSubmit = async () => {
@@ -103,14 +103,14 @@ export default function Users() {
       });
       fetchUsers();
       setIsBanModalOpen(false);
-    } catch (e) { alert('Ban failed'); }
+    } catch { alert('Ban failed'); }
   };
 
   const handleUnban = async (id: string) => {
     try {
       await apiClient.post('/admin/users/' + id + '/ban', { isBanned: false });
       fetchUsers();
-    } catch (e) {
+    } catch {
       console.error('Failed to unban user', e);
       alert('Failed to unban user');
     }
@@ -122,7 +122,7 @@ export default function Users() {
       await apiClient.delete('/admin/users/' + id);
       fetchUsers();
       alert('User deleted successfully');
-    } catch (e) {
+    } catch {
       alert('Failed to delete user');
     }
   };

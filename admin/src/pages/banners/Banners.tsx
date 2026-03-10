@@ -39,7 +39,7 @@ export default function Banners() {
       setLoading(true);
       const response = await apiClient.get('/admin/banners');
       setBanners(response.data);
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch banners:', error);
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export default function Banners() {
       }
       fetchBanners();
       setIsEditModalOpen(false);
-    } catch (error) {
+    } catch {
       alert('Failed to save banner');
     }
   };
@@ -95,7 +95,7 @@ export default function Banners() {
         await apiClient.delete(`/admin/banners/${selectedBanner._id || selectedBanner.id}`);
         fetchBanners();
         setIsDeleteModalOpen(false);
-      } catch (error) {
+      } catch {
         alert('Failed to delete banner');
       }
     }

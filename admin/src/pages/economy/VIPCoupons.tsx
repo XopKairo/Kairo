@@ -31,7 +31,7 @@ export default function VIPCoupons() {
       ]);
       setVipPackages(vipRes.data);
       setCoupons(couponRes.data);
-    } catch (e) {
+    } catch {
       console.error(e);
     }
   };
@@ -43,7 +43,7 @@ export default function VIPCoupons() {
     try {
       await apiClient.delete('/admin/economy/coupons/' + id);
       setCoupons(coupons.filter(c => c._id !== id));
-    } catch (e) { alert('Failed'); }
+    } catch { alert('Failed'); }
   };
 
   return (

@@ -20,7 +20,7 @@ export default function Blacklist() {
     try {
       const res = await apiClient.get('/admin/blacklist');
       setList(res.data);
-    } catch (e) {
+    } catch {
       console.error('Failed to fetch blacklist:', e);
     } finally {
       setLoading(false);
@@ -36,7 +36,7 @@ export default function Blacklist() {
       fetchBlacklist();
       setIsModalOpen(false);
       setFormData({ value: '', type: 'IP', reason: '' });
-    } catch (e) { alert('Failed to add to blacklist'); }
+    } catch { alert('Failed to add to blacklist'); }
   };
 
   const handleRemove = async (id: string) => {
@@ -44,7 +44,7 @@ export default function Blacklist() {
     try {
       await apiClient.delete(`/admin/blacklist/${id}`);
       fetchBlacklist();
-    } catch (e) { alert('Failed to remove'); }
+    } catch { alert('Failed to remove'); }
   };
 
   return (

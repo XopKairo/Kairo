@@ -1,5 +1,4 @@
 /* eslint-disable react-refresh/only-export-components */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createContext, useState, useEffect, type ReactNode } from 'react';
 import apiClient from '../api/apiClient';
 

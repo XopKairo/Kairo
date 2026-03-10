@@ -21,7 +21,7 @@ export default function Calls() {
     try {
       const res = await apiClient.get('/calls/active');
       setActiveCalls(res.data);
-    } catch (e) {
+    } catch {
       console.error('Failed to fetch active calls:', e);
     } finally {
       setLoading(false);
@@ -40,7 +40,7 @@ export default function Calls() {
       await apiClient.post('/admin/calls/force-end', { callId });
       alert('Call termination command sent');
       fetchActiveCalls();
-    } catch (e) {
+    } catch {
       alert('Failed to terminate call');
     }
   };

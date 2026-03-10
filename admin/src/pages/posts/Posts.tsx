@@ -19,7 +19,7 @@ export default function Posts() {
     try {
       const response = await apiClient.get('/admin/economy/posts/admin'); // Placeholder if you have separate admin posts route
       setPosts(response.data);
-    } catch (e) {
+    } catch {
       // Fallback to general feed if admin route fails
       try {
         const res = await apiClient.get('/admin/posts'); 
@@ -38,7 +38,7 @@ export default function Posts() {
     try {
       await apiClient.put('/admin/posts/' + id + '/feature', { isFeatured: !current });
       fetchPosts();
-    } catch (e) {
+    } catch {
       console.error('Failed to toggle feature', e);
       alert('Failed to update post status');
     }
@@ -49,7 +49,7 @@ export default function Posts() {
     try {
       await apiClient.delete('/admin/posts/' + id);
       fetchPosts();
-    } catch (e) {
+    } catch {
       console.error('Failed to delete post', e);
       alert('Failed to delete post');
     }

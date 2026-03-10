@@ -22,7 +22,7 @@ export default function Agencies() {
     try {
       const res = await apiClient.get('/api/admin/agencies');
       setAgencies(res.data);
-    } catch (e) {
+    } catch {
       console.error(e);
     }
   };
@@ -35,7 +35,7 @@ export default function Agencies() {
       await apiClient.post('/api/admin/agencies', formData);
       setIsAddModalOpen(false);
       fetchAgencies();
-    } catch (e) { alert('Failed'); }
+    } catch { alert('Failed'); }
   };
 
   return (

@@ -23,7 +23,7 @@ export default function Payouts() {
     try {
       const res = await apiClient.get('/admin/payouts');
       setPayouts(res.data);
-    } catch (e) {
+    } catch {
       console.error('Failed to fetch payouts:', e);
     } finally {
       setLoading(false);
@@ -40,7 +40,7 @@ export default function Payouts() {
       await apiClient.put(`/admin/payouts/${id}`, { status });
       setPayouts(prev => prev.map(p => p._id === id ? { ...p, status } : p));
       alert(`Payout request ${status} successfully.`);
-    } catch (e) {
+    } catch {
       alert('Action failed. Check logs.');
     } finally {
       setProcessingId(null);

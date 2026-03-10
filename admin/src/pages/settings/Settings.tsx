@@ -45,7 +45,7 @@ export default function Settings() {
         setIsAiModerationEnabled(response.data.isAiModerationEnabled !== undefined ? response.data.isAiModerationEnabled : true);
         setAiSensitivity(response.data.aiSensitivity || 'High');
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch settings:', error);
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function Settings() {
     try {
       await apiClient.put('/settings', { maintenance: newStatus });
       setMaintenance(newStatus);
-    } catch (error) {
+    } catch {
       console.error('Failed to update maintenance mode:', error);
       alert('Failed to update maintenance mode. Please try again.');
     } finally {
@@ -117,7 +117,7 @@ export default function Settings() {
     try {
       await apiClient.put('/settings', { rewardPerAd, dailyLimit });
       alert('Ad settings updated!');
-    } catch (error) {
+    } catch {
       alert('Update failed');
     } finally {
       setSaving(false);
@@ -135,7 +135,7 @@ export default function Settings() {
         aiSensitivity 
       });
       alert('Global configuration updated!');
-    } catch (error) {
+    } catch {
       alert('Update failed');
     } finally {
       setSaving(false);

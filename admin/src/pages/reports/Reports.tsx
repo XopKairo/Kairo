@@ -21,7 +21,7 @@ export default function Reports() {
     try {
       const response = await apiClient.get('/admin/reports');
       setReports(response.data);
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch reports:', error);
     } finally {
       setLoading(false);
@@ -44,7 +44,7 @@ export default function Reports() {
       });
       alert(`Report handled: ${action}`);
       fetchReports();
-    } catch (error) {
+    } catch {
       alert('Action failed');
     }
   };
