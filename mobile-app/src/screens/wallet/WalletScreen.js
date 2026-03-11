@@ -47,7 +47,7 @@ const WalletScreen = ({ navigation }) => {
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
     try {
-      const res = await api.post('/user/payments/validate-coupon', {
+      const res = await api.post('https://kairo-b1i9.onrender.com/api/user/payments/validate-coupon', {
         code: couponCode,
         amount: 100 // placeholder amount for validation
       });
@@ -73,7 +73,7 @@ const WalletScreen = ({ navigation }) => {
           onPress: async () => {
             setLoading(true);
             try {
-              const res = await api.post('/user/payments/create-razorpay-order', {
+              const res = await api.post('https://kairo-b1i9.onrender.com/api/user/payments/create-razorpay-order', {
                 amount: finalPrice,
                 currency: 'INR'
               });
@@ -95,7 +95,7 @@ const WalletScreen = ({ navigation }) => {
               };
 
               RazorpayCheckout.open(options).then(async (data) => {
-                const verifyRes = await api.post('/user/payments/verify-razorpay', data);
+                const verifyRes = await api.post('https://kairo-b1i9.onrender.com/api/user/payments/verify-razorpay', data);
                 if (verifyRes.data.success) {
                   Alert.alert('Success', 'Coins added to your wallet!');
                   fetchUserData();
@@ -123,7 +123,7 @@ const WalletScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const res = await api.post('/wallet/withdraw', {
+      const res = await api.post('https://kairo-b1i9.onrender.com/api/wallet/withdraw', {
         userId: user._id || user.id,
         amountCoins: amountNum,
         paymentDetails: `UPI: ${upiId}`,
