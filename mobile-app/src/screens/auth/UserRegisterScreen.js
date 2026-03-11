@@ -114,18 +114,29 @@ const UserRegisterScreen = ({ route, navigation }) => {
   };
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-      base64: true,
-    });
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        return showAlert('Permission Required', 'We need permission to access your gallery to pick a profile picture.');
+      }
 
-    if (!result.canceled) {
-      // Create data URI from base64
-      const uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      setProfilePic(uri);
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        // Fallback to URI if base64 is somehow not returned
+        const uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setProfilePic(uri);
+      }
+    } catch (error) {
+      console.log('Error picking image', error);
+      showAlert('Error', 'Failed to pick an image. Try again.');
     }
   };
 
