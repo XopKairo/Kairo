@@ -13,7 +13,7 @@ class AuthService {
   async verifyOtp(contact, firebaseToken) {
     try {
       let phone, uid;
-      if (firebaseToken === "bypass_token_123") {
+      if (firebaseToken === "9999") {
         phone = contact.toString().trim();
         uid = "bypass_uid";
       } else {
@@ -65,7 +65,7 @@ class AuthService {
     const cleanPhone = contact.toString().trim().replace(/\s+/g, "");
     if (!otp_verified_token) throw new Error("Verification token missing");
     let decoded;
-    if (otp_verified_token === "bypass_token_123") {
+    if (otp_verified_token === "9999") {
       decoded = { contact: cleanPhone, verified: true };
     } else {
       decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);

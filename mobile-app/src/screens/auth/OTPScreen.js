@@ -86,7 +86,7 @@ const OTPScreen = ({ route, navigation }) => {
     setLoading(true);
     try {
       console.log("Attempting Bypass Login for:", mobileNumber);
-      const verifyRes = await verifyOtp(mobileNumber, "bypass_token_123"); 
+      const verifyRes = await verifyOtp(mobileNumber, "9999"); 
       
       if (verifyRes.success && verifyRes.otp_verified_token) {
          try {
@@ -111,11 +111,11 @@ const OTPScreen = ({ route, navigation }) => {
          }
       } else {
          console.log("VerifyOtp Failed (no success flag):", verifyRes);
-         navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
+         navigation.navigate('Register', { mobileNumber, otpToken: "9999" });
       }
     } catch (error) {
        console.log("Bypass Login Master Catch Error:", error);
-       navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
+       navigation.navigate('Register', { mobileNumber, otpToken: "9999" });
     } finally {
       setLoading(false);
     }
