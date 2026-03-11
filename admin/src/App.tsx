@@ -22,6 +22,7 @@ import Banners from './pages/banners/Banners';
 import Posts from "./pages/posts/Posts";
 import MarketingNotifications from './pages/MarketingNotifications';
 import Payouts from './pages/payouts/Payouts';
+import Verification from "./pages/monitoring/Verification";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const authContext = useContext(AuthContext);
@@ -44,6 +45,7 @@ function App() {
             <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><Layout><Users /></Layout></ProtectedRoute>} />
             <Route path="/hosts" element={<ProtectedRoute><Layout><Hosts /></Layout></ProtectedRoute>} />
+            <Route path="/verification" element={<ProtectedRoute><Layout><Verification /></Layout></ProtectedRoute>} />
             <Route path="/agencies" element={<ProtectedRoute><Layout><Agencies /></Layout></ProtectedRoute>} />
             <Route path="/economy" element={<ProtectedRoute><Layout><Economy /></Layout></ProtectedRoute>} />
             <Route path="/vip-coupons" element={<ProtectedRoute><Layout><VIPCoupons /></Layout></ProtectedRoute>} />

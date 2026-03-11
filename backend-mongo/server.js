@@ -210,6 +210,7 @@ app.use("/api/admin/hosts", protectAdmin, adminHostsRoutes);
 app.use("/api/admin/agencies", protectAdmin, adminAgenciesRoutes);
 app.use("/api/admin/banners", protectAdmin, adminBannersRoutes);
 app.use("/api/admin/notifications", protectAdmin, notificationsRoutes);
+app.use("/api/admin/verification", protectAdmin, verificationRoutes);
 app.use("/api/verification", protectUser, verificationRoutes);
 
 // Public Settings for Mobile App
