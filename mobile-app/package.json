@@ -35,7 +35,6 @@
     "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "~14.0.2",
     "expo-location": "~18.0.10",
-    "expo-modules-core": "~2.2.3",
     "expo-navigation-bar": "~4.0.8",
     "expo-notifications": "~0.29.14",
     "expo-status-bar": "~2.0.1",
@@ -80,7 +79,9 @@
       "reactNativeDirectoryCheck": {
         "exclude": [
           "react-native-encrypted-storage",
-          "react-native-keep-awake"
+          "react-native-keep-awake",
+          "react-native-razorpay",
+          "expo-av"
         ],
         "listUnknownPackages": false
       }
