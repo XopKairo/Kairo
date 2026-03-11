@@ -71,7 +71,7 @@ app.use("/api/admin/verification", protectAdmin, verificationRoutes);
 app.use("/api/admin/monitoring", protectAdmin, monitoringRoutes);
 app.use("/api/admin/reports", protectAdmin, reportRoutes);
 app.use("/api/admin/notifications", protectAdmin, notificationsRoutes);
-app.use("/api/admin/settings", protectAdmin, settingsRoutes);
+app.use("/api/settings", protectAdmin, settingsRoutes);
 
 app.use(errorHandler);
 
