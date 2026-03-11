@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { History, Plus } from 'lucide-react';
+import { History, Plus, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface CoinPackage {
@@ -46,6 +46,16 @@ export default function Economy() {
 
   useEffect(() => { fetchData(); }, []);
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this package?")) return;
+    try {
+      await apiClient.delete("/admin/economy/coins/" + id);
+      setCoins(prev => prev.filter(p => p._id !== id));
+    } catch {
+      alert("Failed to delete package");
+    }
+  };
+
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -75,7 +85,7 @@ export default function Economy() {
              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Coin Store Packages</h3>
              <p className="text-sm text-gray-500">Manage packages available for users to buy</p>
            </div>
-           <button 
+           <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button 
              onClick={() => { setSelectedPackage(null); setFormData({coins:0, priceINR:0, bonus:0, isActive:true}); setIsEditModalOpen(true); }} 
              className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all"
            >
@@ -91,7 +101,7 @@ export default function Economy() {
                   {pkg.bonus > 0 && <p className="text-xs font-bold text-green-500 mt-2 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-lg inline-block">+{pkg.bonus} Bonus</p>}
                   
                   <div className="flex gap-2 mt-6">
-                    <button 
+                    <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button 
                       onClick={() => { setSelectedPackage(pkg); setFormData({...pkg}); setIsEditModalOpen(true); }} 
                       className="w-full py-2 bg-white dark:bg-surface-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors"
                     >
@@ -173,10 +183,10 @@ export default function Economy() {
               </div>
 
               <div className="pt-4 flex flex-col gap-3">
-                <button type="submit" disabled={saving} className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-lg transition-all disabled:opacity-50 uppercase tracking-widest">
+                <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button type="submit" disabled={saving} className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-lg transition-all disabled:opacity-50 uppercase tracking-widest">
                   {saving ? 'Processing...' : selectedPackage ? 'Update Package' : 'Create Package'}
                 </button>
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500 font-bold hover:text-gray-700 transition-colors">
+                <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500 font-bold hover:text-gray-700 transition-colors">
                   Discard Changes
                 </button>
               </div>
