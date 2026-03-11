@@ -121,22 +121,20 @@ const UserRegisterScreen = ({ route, navigation }) => {
       }
 
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
-        allowsEditing: true,
-        aspect: [1, 1],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.5,
         base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        // Fallback to URI if base64 is somehow not returned
+        // Use base64 if available, otherwise uri
         const uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
         setProfilePic(uri);
       }
     } catch (error) {
       console.log('Error picking image', error);
-      showAlert('Error', 'Failed to pick an image. Try again.');
+      showAlert('Error', `Failed: ${error.message || 'Unknown error'}`);
     }
   };
 
