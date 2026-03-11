@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 const ChatScreen = ({ route, navigation }) => {
-  const { recipient, conversationId: initialConvId } = route.params;
+  const { recipient, conversationId: initialConvId } = route.params || {};
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -24,21 +24,30 @@ const ChatScreen = ({ route, navigation }) => {
   const flatListRef = useRef();
 
   useEffect(() => {
+    if (!recipient) {
+       // If no recipient, this might be the main chat tab
+       // We should ideally show a list of conversations here
+       return;
+    }
     fetchMessages();
 
-    socketService.socket.on('newMessage', (message) => {
-      setMessages(prev => [...prev, message]);
-    });
+    if (socketService.socket) {
+      socketService.socket.on('newMessage', (message) => {
+        setMessages(prev => [...prev, message]);
+      });
 
-    socketService.socket.on('userTyping', () => setIsTyping(true));
-    socketService.socket.on('userStoppedTyping', () => setIsTyping(false));
+      socketService.socket.on('userTyping', () => setIsTyping(true));
+      socketService.socket.on('userStoppedTyping', () => setIsTyping(false));
+    }
 
     return () => {
-      socketService.socket.off('newMessage');
-      socketService.socket.off('userTyping');
-      socketService.socket.off('userStoppedTyping');
+      if (socketService.socket) {
+        socketService.socket.off('newMessage');
+        socketService.socket.off('userTyping');
+        socketService.socket.off('userStoppedTyping');
+      }
     };
-  }, []);
+  }, [recipient]);
 
   const fetchMessages = async () => {
     if (!initialConvId) return;
@@ -50,16 +59,18 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const handleSend = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !recipient) return;
 
     const messageData = {
-      recipientId: recipient.id,
+      recipientId: recipient.id || recipient._id,
       text: inputText,
       conversationId: initialConvId,
     };
 
     // Emit via Socket for instant delivery
-    socketService.socket.emit('privateMessage', messageData);
+    if (socketService.socket) {
+      socketService.socket.emit('privateMessage', messageData);
+    }
 
     // Save to DB via REST
     try {
@@ -83,6 +94,21 @@ const ChatScreen = ({ route, navigation }) => {
       </View>
     );
   };
+
+  if (!recipient) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+           <Text style={styles.headerName}>Messages</Text>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: COLORS.textGray, textAlign: 'center' }}>
+            Select a host or friend to start chatting.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
