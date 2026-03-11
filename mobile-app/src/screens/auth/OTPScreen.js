@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView, 
   Platform,
   ScrollView,
-  Alert,
   TouchableOpacity,
   TextInput,
   AppState
@@ -55,7 +54,6 @@ const OTPScreen = ({ route, navigation }) => {
 
   const handleResendOTP = async () => {
     try {
-      // Re-trigger Firebase SMS
       const newConfirmation = await auth().signInWithPhoneNumber(mobileNumber);
       navigation.setParams({ confirmation: newConfirmation });
       endTimeRef.current = Date.now() + 30000;
@@ -63,6 +61,63 @@ const OTPScreen = ({ route, navigation }) => {
       showAlert("Success", "New OTP sent!", "success");
     } catch(err) {
       showAlert("Error", "Failed to resend OTP. Try again later.");
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    const otpValue = otp.join('');
+    if (otpValue.length < 6) return showAlert('Invalid OTP', 'Please enter the 6-digit code sent to your phone.');
+
+    setLoading(true);
+    try {
+      if (confirmation) {
+        const result = await confirmation.confirm(otpValue);
+        const firebaseToken = await result.user.getIdToken();
+        const verifyRes = await verifyOtp(mobileNumber, firebaseToken);
+        
+        if (verifyRes.success && verifyRes.otp_verified_token) {
+           const loginRes = await signIn(mobileNumber, verifyRes.otp_verified_token);
+           if(loginRes.success) {
+               navigation.replace('Welcome');
+           }
+        }
+      } else {
+        showAlert("Wait", "Please use Fast Login button below for testing without real SMS.");
+      }
+    } catch (error) {
+      showAlert('Error', 'Invalid or expired OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBypassLogin = async () => {
+    setLoading(true);
+    try {
+      const verifyRes = await verifyOtp(mobileNumber, "9999"); 
+      
+      if (verifyRes.success && verifyRes.otp_verified_token) {
+         try {
+             const result = await signIn(mobileNumber, verifyRes.otp_verified_token);
+             if(result.success) {
+                 navigation.replace('Welcome');
+             } else {
+                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
+             }
+         } catch(loginErr) {
+             if(loginErr.message?.includes('User not found')) {
+                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
+             } else {
+                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
+             }
+         }
+      } else {
+         navigation.navigate('Register', { mobileNumber, otpToken: "9999" });
+      }
+    } catch (error) {
+       navigation.navigate('Register', { mobileNumber, otpToken: "9999" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,92 +137,6 @@ const OTPScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleBypassLogin = async () => {
-    setLoading(true);
-    try {
-      console.log("Attempting Bypass Login for:", mobileNumber);
-      const verifyRes = await verifyOtp(mobileNumber, "9999"); 
-      
-      if (verifyRes.success && verifyRes.otp_verified_token) {
-         try {
-             console.log("OTP Verified, attempting SignIn...");
-             const result = await signIn(mobileNumber, verifyRes.otp_verified_token);
-             if(result.success) {
-                 console.log("SignIn Successful, navigating to Welcome");
-                 navigation.replace('Welcome');
-             } else {
-                 console.log("SignIn Failed (no success flag):", result);
-                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
-             }
-         } catch(loginErr) {
-             console.log("SignIn Error Details:", loginErr);
-             if(loginErr.message?.includes('User not found')) {
-                 console.log("User not found, navigating to Register");
-                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
-             } else {
-                 console.log("Unexpected Login Error, forcing Register as fallback");
-                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
-             }
-         }
-      } else {
-         console.log("VerifyOtp Failed (no success flag):", verifyRes);
-         navigation.navigate('Register', { mobileNumber, otpToken: "9999" });
-      }
-    } catch (error) {
-       console.log("Bypass Login Master Catch Error:", error);
-       navigation.navigate('Register', { mobileNumber, otpToken: "9999" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    const otpString = otp.join('');
-    if (otpString.length < 6) {
-      showAlert('Error', 'Please enter 6-digit OTP');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (!confirmation) {
-          showAlert("Notice", "OTP service is currently unavailable. Please wait for the timer and use Fast Login.", "notice");
-          setLoading(false);
-          return;
-      }
-
-      // 1. Firebase Verification
-      await confirmation.confirm(otpString);
-      
-      // 2. Get ID Token
-      const fbUser = auth().currentUser;
-      if (!fbUser) throw new Error("Firebase Authentication failed");
-      const idToken = await fbUser.getIdToken();
-
-      // 3. Verify with Backend
-      const verifyRes = await verifyOtp(mobileNumber, idToken);
-      
-      if (verifyRes.success && verifyRes.otp_verified_token) {
-         try {
-             const result = await signIn(mobileNumber, verifyRes.otp_verified_token);
-             if(result.success) {
-                 navigation.replace('Welcome');
-             }
-         } catch(loginErr) {
-             if(loginErr.message?.includes('User not found')) {
-                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
-             } else {
-                 showAlert('Login Failed', loginErr.message || 'An error occurred');
-             }
-         }
-      }
-    } catch (error) {
-       showAlert('Verification Failed', "Invalid OTP or expired session.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <ZoraAlert 
@@ -177,6 +146,10 @@ const OTPScreen = ({ route, navigation }) => {
         type={alertConfig.type}
         onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
       />
+      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <Text style={{color: '#FFF', fontSize: 30}}>←</Text>
+      </TouchableOpacity>
+
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
@@ -184,31 +157,31 @@ const OTPScreen = ({ route, navigation }) => {
             <View style={styles.numberContainer}>
               <Text style={styles.numberText}>{mobileNumber}</Text>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.editBtn}>
-                <Text style={styles.editBtnText}>✎ Change</Text>
+                <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.formCard}>
-            <Text style={styles.instructionText}>Enter the 6-digit code sent to you</Text>
+            <Text style={styles.instructionText}>Enter the 6-digit code sent to your phone</Text>
             
             <View style={styles.otpContainer}>
               {otp.map((digit, index) => (
                 <TextInput
                   key={index}
-                  ref={ref => inputRefs.current[index] = ref}
+                  ref={(ref) => (inputRefs.current[index] = ref)}
                   style={[styles.otpInput, digit ? styles.otpInputFilled : null]}
                   value={digit}
-                  onChangeText={(val) => handleOtpChange(val, index)}
+                  onChangeText={(value) => handleOtpChange(value, index)}
                   onKeyPress={(e) => handleKeyPress(e, index)}
                   keyboardType="number-pad"
-                  maxLength={1}
+                  maxLength={1)
                   selectTextOnFocus
                 />
               ))}
             </View>
 
-            <ZoraButton title="Verify & Continue" onPress={handleVerifyOTP} loading={loading} style={{ marginTop: SPACING.lg }} />
+            <ZoraButton title="Verify & Continue" onPress={handleVerifyOTP} loading={loading} style={{ marginTop: 30 }} />
 
             <View style={styles.resendContainer}>
               <Text style={styles.resendText}>Didn't receive code? </Text>
@@ -246,29 +219,30 @@ const OTPScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
-  scrollContent: { flexGrow: 1, padding: SPACING.lg, justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#0F0A19' },
+  backBtn: { position: 'absolute', top: 50, left: 20, zIndex: 10 },
+  scrollContent: { flexGrow: 1, padding: 20, justifyContent: 'center' },
   header: { alignItems: 'center', marginBottom: 40 },
-  title: { fontSize: 28, fontWeight: '800', color: COLORS.textWhite, marginBottom: 16 },
-  numberContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.05)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
-  numberText: { color: COLORS.textWhite, fontSize: 16, fontWeight: '600', marginRight: 10 },
+  title: { fontSize: 28, fontWeight: '800', color: '#FFF', marginBottom: 16 },
+  numberContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.05)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
+  numberText: { color: '#FFF', fontSize: 16, fontWeight: '600', marginRight: 10 },
   editBtn: { backgroundColor: 'rgba(108, 43, 217, 0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  editBtnText: { color: COLORS.accentGlow, fontSize: 12, fontWeight: '600' },
-  formCard: { backgroundColor: COLORS.cardBackground, padding: SPACING.xl, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
-  instructionText: { color: COLORS.textGray, textAlign: 'center', marginBottom: 24, fontSize: 14 },
+  editBtnText: { color: '#A855F7', fontSize: 12, fontWeight: '600' },
+  formCard: { backgroundColor: '#161026', padding: 30, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  instructionText: { color: '#9CA3AF', textAlign: 'center', marginBottom: 24, fontSize: 14 },
   otpContainer: { flexDirection: 'row', justifyContent: 'space-between' },
-  otpInput: { width: 45, height: 55, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 12, color: COLORS.textWhite, fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
-  otpInputFilled: { borderColor: COLORS.primary, backgroundColor: 'rgba(108, 43, 217, 0.1)' },
+  otpInput: { width: 40, height: 50, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 12, color: '#FFF', fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
+  otpInputFilled: { borderColor: '#6C2BD9', backgroundColor: 'rgba(108, 43, 217, 0.1)' },
   resendContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  resendText: { color: COLORS.textGray },
-  resendLink: { color: COLORS.accentGlow, fontWeight: '600' },
+  resendText: { color: '#9CA3AF' },
+  resendLink: { color: '#A855F7', fontWeight: '600' },
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 30 },
   line: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  dividerText: { color: COLORS.textGray, marginHorizontal: 15, fontSize: 12, fontWeight: 'bold' },
+  dividerText: { color: '#9CA3AF', marginHorizontal: 15, fontSize: 12, fontWeight: 'bold' },
   fastLoginSection: { alignItems: 'center' },
-  quoteText: { color: COLORS.textGray, fontStyle: 'italic', textAlign: 'center', fontSize: 13, marginBottom: 15, paddingHorizontal: 10, lineHeight: 20 },
-  fastLoginBtn: { width: '100%', borderColor: COLORS.primary },
-  waitText: { color: COLORS.textGray, fontSize: 11, marginTop: 8 }
+  quoteText: { color: '#9CA3AF', fontStyle: 'italic', textAlign: 'center', fontSize: 13, marginBottom: 15, lineHeight: 20 },
+  fastLoginBtn: { width: '100%', borderColor: '#6C2BD9' },
+  waitText: { color: '#9CA3AF', fontSize: 11, marginTop: 8 }
 });
 
 export default OTPScreen;

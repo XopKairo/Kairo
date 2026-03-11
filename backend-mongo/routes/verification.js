@@ -98,7 +98,7 @@ router.post("/:id/status", async (req, res) => {
       await Host.findOneAndUpdate(
         { phone: user.phone },
         { 
-          name: user.name,
+          userId: user._id, name: user.name,
           phone: user.phone,
           gender: user.gender || "Female",
           isVerified: true 

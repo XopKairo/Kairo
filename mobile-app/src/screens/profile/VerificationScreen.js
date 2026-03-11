@@ -1,27 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../../services/api';
 import { ShieldCheck, Camera, FileText, Info, ChevronLeft } from 'lucide-react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
+import ZoraAlert from '../../components/ZoraAlert';
 
 const VerificationScreen = ({ navigation }) => {
   const [selfie, setSelfie] = useState(null);
   const [idProof, setIdProof] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const pickImage = async (type) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Camera roll access is required.');
+        showAlert('Permission Denied', 'Camera roll access is required.');
         return;
       }
 
       let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: type === 'selfie' ? [1, 1] : [4, 3],
         quality: 0.6,
@@ -38,12 +44,12 @@ const VerificationScreen = ({ navigation }) => {
         else setIdProof(imagePayload);
       }
     } catch (err) {
-      Alert.alert('Error', 'Failed to pick image');
+      showAlert('Error', 'Failed to pick image');
     }
   };
 
   const submitVerification = async () => {
-    if (!selfie || !idProof) return Alert.alert('Error', 'Please upload both images.');
+    if (!selfie || !idProof) return showAlert('Error', 'Please upload both images.');
 
     setLoading(true);
     try {
@@ -68,14 +74,15 @@ const VerificationScreen = ({ navigation }) => {
         type: idProof.type || 'image/jpeg'
       });
 
-      await api.post('verification/submit', formData, { 
+      const response = await api.post('verification/submit', formData, { 
         headers: { 'Content-Type': 'multipart/form-data' } 
       });
 
-      Alert.alert('Success', 'Verification pending review.', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+      showAlert('Success', 'Verification pending review.', 'success');
+      setTimeout(() => navigation.goBack(), 2000);
     } catch (error) {
       console.error('Verification Error:', error.response?.data || error.message);
-      Alert.alert('Error', 'Failed to submit request. Check your connection.');
+      showAlert('Error', error.response?.data?.message || 'Failed to submit request.');
     } finally {
       setLoading(false);
     }
@@ -84,6 +91,13 @@ const VerificationScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
+      <ZoraAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}><ChevronLeft color={COLORS.textWhite} size={28} /></TouchableOpacity>
         <Text style={styles.headerTitle}>VERIFICATION</Text>

@@ -3,6 +3,7 @@ const { Schema, model } = mongoose;
 
 const hostSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true },
     phone: { type: String, required: true, unique: true },
     status: {
