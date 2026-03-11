@@ -214,6 +214,7 @@ app.use("/api/verification", protectUser, verificationRoutes);
 
 // Public Settings for Mobile App
 app.use("/api/settings", settingsRoutes);
+app.use("/api/economy", economyRoutes);
 
 // Shared / User Routes
 app.use("/api/wallet", walletRoutes);
