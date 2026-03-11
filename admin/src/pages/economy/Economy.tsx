@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { History, Plus, Trash2 } from 'lucide-react';
-import apiClient from '../../api/apiClient';
+import { useState, useEffect } from "react";
+import { History, Plus, Trash2 } from "lucide-react";
+import apiClient from "../../api/apiClient";
 
 interface CoinPackage {
   _id: string;
@@ -34,7 +34,6 @@ export default function Economy() {
       setCoins(coinsRes.data);
     } catch (e) {
       console.error("Failed to fetch coins:", e);
-      alert("Error loading coin packages.");
     }
     try {
       const transRes = await apiClient.get("/admin/monitoring/transactions");
@@ -61,15 +60,15 @@ export default function Economy() {
     setSaving(true);
     try {
       if (selectedPackage) {
-        const response = await apiClient.put('/admin/economy/coins/' + selectedPackage._id, formData);
+        const response = await apiClient.put("/admin/economy/coins/" + selectedPackage._id, formData);
         setCoins(prev => prev.map(p => p._id === selectedPackage._id ? response.data : p));
       } else {
-        const response = await apiClient.post('/admin/economy/coins', formData);
+        const response = await apiClient.post("/admin/economy/coins", formData);
         setCoins(prev => [...prev, response.data]);
       }
       setIsEditModalOpen(false);
     } catch {
-      alert('Failed to save package');
+      alert("Failed to save package");
     } finally { setSaving(false); }
   };
 
@@ -85,7 +84,7 @@ export default function Economy() {
              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Coin Store Packages</h3>
              <p className="text-sm text-gray-500">Manage packages available for users to buy</p>
            </div>
-           <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button 
+           <button 
              onClick={() => { setSelectedPackage(null); setFormData({coins:0, priceINR:0, bonus:0, isActive:true}); setIsEditModalOpen(true); }} 
              className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all"
            >
@@ -100,12 +99,18 @@ export default function Economy() {
                   <p className="text-xl font-bold text-brand-600 mt-1">₹{pkg.priceINR}</p>
                   {pkg.bonus > 0 && <p className="text-xs font-bold text-green-500 mt-2 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-lg inline-block">+{pkg.bonus} Bonus</p>}
                   
-                  <div className="flex gap-2 mt-6">
-                    <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button 
+                  <div className="flex flex-col gap-2 mt-6">
+                    <button 
                       onClick={() => { setSelectedPackage(pkg); setFormData({...pkg}); setIsEditModalOpen(true); }} 
                       className="w-full py-2 bg-white dark:bg-surface-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors"
                     >
                       Edit Package
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(pkg._id)} 
+                      className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Trash2 size={14}/> Delete
                     </button>
                   </div>
                 </div>
@@ -131,10 +136,10 @@ export default function Economy() {
                   <tr><td colSpan={4} className="py-8 text-center text-gray-500">No recent transactions found</td></tr>
                 ) : transactions.map(t => (
                   <tr key={t._id} className="group">
-                    <td className="py-4 font-medium text-gray-900 dark:text-white">{t.userId?.name || 'Unknown User'}</td>
+                    <td className="py-4 font-medium text-gray-900 dark:text-white">{t.userId?.name || "Unknown User"}</td>
                     <td className="py-4 font-black text-gray-900 dark:text-white">₹{t.amount}</td>
                     <td className="py-4">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${t.status === 'completed' ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"}`}>{t.status}</span>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${t.status === "completed" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"}`}>{t.status}</span>
                     </td>
                     <td className="py-4 text-sm text-gray-400 text-right">{new Date(t.createdAt).toLocaleDateString()}</td>
                   </tr>
@@ -147,7 +152,7 @@ export default function Economy() {
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8 shadow-2xl border border-white/10">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{selectedPackage ? 'Edit Package' : 'Add Package'}</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">{selectedPackage ? "Edit Package" : "Add Package"}</h2>
             <form onSubmit={handleSaveChanges} className="space-y-6">
               <div>
                 <label className="block text-sm font-bold text-gray-500 mb-2 uppercase tracking-widest">Coin Amount</label>
@@ -183,10 +188,10 @@ export default function Economy() {
               </div>
 
               <div className="pt-4 flex flex-col gap-3">
-                <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button type="submit" disabled={saving} className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-lg transition-all disabled:opacity-50 uppercase tracking-widest">
-                  {saving ? 'Processing...' : selectedPackage ? 'Update Package' : 'Create Package'}
+                <button type="submit" disabled={saving} className="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-lg transition-all disabled:opacity-50 uppercase tracking-widest">
+                  {saving ? "Processing..." : selectedPackage ? "Update Package" : "Create Package"}
                 </button>
-                <button onClick={() => handleDelete(pkg._id)} className="w-full py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 mb-2"><Trash2 size={14}/> Delete</button><button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500 font-bold hover:text-gray-700 transition-colors">
+                <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500 font-bold hover:text-gray-700 transition-colors">
                   Discard Changes
                 </button>
               </div>
