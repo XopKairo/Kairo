@@ -1,10 +1,20 @@
 import "dotenv/config";
+import mongoose from "mongoose";
 import Admin from "../models/Admin.js";
 import InterestTag from "../models/InterestTag.js";
 import logger from "../utils/logger.js";
 
 export const seedAdmin = async () => {
   try {
+    // Drop legacy email index if it exists
+    try {
+      const User = mongoose.model("User");
+      await User.collection.dropIndex("email_1");
+      logger.info("✅ Legacy email index dropped successfully");
+    } catch (e) {
+      // Index might not exist, ignore
+    }
+
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
