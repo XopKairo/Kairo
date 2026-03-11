@@ -57,7 +57,7 @@ router.delete("/coupons/:id", async (req, res) => {
 
 // --- Coin Packages ---
 router.get("/coins", async (req, res) => {
-  res.json(await CoinPackage.find({}));
+  const pkg = await CoinPackage.find({}); console.log("Fetched packages:", pkg.length); res.json(pkg);
 });
 
 router.post("/coins", async (req, res) => {

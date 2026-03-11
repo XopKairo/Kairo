@@ -30,14 +30,17 @@ export default function Economy() {
 
   const fetchData = async () => {
     try {
-      const [coinsRes, transRes] = await Promise.all([
-        apiClient.get('/admin/economy/coins'),
-        apiClient.get('/admin/monitoring/transactions')
-      ]);
+      const coinsRes = await apiClient.get("/admin/economy/coins");
       setCoins(coinsRes.data);
+    } catch (e) {
+      console.error("Failed to fetch coins:", e);
+      alert("Error loading coin packages.");
+    }
+    try {
+      const transRes = await apiClient.get("/admin/monitoring/transactions");
       setTransactions(transRes.data);
-    } catch (e: any) {
-      console.error('Failed to fetch economy data:', e);
+    } catch (e) {
+      console.error("Failed to fetch transactions:", e);
     }
   };
 
