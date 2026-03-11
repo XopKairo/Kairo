@@ -27,7 +27,23 @@ class UserAuthController {
 
   async register(req, res) {
     try {
-      const result = await authService.register(req.body);
+      let data = req.body;
+      
+      // If we have a file, add it to the data
+      if (req.file) {
+        data.profilePicture = req.file.path;
+      }
+
+      // Handle strings if data is sent as FormData (which sometimes sends strings instead of objects)
+      if (typeof data.languages === 'string') {
+        try {
+          data.languages = JSON.parse(data.languages);
+        } catch (e) {
+          data.languages = data.languages.split(',');
+        }
+      }
+
+      const result = await authService.register(data);
       res.status(201).json(result);
     } catch (error) {
       if (error.message === "BETA_ONLY") {

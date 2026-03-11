@@ -73,14 +73,36 @@ export const loginUser = async (contact, otpToken) => {
 
 export const registerUser = async (name, contact, _, otpToken, additionalData = {}) => {
   try {
-    const payload = {
-      name,
-      otp_verified_token: otpToken,
-      phone: contact,
-      ...additionalData
-    };
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('otp_verified_token', otpToken);
+    formData.append('phone', contact);
 
-    const response = await API.post('/user/auth/register', payload);    if (response.data.token) {
+    // Append additional data
+    Object.keys(additionalData).forEach(key => {
+      if (key === 'profilePicture' && additionalData[key]) {
+        const uri = additionalData[key];
+        const filename = uri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image`;
+        
+        formData.append('profilePicture', {
+          uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+          name: filename,
+          type
+        });
+      } else if (Array.isArray(additionalData[key])) {
+        formData.append(key, JSON.stringify(additionalData[key]));
+      } else if (additionalData[key]) {
+        formData.append(key, additionalData[key]);
+      }
+    });
+
+    const response = await API.post('/user/auth/register', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }

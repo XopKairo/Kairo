@@ -7,7 +7,12 @@ import {
   validateRequest,
 } from "../utils/validation.js";
 
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { getStorage } from "../config/cloudinaryConfig.js";
+
 const router = express.Router();
+const upload = multer({ storage: getStorage("user_profiles") });
 
 // Send OTP
 router.post("/send-otp", userAuthController.sendOtp);
@@ -22,7 +27,7 @@ router.post(
 // User Registration
 router.post(
   "/register",
-  validateRequest(registerSchema),
+  upload.single("profilePicture"),
   userAuthController.register,
 );
 

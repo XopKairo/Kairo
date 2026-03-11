@@ -122,15 +122,14 @@ const UserRegisterScreen = ({ route, navigation }) => {
 
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.5,
-        base64: true,
+        allowsEditing: true, // Manual adjustment enable aakki
+        aspect: [1, 1], // Square crop
+        quality: 0.7,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        // Use base64 if available, otherwise uri
-        const uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-        setProfilePic(uri);
+        setProfilePic(asset.uri); // Direct URI use cheyyunnu
       }
     } catch (error) {
       console.log('Error picking image', error);
