@@ -1,5 +1,6 @@
 import "dotenv/config";
 import Admin from "../models/Admin.js";
+import InterestTag from "../models/InterestTag.js";
 import logger from "../utils/logger.js";
 
 export const seedAdmin = async () => {
@@ -8,9 +9,7 @@ export const seedAdmin = async () => {
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminEmail || !adminPassword) {
-      logger.warn(
-        "⚠️ ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables. Skipping auto-seed.",
-      );
+      logger.warn("⚠️ ADMIN_EMAIL or ADMIN_PASSWORD not set in environment variables. Skipping auto-seed.");
       return;
     }
 
@@ -20,17 +19,39 @@ export const seedAdmin = async () => {
       const admin = new Admin({
         username: "admin",
         email: adminEmail,
-        password: adminPassword, // Password will be hashed automatically by the pre-save hook in Admin.js
+        password: adminPassword,
         role: "admin",
       });
       await admin.save();
-      logger.info(
-        `✅ Initial admin user created successfully for: ${adminEmail}`,
-      );
+      logger.info(`✅ Initial admin user created successfully for: ${adminEmail}`);
     } else {
       logger.info(`ℹ️ Admin user already exists. Skipping auto-seed.`);
     }
   } catch (error) {
     logger.error(`❌ Admin seeding failed: ${error.message}`);
+  }
+};
+
+export const seedInterests = async () => {
+  try {
+    const count = await InterestTag.countDocuments();
+    if (count === 0) {
+      const defaultInterests = [
+        { name: "Gaming", isActive: true },
+        { name: "Music", isActive: true },
+        { name: "Movies", isActive: true },
+        { name: "Dance", isActive: true },
+        { name: "Cooking", isActive: true },
+        { name: "Travel", isActive: true },
+        { name: "Fitness", isActive: true },
+        { name: "Art", isActive: true },
+        { name: "Technology", isActive: true },
+        { name: "Fashion", isActive: true }
+      ];
+      await InterestTag.insertMany(defaultInterests);
+      logger.info("✅ Default interests seeded successfully");
+    }
+  } catch (error) {
+    logger.error(`❌ Interests seeding failed: ${error.message}`);
   }
 };
