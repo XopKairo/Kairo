@@ -7,7 +7,8 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
-  TextInput
+  TextInput,
+  AppState
 } from 'react-native';
 import { COLORS, SPACING } from '../../../theme/theme';
 import ZoraButton from '../../../components/ZoraButton';
@@ -23,6 +24,7 @@ const HostOTPScreen = ({ route, navigation }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']); 
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(30);
+  const endTimeRef = useRef(Date.now() + 30000);
   const inputRefs = useRef([]);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
 
@@ -31,21 +33,30 @@ const HostOTPScreen = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-    let interval = null;
-    if (timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000));
+      setTimer(remaining);
     };
-  }, [timer]);
+
+    const interval = setInterval(updateTimer, 1000);
+
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        updateTimer();
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, []);
 
   const handleResendOTP = async () => {
     try {
       const newConfirmation = await auth().signInWithPhoneNumber(mobileNumber);
       navigation.setParams({ confirmation: newConfirmation });
+      endTimeRef.current = Date.now() + 30000;
       setTimer(30);
       showAlert('Success', 'New OTP sent!', 'success');
     } catch(err) {
