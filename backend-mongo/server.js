@@ -271,7 +271,7 @@ Sentry.setupExpressErrorHandler(app);
 // Error Handling
 app.use(errorHandler);
 
-import { seedAdmin, seedInterests } from "./utils/initDb.js";
+import { seedAdmin, seedInterests, seedPackages } from "./utils/initDb.js";
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/kairo';
@@ -297,7 +297,7 @@ mongoose
   })
   .then(async () => {
     console.log("✅ MongoDB Connected with pool size 100");
-    await seedAdmin(); await seedInterests(); // Auto-seed admin user
+    await seedAdmin(); await seedInterests(); await seedPackages(); // Auto-seed admin user
     server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => console.error("❌ Connection Error:", err));
