@@ -297,7 +297,7 @@ mongoose
   })
   .then(async () => {
     console.log("✅ MongoDB Connected with pool size 100");
-    await seedAdmin(); await seedInterests(); await seedPackages(); // Auto-seed admin user
+    await seedAdmin(); await seedInterests(); // await seedPackages(); // Auto-seed admin user
     server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => console.error("❌ Connection Error:", err));

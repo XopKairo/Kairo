@@ -22,12 +22,12 @@ router.get("/vip", async (req, res) => {
 
 router.post("/vip", async (req, res) => {
   const pkg = await VipPackage.create(req.body);
-  res.json(pkg);
+  res.status(201).json(pkg);
 });
 
 router.put("/vip/:id", async (req, res) => {
   const pkg = await VipPackage.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(pkg);
+  res.status(201).json(pkg);
 });
 
 router.delete("/vip/:id", async (req, res) => {
@@ -69,14 +69,14 @@ router.post("/coins", async (req, res) => {
     icon,
     isActive,
   });
-  res.json(pkg);
+  res.status(201).json(pkg);
 });
 
 router.put("/coins/:id", async (req, res) => {
   const pkg = await CoinPackage.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
-  res.json(pkg);
+  res.status(201).json(pkg);
 });
 
 router.delete("/coins/:id", async (req, res) => {
