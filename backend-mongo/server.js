@@ -49,6 +49,7 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 
 // Public Routes
+app.get("/", (req, res) => res.send("Welcome to Kairo API. Use /api/health for status."));
 app.use("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/economy", economyRoutes); // Public coins fetching
 
