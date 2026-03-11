@@ -68,7 +68,7 @@ const VerificationScreen = ({ navigation }) => {
         type: idProof.type || 'image/jpeg'
       });
 
-      await api.post(`/verification/submit`, formData, { 
+      await api.post('verification/submit', formData, { 
         headers: { 'Content-Type': 'multipart/form-data' } 
       });
 

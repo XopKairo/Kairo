@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, SafeAreaView, StatusBar, Platform, TextInput } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Image, 
+  Alert, 
+  ScrollView, 
+  ActivityIndicator, 
+  SafeAreaView, 
+  StatusBar, 
+  Platform, 
+  TextInput,
+  KeyboardAvoidingView
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import api from '../../services/api';
@@ -38,8 +52,16 @@ const EditProfileScreen = ({ navigation }) => {
         setGender(userData.gender || '');
         setBio(userData.bio || '');
         setAge(userData.age ? userData.age.toString() : '');
-        setLocation(userData.location || '');
-        setLanguages(userData.languages ? userData.languages.join(', ') : '');
+        
+        // Data Sync: Display location from registration (State/District)
+        const loc = userData.location || (userData.district && userData.state ? `${userData.district}, ${userData.state}` : userData.state || userData.district || '');
+        setLocation(loc);
+
+        // Data Sync: Languages
+        if (userData.languages) {
+           setLanguages(Array.isArray(userData.languages) ? userData.languages.join(', ') : userData.languages);
+        }
+
         setIsVipOnly(userData.isVipOnly || false);
         setCallRate(userData.callRatePerMinute ? userData.callRatePerMinute.toString() : '30');
         if (userData.photos) setMoments(userData.photos.map(url => ({ uri: url, isRemote: true })));
@@ -104,7 +126,7 @@ const EditProfileScreen = ({ navigation }) => {
 
       if (moments.length > 0) {
         moments.forEach((m, index) => {
-          if (m.uri) {
+          if (m.uri && !m.isRemote) {
             // @ts-ignore
             formData.append('moments', {
               uri: Platform.OS === 'android' ? m.uri : m.uri.replace('file://', ''),
@@ -139,103 +161,109 @@ const EditProfileScreen = ({ navigation }) => {
         <View style={{ width: 28 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
-        <Text style={styles.label}>Profile Cover</Text>
-        <TouchableOpacity style={styles.mainUpload} onPress={() => pickMedia('image')}>
-           {selfie || user?.profilePicture ? (
-             <Image source={{ uri: selfie?.uri || user?.profilePicture }} style={styles.image} />
-           ) : (
-             <View style={styles.placeholder}>
-                <Camera color={COLORS.primary} size={40} />
-                <Text style={styles.uploadText}>Select Cover</Text>
-             </View>
-           )}
-        </TouchableOpacity>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          
+          <Text style={styles.label}>Profile Cover</Text>
+          <TouchableOpacity style={styles.mainUpload} onPress={() => pickMedia('image')}>
+             {selfie || user?.profilePicture ? (
+               <Image source={{ uri: selfie?.uri || user?.profilePicture }} style={styles.image} />
+             ) : (
+               <View style={styles.placeholder}>
+                  <Camera color={COLORS.primary} size={40} />
+                  <Text style={styles.uploadText}>Select Cover</Text>
+               </View>
+             )}
+          </TouchableOpacity>
 
-        <Text style={styles.label}>Moments (Gallery)</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.momentsRow}>
-           {moments.map((m, i) => (
-             <View key={i} style={styles.momentItem}>
-                <Image source={{ uri: m.uri }} style={styles.momentImg} />
-                <TouchableOpacity style={styles.removeBtn} onPress={() => setMoments(moments.filter((_, idx) => idx !== i))}>
-                   <X color="#FFF" size={12} />
-                </TouchableOpacity>
-             </View>
-           ))}
-           {moments.length < 6 && (
-             <TouchableOpacity style={styles.addMoment} onPress={() => pickMedia('image', true)}>
-                <Plus color={COLORS.textGray} size={30} />
-             </TouchableOpacity>
-           )}
-        </ScrollView>
+          <Text style={styles.label}>Moments (Gallery)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.momentsRow}>
+             {moments.map((m, i) => (
+               <View key={i} style={styles.momentItem}>
+                  <Image source={{ uri: m.uri }} style={styles.momentImg} />
+                  <TouchableOpacity style={styles.removeBtn} onPress={() => setMoments(moments.filter((_, idx) => idx !== i))}>
+                     <X color="#FFF" size={12} />
+                  </TouchableOpacity>
+               </View>
+             ))}
+             {moments.length < 6 && (
+               <TouchableOpacity style={styles.addMoment} onPress={() => pickMedia('image', true)}>
+                  <Plus color={COLORS.textGray} size={30} />
+               </TouchableOpacity>
+             )}
+          </ScrollView>
 
-        <Text style={styles.label}>Short Video Preview</Text>
-        <TouchableOpacity style={styles.videoUpload} onPress={() => pickMedia('video')}>
-           {video || user?.shortVideoUrl ? (
-             <View style={styles.videoPlaceholder}>
-                <VideoIcon color={COLORS.success} size={32} />
-                <Text style={{ color: COLORS.success, fontWeight: 'bold', marginTop: 5 }}>Video Selected</Text>
-             </View>
-           ) : (
-             <View style={styles.placeholder}>
-                <VideoIcon color={COLORS.textGray} size={30} />
-                <Text style={styles.uploadText}>Upload Teaser</Text>
-             </View>
-           )}
-        </TouchableOpacity>
+          <Text style={styles.label}>Short Video Preview</Text>
+          <TouchableOpacity style={styles.videoUpload} onPress={() => pickMedia('video')}>
+             {video || user?.shortVideoUrl ? (
+               <View style={styles.videoPlaceholder}>
+                  <VideoIcon color={COLORS.success} size={32} />
+                  <Text style={{ color: COLORS.success, fontWeight: 'bold', marginTop: 5 }}>Video Selected</Text>
+               </View>
+             ) : (
+               <View style={styles.placeholder}>
+                  <VideoIcon color={COLORS.textGray} size={30} />
+                  <Text style={styles.uploadText}>Upload Teaser</Text>
+               </View>
+             )}
+          </TouchableOpacity>
 
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Display Name" placeholderTextColor="#666" />
+          <Text style={styles.label}>Full Name</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Display Name" placeholderTextColor="#666" />
 
-        <Text style={styles.label}>Bio</Text>
-        <TextInput style={[styles.input, { height: 80 }]} value={bio} onChangeText={setBio} multiline placeholder="Tell users about yourself..." placeholderTextColor="#666" />
+          <Text style={styles.label}>Bio</Text>
+          <TextInput style={[styles.input, { height: 80 }]} value={bio} onChangeText={setBio} multiline placeholder="Tell users about yourself..." placeholderTextColor="#666" />
 
-        <Text style={styles.label}>Identity</Text>
-        <View style={styles.genderRow}>
-          {['Male', 'Female', 'Other'].map((g) => (
-            <TouchableOpacity key={g} style={[styles.genderBtn, gender === g && styles.activeGender]} onPress={() => setGender(g)}>
-              <Text style={[styles.genderText, gender === g && { color: '#FFF' }]}>{g}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.row}>
-           <View style={{ flex: 1, marginRight: 10 }}>
-              <Text style={styles.label}>Age</Text>
-              <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" />
-           </View>
-           <View style={{ flex: 2 }}>
-              <Text style={styles.label}>Location</Text>
-              <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="City, Country" placeholderTextColor="#666" />
-           </View>
-        </View>
-
-        <Text style={styles.label}>Languages</Text>
-        <TextInput style={styles.input} value={languages} onChangeText={setLanguages} placeholder="E.g. English, Malayalam" placeholderTextColor="#666" />
-
-        {user?.isHost && (
-          <View style={styles.hostSettings}>
-             <View style={styles.switchRow}>
-                <View>
-                   <Text style={styles.label}>VIP Only Calls</Text>
-                   <Text style={styles.hint}>Only VIP users can call you</Text>
-                </View>
-                <TouchableOpacity 
-                   style={[styles.toggle, isVipOnly && { backgroundColor: COLORS.primary }]} 
-                   onPress={() => setIsVipOnly(!isVipOnly)}
-                >
-                   <View style={[styles.thumb, isVipOnly && { transform: [{ translateX: 20 }] }]} />
-                </TouchableOpacity>
-             </View>
-
-             <Text style={styles.label}>Call Rate (Coins/Min)</Text>
-             <TextInput style={styles.input} value={callRate} onChangeText={setCallRate} keyboardType="numeric" />
+          <Text style={styles.label}>Identity</Text>
+          <View style={styles.genderRow}>
+            {['Male', 'Female', 'Other'].map((g) => (
+              <TouchableOpacity key={g} style={[styles.genderBtn, gender === g && styles.activeGender]} onPress={() => setGender(g)}>
+                <Text style={[styles.genderText, gender === g && { color: '#FFF' }]}>{g}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
 
-        <ZoraButton title="Update Changes" onPress={handleUpdate} loading={loading} style={{ marginTop: 20, marginBottom: 40 }} />
-      </ScrollView>
+          <View style={styles.row}>
+             <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={styles.label}>Age</Text>
+                <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" />
+             </View>
+             <View style={{ flex: 2 }}>
+                <Text style={styles.label}>Location</Text>
+                <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="City, Country" placeholderTextColor="#666" />
+             </View>
+          </View>
+
+          <Text style={styles.label}>Languages</Text>
+          <TextInput style={styles.input} value={languages} onChangeText={setLanguages} placeholder="E.g. English, Malayalam" placeholderTextColor="#666" />
+
+          {user?.isHost && (
+            <View style={styles.hostSettings}>
+               <View style={styles.switchRow}>
+                  <View>
+                     <Text style={styles.label}>VIP Only Calls</Text>
+                     <Text style={styles.hint}>Only VIP users can call you</Text>
+                  </View>
+                  <TouchableOpacity 
+                     style={[styles.toggle, isVipOnly && { backgroundColor: COLORS.primary }]} 
+                     onPress={() => setIsVipOnly(!isVipOnly)}
+                  >
+                     <View style={[styles.thumb, isVipOnly && { transform: [{ translateX: 20 }] }]} />
+                  </TouchableOpacity>
+               </View>
+
+               <Text style={styles.label}>Call Rate (Coins/Min)</Text>
+               <TextInput style={styles.input} value={callRate} onChangeText={setCallRate} keyboardType="numeric" />
+            </View>
+          )}
+
+          <ZoraButton title="Update Changes" onPress={handleUpdate} loading={loading} style={{ marginTop: 20, marginBottom: 40 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
