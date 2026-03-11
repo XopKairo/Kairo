@@ -22,7 +22,7 @@ const HostOTPScreen = ({ route, navigation }) => {
   
   const [otp, setOtp] = useState(['', '', '', '', '', '']); 
   const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(30);
   const inputRefs = useRef([]);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
 
@@ -46,7 +46,7 @@ const HostOTPScreen = ({ route, navigation }) => {
     try {
       const newConfirmation = await auth().signInWithPhoneNumber(mobileNumber);
       navigation.setParams({ confirmation: newConfirmation });
-      setTimer(60);
+      setTimer(30);
       showAlert('Success', 'New OTP sent!', 'success');
     } catch(err) {
       showAlert('Error', 'Failed to resend OTP. Try again later.');

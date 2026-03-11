@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Public Environment Variable for Expo
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com/api';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com/api/';
 export const BASE_URL = API_URL.replace(/\/api$/, '');
 
 const API = axios.create({
@@ -61,7 +61,7 @@ API.interceptors.response.use(
 // Compatibility logic for older calls
 export const loginUser = async (contact, otpToken) => {
   try {
-    const response = await API.post('/user/auth/login', { contact, otp_verified_token: otpToken });
+    const response = await API.post('user/auth/login', { contact, otp_verified_token: otpToken });
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -74,34 +74,45 @@ export const loginUser = async (contact, otpToken) => {
 
 export const registerUser = async (name, contact, _, otpToken, additionalData = {}) => {
   try {
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('otp_verified_token', otpToken);
-    formData.append('phone', contact);
+    const isMultipart = !!additionalData.profilePicture;
+    let payload;
+    let headers = {};
 
-    // Append additional data
-    Object.keys(additionalData).forEach(key => {
-      if (key === 'profilePicture' && additionalData[key]) {
-        const uri = additionalData[key];
+    if (isMultipart) {
+      payload = new FormData();
+      payload.append('name', name);
+      payload.append('otp_verified_token', otpToken);
+      payload.append('phone', contact); // phone field name in backend
+      payload.append('gender', additionalData.gender || '');
+      payload.append('dob', additionalData.dob || '');
+      payload.append('state', additionalData.state || '');
+      payload.append('district', additionalData.district || '');
+      payload.append('languages', JSON.stringify(additionalData.languages || []));
+
+      if (additionalData.profilePicture) {
+        const uri = additionalData.profilePicture;
         const filename = uri.split('/').pop();
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : `image`;
         
-        formData.append('profilePicture', {
+        payload.append('profilePicture', {
           uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
           name: filename,
           type
         });
-      } else if (Array.isArray(additionalData[key])) {
-        formData.append(key, JSON.stringify(additionalData[key]));
-      } else if (additionalData[key]) {
-        formData.append(key, additionalData[key]);
       }
-    });
+      headers = { 'Content-Type': 'multipart/form-data' };
+    } else {
+      payload = {
+        name,
+        phone: contact,
+        otp_verified_token: otpToken,
+        ...additionalData
+      };
+    }
 
-    const response = await API.post('/user/auth/register', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const registrationUrl = 'https://kairo-b1i9.onrender.com/api/user/auth/register';
+    const response = await API.post(registrationUrl, payload, { headers });
 
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
@@ -127,7 +138,7 @@ export const updateUserProfile = async (userId, data) => {
 
 export const sendOtp = async (contact) => {
   try {
-    const response = await API.post('/user/auth/send-otp', { contact });
+    const response = await API.post('user/auth/send-otp', { contact });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

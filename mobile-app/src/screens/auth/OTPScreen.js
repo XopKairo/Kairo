@@ -23,7 +23,7 @@ const OTPScreen = ({ route, navigation }) => {
   
   const [otp, setOtp] = useState(['', '', '', '', '', '']); // Firebase uses 6 digits
   const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(30);
   const inputRefs = useRef([]);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
 
@@ -48,7 +48,7 @@ const OTPScreen = ({ route, navigation }) => {
       // Re-trigger Firebase SMS
       const newConfirmation = await auth().signInWithPhoneNumber(mobileNumber);
       navigation.setParams({ confirmation: newConfirmation });
-      setTimer(60);
+      setTimer(30);
       showAlert("Success", "New OTP sent!", "success");
     } catch(err) {
       showAlert("Error", "Failed to resend OTP. Try again later.");

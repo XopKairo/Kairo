@@ -1,0 +1,21 @@
+env: load .env
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_ZEGO_APP_ID EXPO_PUBLIC_ZEGO_APP_SIGN
+Starting project at /data/data/com.termux/files/home/kairo/mobile-app
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Android Bundled 3967ms index.js (3561 modules)
+ INFO  
+[7m [1m💡 JavaScript logs will be removed from Metro in React Native 0.77![22m Please use React Native DevTools as your default tool. Tip: Type [1mj[22m in the terminal to open (requires Google Chrome or Microsoft Edge).[27m
+ WARN  Splash UI setup failed: [Error: Call to function 'ExpoNavigationBar.setVisibilityAsync' has been rejected.
+→ Caused by: The current activity is no longer available]
+ WARN  Android UI initialisation failed: [Error: Call to function 'ExpoNavigationBar.setVisibilityAsync' has been rejected.
+→ Caused by: The current activity is no longer available]
+ WARN  This method is deprecated (as well as all React Native Firebase namespaced API) and will be removed in the next major release as part of move to match Firebase Web modular SDK API. Please see migration guide for more details: https://rnfirebase.io/migrating-to-v22 Please use `getApp()` instead.
+ WARN  This method is deprecated (as well as all React Native Firebase namespaced API) and will be removed in the next major release as part of move to match Firebase Web modular SDK API. Please see migration guide for more details: https://rnfirebase.io/migrating-to-v22. Method called was `signInWithPhoneNumber`. Please use `signInWithPhoneNumber()` instead.
+ LOG  Firebase Auth Error: [auth/billing-not] An internal error has occurred. [ BILLING_NOT_ENABLED ]
+ WARN  [expo-image-picker] `ImagePicker.MediaTypeOptions` have been deprecated. Use `ImagePicker.MediaType` or an array of `ImagePicker.MediaType` instead.
+Android Bundled 367ms index.js (1 module)
+ INFO  
+[7m [1m💡 JavaScript logs will be removed from Metro in React Native 0.77![22m Please use React Native DevTools as your default tool. Tip: Type [1mj[22m in the terminal to open (requires Google Chrome or Microsoft Edge).[27m

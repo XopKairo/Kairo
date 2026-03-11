@@ -167,8 +167,11 @@ const UserRegisterScreen = ({ route, navigation }) => {
         
         if (response.success) {
            navigation.replace('Welcome');
+        } else {
+           showAlert('Registration Failed', response.message || 'Check your details and try again');
         }
     } catch (error) {
+      console.log("Registration Error:", error);
       showAlert('Registration Failed', error.message || 'Check your details and try again');
     } finally {
       setLoading(false);
