@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Public Environment Variable for Expo
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com/api/';
-export const BASE_URL = API_URL.replace(/\/api$/, '');
+export const API_URL = 'https://kairo-b1i9.onrender.com/api';
+export const BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const API = axios.create({
   baseURL: API_URL,
@@ -61,7 +61,7 @@ API.interceptors.response.use(
 // Compatibility logic for older calls
 export const loginUser = async (contact, otpToken) => {
   try {
-    const response = await API.post('user/auth/login', { contact, otp_verified_token: otpToken });
+    const response = await API.post(`${API_URL}/user/auth/login`, { contact, otp_verified_token: otpToken });
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -111,8 +111,7 @@ export const registerUser = async (name, contact, _, otpToken, additionalData = 
       };
     }
 
-    const registrationUrl = 'https://kairo-b1i9.onrender.com/api/user/auth/register';
-    const response = await API.post(registrationUrl, payload, { headers });
+    const response = await API.post(`${API_URL}/user/auth/register`, payload, { headers });
 
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
@@ -126,7 +125,7 @@ export const registerUser = async (name, contact, _, otpToken, additionalData = 
 
 export const updateUserProfile = async (userId, data) => {
   try {
-    const response = await API.put(`/users/${userId}/profile`, data);
+    const response = await API.put(`${API_URL}/users/${userId}/profile`, data);
     if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
@@ -138,7 +137,7 @@ export const updateUserProfile = async (userId, data) => {
 
 export const sendOtp = async (contact) => {
   try {
-    const response = await API.post('user/auth/send-otp', { contact });
+    const response = await API.post(`${API_URL}/user/auth/send-otp`, { contact });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -147,7 +146,7 @@ export const sendOtp = async (contact) => {
 
 export const verifyOtp = async (contact, otp) => {
   try {
-    const response = await API.post('/user/auth/verify-otp', { contact, otp });
+    const response = await API.post(`${API_URL}/user/auth/verify-otp`, { contact, otp });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -161,7 +160,7 @@ export const logoutUser = async () => {
 
 export const getAppSettings = async () => {
   try {
-    const response = await API.get('/settings');
+    const response = await API.get(`${API_URL}/settings`);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
