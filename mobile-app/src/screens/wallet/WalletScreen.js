@@ -29,11 +29,11 @@ const WalletScreen = ({ navigation }) => {
       const userDataStr = await AsyncStorage.getItem('userData');
       if (userDataStr) {
         const u = JSON.parse(userDataStr);
-        const res = await api.get(`/user/${u.id || u._id}`);
+        const res = await api.get(`users/${u.id || u._id}`);
         setUser(res.data);
       }
       
-      const pkgRes = await api.get('/user/payments/packages');
+      const pkgRes = await api.get('user/payments/packages');
       setPackages(pkgRes.data || []);
     } catch (err) {
       console.log('Error fetching wallet data', err);

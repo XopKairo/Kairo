@@ -43,7 +43,8 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-        const formattedContact = `+91${mobileNumber}`;
+        const cleanNumber = mobileNumber.replace(/\s+/g, '');
+        const formattedContact = `+91${cleanNumber}`;
         let confirmation = null;
         try {
             // Firebase Phone Auth
