@@ -7,10 +7,19 @@ import logger from "../utils/logger.js";
 
 export const seedAdmin = async () => {
   try {
+    // Drop legacy user indexes
     try {
       const User = mongoose.model("User");
       await User.collection.dropIndex("email_1");
-      logger.info("✅ Legacy email index dropped successfully");
+      logger.info("✅ Legacy user email index dropped");
+    } catch (e) {}
+
+    // Drop legacy transaction indexes
+    try {
+      const Transaction = mongoose.model("Transaction");
+      await Transaction.collection.dropIndex("razorpayOrderId_1");
+      await Transaction.collection.dropIndex("cashfreeOrderId_1");
+      logger.info("✅ Legacy transaction indexes dropped");
     } catch (e) {}
 
     const adminEmail = process.env.ADMIN_EMAIL;
