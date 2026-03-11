@@ -6,12 +6,11 @@ import { initRewardedAd, showRewardedAd } from '../../services/adService';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
-import { Wallet, Play, ArrowUpRight, History, Info } from 'lucide-react-native';
+import { Wallet, Play, ArrowUpRight, History, Info, Tag, CheckCircle2 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import RazorpayCheckout from 'react-native-razorpay';
 
 const COIN_TO_INR_RATE = 0.1;
-
-import RazorpayCheckout from 'react-native-razorpay';
-import { Tag, CheckCircle2 } from 'lucide-react-native';
 
 const WalletScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -49,7 +48,7 @@ const WalletScreen = ({ navigation }) => {
     try {
       const res = await api.post('https://kairo-b1i9.onrender.com/api/user/payments/validate-coupon', {
         code: couponCode,
-        amount: 100 // placeholder amount for validation
+        amount: 100 
       });
       if (res.data.success) {
         setAppliedCoupon(res.data);
@@ -64,8 +63,8 @@ const WalletScreen = ({ navigation }) => {
     const finalPrice = appliedCoupon ? Math.max(pkg.priceINR - appliedCoupon.discount, 1) : pkg.priceINR;
     
     Alert.alert(
-      'Confirm Purchase',
-      `Buy ${pkg.coins} coins for ₹${finalPrice}?`,
+      'Payment Method',
+      `Buy ${pkg.coins} coins for ₹${finalPrice}. Choose your preferred payment method:`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -82,7 +81,7 @@ const WalletScreen = ({ navigation }) => {
                 description: `Purchase ${pkg.coins} Coins`,
                 image: 'https://i.imgur.com/3g7nmJC.png',
                 currency: 'INR',
-                key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID, 
+                key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder', 
                 amount: res.data.order.amount,
                 name: 'ZORA App',
                 order_id: res.data.order.id,
@@ -110,6 +109,29 @@ const WalletScreen = ({ navigation }) => {
               setLoading(false);
             }
           }
+        },
+        {
+          text: 'Pay with Cashfree',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const res = await api.post('https://kairo-b1i9.onrender.com/api/user/payments/create-order', {
+                amount: finalPrice,
+                currency: 'INR'
+              });
+              
+              if (res.data.paymentLink) {
+                Linking.openURL(res.data.paymentLink);
+                Alert.alert('Payment Link Sent', 'Check your browser to complete payment.', [
+                  { text: 'Refresh Wallet', onPress: () => fetchUserData() }
+                ]);
+              }
+            } catch (err) {
+              Alert.alert('Cashfree Error', err.response?.data?.message || 'Failed to start Cashfree');
+            } finally {
+              setLoading(false);
+            }
+          }
         }
       ]
     );
@@ -119,12 +141,12 @@ const WalletScreen = ({ navigation }) => {
     const amountNum = Number(withdrawAmount);
     if (amountNum * COIN_TO_INR_RATE < 500) return Alert.alert('Error', 'Min withdrawal is ₹500 (5000 Coins).');
     if (!upiId) return Alert.alert('Error', 'Enter UPI ID');
-    if (user.coins < amountNum) return Alert.alert('Error', 'Insufficient balance');
+    if (user?.coins < amountNum) return Alert.alert('Error', 'Insufficient balance');
 
     setLoading(true);
     try {
       const res = await api.post('https://kairo-b1i9.onrender.com/api/wallet/withdraw', {
-        userId: user._id || user.id,
+        userId: user?._id || user?.id,
         amountCoins: amountNum,
         paymentDetails: `UPI: ${upiId}`,
         clientRequestId: `req_${Date.now()}`
@@ -171,13 +193,12 @@ const WalletScreen = ({ navigation }) => {
           {adLoading ? <ActivityIndicator color={COLORS.accentGlow} /> : <ArrowUpRight color={COLORS.accentGlow} size={24} />}
         </TouchableOpacity>
 
-        {/* Coupon Section */}
         <View style={styles.couponSection}>
            <Text style={styles.sectionTitle}>Apply Coupon</Text>
            <View style={styles.couponInputRow}>
               <View style={{ flex: 1 }}>
                 <ZoraInput 
-                  placeholder="Enter Code (e.g. ZORA50)" 
+                  placeholder="Enter Code" 
                   value={couponCode} 
                   onChangeText={setCouponCode}
                   autoCapitalize="characters"
@@ -190,12 +211,8 @@ const WalletScreen = ({ navigation }) => {
                 {appliedCoupon ? <CheckCircle2 color="#FFF" size={20} /> : <Text style={styles.applyBtnText}>Apply</Text>}
               </TouchableOpacity>
            </View>
-           {appliedCoupon && (
-             <Text style={styles.couponHint}>Coupon applied! Discount: ₹{appliedCoupon.discount}</Text>
-           )}
         </View>
 
-        {/* Coin Store */}
         <View style={styles.storeSection}>
            <Text style={styles.sectionTitle}>Coin Store</Text>
            <View style={styles.packageGrid}>
@@ -236,12 +253,6 @@ const WalletScreen = ({ navigation }) => {
                value={upiId} 
                onChangeText={setUpiId} 
              />
-             
-             <View style={styles.calcBox}>
-                <Text style={styles.calcLabel}>You will receive:</Text>
-                <Text style={styles.calcValue}>₹{(Number(withdrawAmount) * COIN_TO_INR_RATE).toFixed(2)}</Text>
-             </View>
-
              <ZoraButton 
                title="Request Withdrawal" 
                onPress={handleWithdraw} 
@@ -253,14 +264,11 @@ const WalletScreen = ({ navigation }) => {
         <View style={styles.rules}>
            <Text style={styles.ruleTitle}>Rules & Limits</Text>
            <View style={styles.ruleItem}><Info size={14} color={COLORS.textGray} /><Text style={styles.ruleText}>Min withdrawal: ₹500 (5000 Coins)</Text></View>
-           <View style={styles.ruleItem}><Info size={14} color={COLORS.textGray} /><Text style={styles.ruleText}>Daily Limit: ₹2000</Text></View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.backgroundDark },
@@ -282,7 +290,6 @@ const styles = StyleSheet.create({
   applyBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 20, height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   appliedBtn: { backgroundColor: COLORS.success },
   applyBtnText: { color: '#FFF', fontWeight: 'bold' },
-  couponHint: { color: COLORS.success, fontSize: 12, marginTop: 10, fontWeight: '600' },
   storeSection: { marginBottom: 30 },
   packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   packageCard: { width: '30%', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)', position: 'relative' },
@@ -294,11 +301,6 @@ const styles = StyleSheet.create({
   pkgPrice: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
   withdrawSection: { backgroundColor: COLORS.cardBackground, padding: 25, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
   sectionTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '800', marginBottom: 20 },
-  calcBox: { flexDirection: 'row', justifyContent: 'space-between', padding: 15, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 15, marginBottom: 20 },
-  calcLabel: { color: COLORS.textGray, fontSize: 14 },
-  calcValue: { color: COLORS.success, fontSize: 18, fontWeight: 'bold' },
-  warningBox: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 15, justifyContent: 'center' },
-  warningText: { color: COLORS.error, fontSize: 12, fontWeight: '600' },
   rules: { marginTop: 30, paddingBottom: 50 },
   ruleTitle: { color: COLORS.textWhite, fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
   ruleItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
