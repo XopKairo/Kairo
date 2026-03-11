@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
       "userId",
       "name phone nickname isVerified",
     );
-    res.json(requests);
+    console.log("Found requests:", requests.length); res.json(requests);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
