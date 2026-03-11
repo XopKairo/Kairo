@@ -19,12 +19,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import api, { BASE_URL } from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import HostCard from '../../components/HostCard';
+import Swiper from 'react-native-deck-swiper';
+import SwipeCard from '../../components/SwipeCard';
 
 const { width, height } = Dimensions.get('window');
-
-import Swiper from 'react-native-deck-swiper';
-import LottieView from 'lottie-react-native';
-import SwipeCard from '../../components/SwipeCard';
 
 const HomeScreen = ({ navigation }) => {
   const [banners, setBanners] = useState([]);
@@ -33,21 +31,12 @@ const HomeScreen = ({ navigation }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [appSettings, setAppSettings] = useState({ callRate: 30 });
   const [activeTab, setActiveTab] = useState('For You');
-  const [isSearching, setIsSearching] = useState(false);
 
   const tabs = ['Follow', 'Nearby', 'New', 'For You'];
 
   useFocusEffect(
     useCallback(() => {
-      if (activeTab === 'Nearby') {
-        setIsSearching(true);
-        setTimeout(() => {
-          fetchData();
-          setIsSearching(false);
-        }, 3000);
-      } else {
-        fetchData();
-      }
+      fetchData();
     }, [activeTab])
   );
 
@@ -68,9 +57,9 @@ const HomeScreen = ({ navigation }) => {
       }
 
       const [bannerRes, hostRes, settingsRes] = await Promise.all([
-        api.get('/admin/banners').catch(() => ({ data: [] })), 
-        api.get('/hosts', { params: { targetGender, tabFilter: activeTab, userId: user?.id || user?._id } }).catch(() => ({ data: [] })),
-        api.get('/settings').catch(() => ({ data: { callRate: 30 } }))
+        api.get('admin/banners').catch(() => ({ data: [] })), 
+        api.get('hosts', { params: { targetGender, tabFilter: activeTab, userId: user?.id || user?._id } }).catch(() => ({ data: [] })),
+        api.get('settings').catch(() => ({ data: { callRate: 30 } }))
       ]);
       
       setBanners(bannerRes.data || []);
@@ -82,8 +71,15 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const handleInteraction = async (hostId, action) => {
+    try {
+      await api.post('hosts/interaction', { hostId, action });
+    } catch (e) {}
+  };
+
   const handleCall = (host) => {
     if (!currentUser) return;
+    handleInteraction(host._id, 'like');
     navigation.navigate('VideoCall', {
       userId: currentUser.id || currentUser._id,
       userName: currentUser.name || 'User',
@@ -95,7 +91,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const handleChat = (host) => {
-    navigation.navigate('Chat', { userId: host._id, name: host.name });
+    navigation.navigate('Chat', { recipient: host });
   };
 
   return (
@@ -123,80 +119,56 @@ const HomeScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Nearby Searching Animation */}
-      {activeTab === 'Nearby' && isSearching ? (
-        <View style={styles.searchingContainer}>
-          <LottieView 
-            source={{ uri: 'https://assets9.lottiefiles.com/packages/lf20_m9ubts9m.json' }} 
-            autoPlay 
-            loop 
-            style={styles.lottie} 
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
+        
+        {activeTab !== 'For You' && banners.length > 0 && (
+          <FlatList
+            data={banners}
+            renderItem={({ item }) => (
+              <View style={styles.bannerContainer}>
+                <Image source={{ uri: item.imageUrl.startsWith('http') ? item.imageUrl : `${BASE_URL}/${item.imageUrl}` }} style={styles.bannerImage} resizeMode="cover" />
+              </View>
+            )}
+            keyExtractor={item => item._id || item.id}
+            horizontal pagingEnabled showsHorizontalScrollIndicator={false}
+            style={styles.bannerList}
           />
-          <Text style={styles.searchingText}>Finding users near you...</Text>
+        )}
+
+        <View style={styles.tabsContainer}>
+           {tabs.map((tab) => (
+             <TouchableOpacity key={tab} style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]} onPress={() => setActiveTab(tab)}>
+               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+             </TouchableOpacity>
+           ))}
         </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
-          
-          {/* Banners (Hidden in Swipe mode to save space) */}
-          {activeTab !== 'For You' && banners.length > 0 && (
-            <FlatList
-              data={banners}
-              renderItem={({ item }) => (
-                <View style={styles.bannerContainer}>
-                  <Image source={{ uri: item.imageUrl.startsWith('http') ? item.imageUrl : `${BASE_URL}/${item.imageUrl}` }} style={styles.bannerImage} resizeMode="cover" />
-                </View>
-              )}
-              keyExtractor={item => item._id || item.id}
-              horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-              style={styles.bannerList}
+
+        {activeTab === 'For You' && hosts.length > 0 ? (
+          <View style={styles.swiperContainer}>
+            <Swiper
+              cards={hosts}
+              renderCard={(card) => <SwipeCard item={card} onCall={() => handleCall(card)} onChat={() => handleChat(card)} />}
+              onSwipedLeft={(idx) => handleInteraction(hosts[idx]._id, 'pass')}
+              onSwipedRight={(idx) => handleInteraction(hosts[idx]._id, 'like')}
+              cardIndex={0}
+              backgroundColor={'transparent'}
+              stackSize={3}
+              infinite
+              verticalSwipe={false}
             />
-          )}
-
-          {/* Top Tabs */}
-          <View style={styles.tabsContainer}>
-             {tabs.map((tab) => (
-               <TouchableOpacity key={tab} style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]} onPress={() => setActiveTab(tab)}>
-                 <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
-               </TouchableOpacity>
-             ))}
           </View>
-
-          {/* Swipe UI for "For You" */}
-          {activeTab === 'For You' && hosts.length > 0 ? (
-            <View style={styles.swiperContainer}>
-              <Swiper
-                cards={hosts}
-                renderCard={(card) => <SwipeCard item={card} onCall={() => handleCall(card)} onChat={() => handleChat(card)} />}
-                onSwipedLeft={(idx) => console.log('Passed', hosts[idx].name)}
-                onSwipedRight={(idx) => console.log('Liked', hosts[idx].name)}
-                onSwipedTop={(idx) => handleCall(hosts[idx])}
-                onSwipedBottom={(idx) => console.log('Down', hosts[idx].name)}
-                cardIndex={0}
-                backgroundColor={'transparent'}
-                stackSize={3}
-                infinite
-                verticalSwipe={true}
-                overlayLabels={{
-                  left: { title: 'PASS', style: { label: { color: 'red', borderColor: 'red', borderWidth: 2, fontSize: 32 }, wrapper: { alignItems: 'flex-end', justifyContent: 'flex-start', marginTop: 30, marginLeft: -30 } } },
-                  right: { title: 'LIKE', style: { label: { color: 'green', borderColor: 'green', borderWidth: 2, fontSize: 32 }, wrapper: { alignItems: 'flex-start', justifyContent: 'flex-start', marginTop: 30, marginLeft: 30 } } },
-                  top: { title: 'CALLING...', style: { label: { color: COLORS.primary, borderColor: COLORS.primary, borderWidth: 2, fontSize: 32 }, wrapper: { alignItems: 'center', justifyContent: 'center' } } }
-                }}
-              />
-            </View>
-          ) : (
-            /* Standard Grid for other tabs */
-            <View style={{ minHeight: 400, marginTop: 10 }}>
-              {loading ? (
-                 <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 50 }} />
-              ) : hosts.length > 0 ? (
-                <FlashList data={hosts} renderItem={({ item }) => <HostCard item={item} currentUser={currentUser} navigation={navigation} />} keyExtractor={item => item._id} numColumns={2} estimatedItemSize={200} scrollEnabled={false} />
-              ) : (
-                <View style={styles.emptyContainer}><Text style={styles.emptyText}>No users found.</Text></View>
-              )}
-            </View>
-          )}
-        </ScrollView>
-      )}
+        ) : (
+          <View style={{ minHeight: 400, marginTop: 10 }}>
+            {loading ? (
+               <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 50 }} />
+            ) : hosts.length > 0 ? (
+              <FlashList data={hosts} renderItem={({ item }) => <HostCard item={item} currentUser={currentUser} navigation={navigation} />} keyExtractor={item => item._id} numColumns={2} estimatedItemSize={200} scrollEnabled={false} />
+            ) : (
+              <View style={styles.emptyContainer}><Text style={styles.emptyText}>No users found in your area.</Text></View>
+            )}
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -221,9 +193,6 @@ const styles = StyleSheet.create({
   tabText: { color: COLORS.textGray, fontSize: 13, fontWeight: '600' },
   tabTextActive: { color: COLORS.primary, fontWeight: '800' },
   swiperContainer: { flex: 1, height: height * 0.75, marginTop: 10 },
-  searchingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  lottie: { width: 200, height: 200 },
-  searchingText: { color: COLORS.textWhite, marginTop: 20, fontSize: 16, fontWeight: '600' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 60 },
   emptyText: { color: COLORS.textGray, fontSize: 15 }
 });

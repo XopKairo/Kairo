@@ -2,47 +2,43 @@ import express from "express";
 const router = express.Router();
 import Host from "../models/Host.js";
 import User from "../models/User.js";
+import { protectUser } from "../middleware/authMiddleware.js";
 
-// GET all hosts (Admin and App)
+// GET all hosts with real filtering (Nearby, Gender, Tab-based)
 router.get("/", async (req, res) => {
   try {
-    const hosts = await Host.find({ isVerified: true }).sort({ isBoosted: -1, rankingScore: -1, createdAt: -1 });
+    const { targetGender, tabFilter, userId } = req.query;
+    let query = { isVerified: true };
+
+    if (targetGender) query.gender = targetGender;
+
+    // 1. Real Nearby Logic: Filter by User District
+    if (tabFilter === "Nearby" && userId) {
+      const user = await User.findById(userId);
+      if (user && user.district) {
+        query.district = user.district; 
+      }
+    }
+
+    // 2. Tab Specific Sorting
+    let sort = { isBoosted: -1, rankingScore: -1, createdAt: -1 };
+    if (tabFilter === "New") sort = { createdAt: -1 };
+
+    const hosts = await Host.find(query).sort(sort).limit(50);
     res.json(hosts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// POST to verify/unverify host (Admin)
-router.post("/:id/verify", async (req, res) => {
+// POST Interaction (Like/Pass) to update Ranking Score
+router.post("/interaction", protectUser, async (req, res) => {
   try {
-    const { isVerified } = req.body;
-    const hostId = req.params.id;
+    const { hostId, action } = req.body; // action: "like" or "pass"
+    const increment = action === "like" ? 5 : -1;
 
-    const host = await Host.findById(hostId);
-    if (!host) return res.status(404).json({ message: "Host record not found" });
-
-    if (isVerified) {
-      // Already handled during verification approval usually, but here for direct toggle
-      await Host.findByIdAndUpdate(hostId, { isVerified: true });
-      await User.findOneAndUpdate({ phone: host.phone }, { isHost: true, isVerified: true });
-    } else {
-      // UNVERIFY: Revert to normal user
-      await User.findOneAndUpdate({ phone: host.phone }, { isHost: false, isVerified: false });
-      await Host.findByIdAndDelete(hostId);
-    }
-
-    res.json({ success: true, message: isVerified ? "Host verified" : "Host unverified and reverted to normal user" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// PUT update host details
-router.put("/:id", async (req, res) => {
-  try {
-    const host = await Host.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json({ success: true, host });
+    await Host.findByIdAndUpdate(hostId, { $inc: { rankingScore: increment } });
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

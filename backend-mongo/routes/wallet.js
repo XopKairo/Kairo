@@ -1,15 +1,39 @@
 import express from "express";
-import walletController from "../controllers/walletController.js";
-
 const router = express.Router();
+import { protectUser } from "../middleware/authMiddleware.js";
+import User from "../models/User.js";
+import Settings from "../models/Settings.js";
 
-// Route to request withdrawal (User/Host)
-router.post("/withdraw", walletController.withdraw);
+// Secure Ad Reward Sync
+router.post("/ad-reward", protectUser, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id;
+    const settings = await Settings.findOne() || { rewardPerAd: 5, dailyLimit: 10 };
 
-// Route to earn coins via Ads
-router.post("/earn-ad", walletController.earnAd);
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-// GET active coin packages for store
-router.get("/coin-packages", walletController.getCoinPackages);
+    // Check daily limit
+    const today = new Date().setHours(0, 0, 0, 0);
+    const lastAdDate = user.lastAdWatchedAt ? new Date(user.lastAdWatchedAt).setHours(0, 0, 0, 0) : 0;
+
+    if (today > lastAdDate) {
+      user.dailyAdsWatched = 0;
+    }
+
+    if (user.dailyAdsWatched >= settings.dailyLimit) {
+      return res.status(400).json({ success: false, message: "Daily ad limit reached" });
+    }
+
+    user.coins += settings.rewardPerAd;
+    user.dailyAdsWatched += 1;
+    user.lastAdWatchedAt = new Date();
+    await user.save();
+
+    res.json({ success: true, newBalance: user.coins, message: `Rewarded ${settings.rewardPerAd} coins` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 export default router;

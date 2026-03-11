@@ -1,55 +1,44 @@
-import { RewardedAd, RewardedAdEventType, AdEventType, TestIds } from 'react-native-google-mobile-ads';
-import { getAppSettings } from './api';
+import mobileAds, { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
+import api from './api';
 
-let rewardedAd = null;
+const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy';
 
-export const initRewardedAd = async (onAdDismissed, onRewardEarned) => {
-  try {
-    const settings = await getAppSettings().catch(() => ({}));
-    // Use test ID if no ID is provided in settings
-    const adUnitId = settings.adMobId || TestIds.REWARDED;
+const rewarded = RewardedAd.createForAdRequest(adUnitId, {
+  keywords: ['fashion', 'gaming'],
+});
 
-    rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
-      requestNonPersonalizedAdsOnly: true,
-    });
+export const initRewardedAd = (onEarnReward) => {
+  const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+    // Ad loaded
+  });
 
-    const unsubscribeLoaded = rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      console.log('Ad Loaded');
-    });
+  const unsubscribeEarned = rewarded.addAdEventListener(
+    RewardedAdEventType.EARNED_REWARD,
+    async (reward) => {
+      try {
+        // SECURE SYNC: Notify backend to add coins after ad completion
+        const response = await api.post('wallet/ad-reward');
+        if (response.data.success) {
+          onEarnReward(response.data.newBalance);
+        }
+      } catch (error) {
+        console.error('Failed to sync ad reward:', error.message);
+      }
+    },
+  );
 
-    const unsubscribeEarned = rewardedAd.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      _reward => {
-        const rewardAmount = settings.rewardPerAd || 5;
-        if (onRewardEarned) onRewardEarned(rewardAmount);
-      },
-    );
+  rewarded.load();
 
-    const unsubscribeClosed = rewardedAd.addAdEventListener(
-      AdEventType.CLOSED,
-      () => {
-        if (onAdDismissed) onAdDismissed();
-        rewardedAd.load(); // Load next
-      },
-    );
-
-    rewardedAd.load();
-
-    return () => {
-      unsubscribeLoaded();
-      unsubscribeEarned();
-      unsubscribeClosed();
-    };
-  } catch (error) {
-    console.error('Ad Init Error:', error);
-    return () => {};
-  }
+  return () => {
+    unsubscribeLoaded();
+    unsubscribeEarned();
+  };
 };
 
 export const showRewardedAd = () => {
-  if (rewardedAd && rewardedAd.loaded) {
-    rewardedAd.show();
+  if (rewarded.loaded) {
+    rewarded.show();
   } else {
-    if (rewardedAd) rewardedAd.load();
+    rewarded.load();
   }
 };

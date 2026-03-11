@@ -223,7 +223,7 @@ const WalletScreen = ({ navigation }) => {
 
         <TouchableOpacity 
           style={styles.adCard} 
-          onPress={() => { setAdLoading(true); showRewardedAd(); }}
+          onPress={() => { setAdLoading(true); initRewardedAd((newBalance) => { setUser(prev => ({...prev, coins: newBalance})); setAdLoading(false); }); showRewardedAd(); }}
           disabled={adLoading}
         >
           <View style={styles.adLeft}>
