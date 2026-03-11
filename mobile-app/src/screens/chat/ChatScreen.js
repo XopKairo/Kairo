@@ -25,8 +25,6 @@ const ChatScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     if (!recipient) {
-       // If no recipient, this might be the main chat tab
-       // We should ideally show a list of conversations here
        return;
     }
     fetchMessages();
@@ -67,12 +65,10 @@ const ChatScreen = ({ route, navigation }) => {
       conversationId: initialConvId,
     };
 
-    // Emit via Socket for instant delivery
     if (socketService.socket) {
       socketService.socket.emit('privateMessage', messageData);
     }
 
-    // Save to DB via REST
     try {
       await api.post(`/chat/send`, messageData);
       setMessages(prev => [...prev, { ...messageData, sender: user.id, createdAt: new Date() }]);
@@ -133,7 +129,7 @@ const ChatScreen = ({ route, navigation }) => {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={90}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.inputContainer}>
           <TextInput
