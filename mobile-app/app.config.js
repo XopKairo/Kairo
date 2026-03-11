@@ -44,7 +44,9 @@ export default {
         "MODIFY_AUDIO_SETTINGS",
         "ACCESS_NETWORK_STATE",
         "ACCESS_WIFI_STATE",
-        "INTERNET"
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e",
