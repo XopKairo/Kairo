@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await apiClient.get('/auth/admin/me');
+          const response = await apiClient.get('/admin/auth/me');
           if (isMounted) {
             setUser(response.data.user);
           }
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (credentials: Record<string, string>) => {
     try {
-      const response = await apiClient.post('/auth/admin/login', credentials);
+      const response = await apiClient.post('/admin/auth/login', credentials);
       const { accessToken, user } = response.data;
       
       localStorage.setItem('token', accessToken);
