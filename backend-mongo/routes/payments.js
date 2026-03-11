@@ -32,7 +32,7 @@ router.post("/validate-coupon", protectUser, async (req, res) => {
     const discount = Math.min((amount * coupon.discountPercentage) / 100, coupon.maxDiscountAmount);
     res.json({ success: true, discount, finalAmount: amount - discount });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Razorpay Order Error:", error); res.status(500).json({ success: false, message: error.message, detail: error });
   }
 });
 
@@ -62,7 +62,7 @@ router.post("/create-razorpay-order", protectUser, async (req, res) => {
 
     res.json({ success: true, order });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Razorpay Order Error:", error); res.status(500).json({ success: false, message: error.message, detail: error });
   }
 });
 
@@ -88,7 +88,7 @@ router.post("/verify-razorpay", protectUser, async (req, res) => {
     }
     res.status(404).json({ success: false, message: "Transaction not found" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Razorpay Order Error:", error); res.status(500).json({ success: false, message: error.message, detail: error });
   }
 });
 
@@ -141,7 +141,7 @@ router.post("/create-order", protectUser, async (req, res) => {
       paymentLink: cashfreeOrder.payment_link,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Razorpay Order Error:", error); res.status(500).json({ success: false, message: error.message, detail: error });
   }
 });
 
@@ -211,7 +211,7 @@ router.post("/verify", protectUser, async (req, res) => {
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Razorpay Order Error:", error); res.status(500).json({ success: false, message: error.message, detail: error });
   }
 });
 
