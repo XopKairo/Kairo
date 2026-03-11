@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, CheckCircle, Edit, Eye } from 'lucide-react';
+import { MoreHorizontal, CheckCircle, Edit, Eye, XCircle } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Host {
@@ -107,6 +107,7 @@ export default function Hosts() {
                     {activeMenu === rowId && (
                       <div className="absolute right-6 top-12 w-48 bg-white dark:bg-surface-800 border rounded-2xl shadow-xl z-50 p-2">
                         <button onClick={() => { setEditingHost(host); setEditForm({...host}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-gray-50 rounded-xl flex gap-2 text-sm"><Edit size={16}/> Edit Host</button>
+                        {host.isVerified && <button onClick={() => handleVerify(rowId, false)} className="w-full text-left p-3 hover:bg-orange-50 rounded-xl flex gap-2 text-sm text-orange-600"><XCircle size={16}/> Unverify Host</button>}
                         {!host.isVerified && <button onClick={() => handleVerify(rowId, true)} className="w-full text-left p-3 hover:bg-green-50 rounded-xl flex gap-2 text-sm text-green-600"><CheckCircle size={16}/> Approve</button>}
                       </div>
                     )}

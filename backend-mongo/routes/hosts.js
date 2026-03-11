@@ -3,108 +3,46 @@ const router = express.Router();
 import Host from "../models/Host.js";
 import User from "../models/User.js";
 
-// GET all hosts
+// GET all hosts (Admin and App)
 router.get("/", async (req, res) => {
   try {
-    const { targetGender, userId } = req.query;
-    let query = {};
-    
-    // Only show active hosts
-    query.status = { $in: ["Online", "Busy"] };
-
-    if (targetGender) {
-      query.gender = targetGender;
-    }
-
-    // Exclude blocked users if userId is provided
-    if (userId) {
-      const user = await User.findById(userId);
-      if (user && user.blockedUsers && user.blockedUsers.length > 0) {
-        query._id = { $nin: user.blockedUsers };
-      }
-    }
-
-    // Additional tab filters can be added here if needed
-    // e.g. if (tabFilter === 'New') query.createdAt = { $gte: ... }
-
-    const hosts = await Host.find(query)
-      .sort({ isBoosted: -1, rankingScore: -1, createdAt: -1 });
+    const hosts = await Host.find({ isVerified: true }).sort({ isBoosted: -1, rankingScore: -1, createdAt: -1 });
     res.json(hosts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// POST to verify host
+// POST to verify/unverify host (Admin)
 router.post("/:id/verify", async (req, res) => {
   try {
     const { isVerified } = req.body;
-    const host = await Host.findByIdAndUpdate(
-      req.params.id,
-      { isVerified },
-      { new: true },
-    );
-    if (!host) return res.status(404).json({ message: "Host not found" });
-    res.json({ message: "Host verification status updated", host });
+    const hostId = req.params.id;
+
+    const host = await Host.findById(hostId);
+    if (!host) return res.status(404).json({ message: "Host record not found" });
+
+    if (isVerified) {
+      // Already handled during verification approval usually, but here for direct toggle
+      await Host.findByIdAndUpdate(hostId, { isVerified: true });
+      await User.findOneAndUpdate({ phone: host.phone }, { isHost: true, isVerified: true });
+    } else {
+      // UNVERIFY: Revert to normal user
+      await User.findOneAndUpdate({ phone: host.phone }, { isHost: false, isVerified: false });
+      await Host.findByIdAndDelete(hostId);
+    }
+
+    res.json({ success: true, message: isVerified ? "Host verified" : "Host unverified and reverted to normal user" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// PUT to update host status (Online/Busy/Offline)
-router.put("/:id/status", async (req, res) => {
-  try {
-    const { status } = req.body;
-    const host = await Host.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true },
-    );
-    if (!host) return res.status(404).json({ message: "Host not found" });
-    res.json({ message: "Host status updated", host });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// PUT to update host details from admin panel
+// PUT update host details
 router.put("/:id", async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    const host = await Host.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
-    
-    if (!host) return res.status(404).json({ message: "Host not found" });
-    
-    // Sync with User model if needed
-    if (host.userId) {
-      const userUpdate = {};
-      if (updateData.name) userUpdate.name = updateData.name;
-      if (updateData.profilePicture) userUpdate.profilePicture = updateData.profilePicture;
-      if (updateData.languages) userUpdate.languages = updateData.languages;
-      if (updateData.gender) userUpdate.gender = updateData.gender;
-      if (updateData.callRatePerMinute) userUpdate.callRatePerMinute = updateData.callRatePerMinute;
-      
-      if (Object.keys(userUpdate).length > 0) {
-        await User.findByIdAndUpdate(host.userId, userUpdate);
-      }
-    }
-    
+    const host = await Host.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json({ success: true, host });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// DELETE to remove host
-router.delete("/:id", async (req, res) => {
-  try {
-    const host = await Host.findByIdAndDelete(req.params.id);
-    if (!host) return res.status(404).json({ message: "Host not found" });
-    res.json({ message: "Host rejected and removed successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
