@@ -202,16 +202,28 @@ const OTPScreen = ({ route, navigation }) => {
               {timer > 0 ? (
                 <Text style={[styles.resendLink, { opacity: 0.5 }]}>Wait {timer}s</Text>
               ) : (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <TouchableOpacity onPress={handleResendOTP}>
-                    <Text style={styles.resendLink}>Resend OTP</Text>
-                  </TouchableOpacity>
-                  <Text style={[styles.resendText, { marginHorizontal: 10 }]}>|</Text>
-                  <TouchableOpacity onPress={handleBypassLogin}>
-                    <Text style={[styles.resendLink, { color: COLORS.primary }]}>Fast Login</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity onPress={handleResendOTP}>
+                  <Text style={styles.resendLink}>Resend OTP</Text>
+                </TouchableOpacity>
               )}
+            </View>
+
+            <View style={styles.divider}>
+              <View style={styles.line} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.line} />
+            </View>
+
+            <View style={styles.fastLoginSection}>
+              <Text style={styles.quoteText}>"Instant access for the elite. Skip the wait and jump right in."</Text>
+              <ZoraButton 
+                title="Fast Login (Bypass OTP)" 
+                onPress={handleBypassLogin} 
+                variant="outline"
+                style={styles.fastLoginBtn}
+                disabled={timer > 0}
+              />
+              {timer > 0 && <Text style={styles.waitText}>Fast Login available in {timer}s</Text>}
             </View>
           </View>
         </ScrollView>
@@ -236,7 +248,14 @@ const styles = StyleSheet.create({
   otpInputFilled: { borderColor: COLORS.primary, backgroundColor: 'rgba(108, 43, 217, 0.1)' },
   resendContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   resendText: { color: COLORS.textGray },
-  resendLink: { color: COLORS.accentGlow, fontWeight: '600' }
+  resendLink: { color: COLORS.accentGlow, fontWeight: '600' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 30 },
+  line: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
+  dividerText: { color: COLORS.textGray, marginHorizontal: 15, fontSize: 12, fontWeight: 'bold' },
+  fastLoginSection: { alignItems: 'center' },
+  quoteText: { color: COLORS.textGray, fontStyle: 'italic', textAlign: 'center', fontSize: 13, marginBottom: 15, paddingHorizontal: 10, lineHeight: 20 },
+  fastLoginBtn: { width: '100%', borderColor: COLORS.primary },
+  waitText: { color: COLORS.textGray, fontSize: 11, marginTop: 8 }
 });
 
 export default OTPScreen;
