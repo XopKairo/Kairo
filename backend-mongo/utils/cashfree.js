@@ -2,7 +2,7 @@ import axios from "axios";
 
 const CASHFREE_APP_ID = process.env.CASHFREE_APP_ID;
 const CASHFREE_SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
-const CASHFREE_ENDPOINT = process.env.CASHFREE_ENDPOINT; // https://api.cashfree.com/pg
+const CASHFREE_ENDPOINT = process.env.CASHFREE_ENDPOINT.includes("api.cashfree.com") && !process.env.CASHFREE_ENDPOINT.includes("/pg") ? `${process.env.CASHFREE_ENDPOINT}/pg` : process.env.CASHFREE_ENDPOINT; // https://api.cashfree.com/pg
 
 export const createCashfreeOrder = async (orderData) => {
   try {
