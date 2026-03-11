@@ -85,34 +85,36 @@ const OTPScreen = ({ route, navigation }) => {
   const handleBypassLogin = async () => {
     setLoading(true);
     try {
-      // Mocked Backend verification for bypass
-      // Normally here you would send a special flag or the backend would accept a master OTP
-      // For this frontend bypass, we will pretend the backend verified successfully
-      // Note: This requires your backend to have a bypass endpoint or accept dummy tokens in dev mode
-      // For now we simulate the register/login flow navigation directly if backend fails for testing
-      
+      console.log("Attempting Bypass Login for:", mobileNumber);
       const verifyRes = await verifyOtp(mobileNumber, "bypass_token_123"); 
       
       if (verifyRes.success && verifyRes.otp_verified_token) {
          try {
+             console.log("OTP Verified, attempting SignIn...");
              const result = await signIn(mobileNumber, verifyRes.otp_verified_token);
              if(result.success) {
+                 console.log("SignIn Successful, navigating to Welcome");
                  navigation.replace('Welcome');
+             } else {
+                 console.log("SignIn Failed (no success flag):", result);
+                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
              }
          } catch(loginErr) {
+             console.log("SignIn Error Details:", loginErr);
              if(loginErr.message?.includes('User not found')) {
+                 console.log("User not found, navigating to Register");
                  navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
              } else {
-                 // Fallback bypass for purely local testing if backend rejects bypass_token
-                 navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
+                 console.log("Unexpected Login Error, forcing Register as fallback");
+                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
              }
          }
       } else {
-         // Force bypass if backend isn't set up for it yet
+         console.log("VerifyOtp Failed (no success flag):", verifyRes);
          navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
       }
     } catch (error) {
-       // Force bypass on network error
+       console.log("Bypass Login Master Catch Error:", error);
        navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
     } finally {
       setLoading(false);

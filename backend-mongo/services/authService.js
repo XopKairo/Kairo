@@ -14,18 +14,13 @@ class AuthService {
     try {
       let phone, uid;
       if (firebaseToken === "bypass_token_123") {
-        phone = contact;
+        phone = contact.toString().trim();
         uid = "bypass_uid";
       } else {
         const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
         phone = decodedToken.phone_number;
         uid = decodedToken.uid;
       }
-
-      if (!phone || phone.replace(/\s+/g, "") !== contact.replace(/\s+/g, "")) {
-        throw new Error("Phone number mismatch with Firebase token");
-      }
-
       const otpVerifiedToken = jwt.sign(
         { contact: phone, verified: true, firebaseUid: uid },
         process.env.JWT_SECRET,
@@ -33,27 +28,18 @@ class AuthService {
       );
       return { success: true, message: "Token Verified", otp_verified_token: otpVerifiedToken };
     } catch (error) {
-      console.error("Verify Error:", error.message);
       throw new Error("Invalid or expired verification token");
     }
   }
 
   async register(data) {
     const { name, phone, otp_verified_token, gender, dob, state, district, profilePicture, languages } = data;
+    const cleanPhone = phone.toString().trim().replace(/\s+/g, "");
     if (!otp_verified_token) throw new Error("Verification token missing");
+    let decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
+    if (decoded.contact.toString().replace(/\s+/g, "") !== cleanPhone || !decoded.verified) throw new Error("Verification mismatch");
 
-    let decoded;
-    if (otp_verified_token === "bypass_token_123") {
-      decoded = { contact: phone, verified: true, firebaseUid: "bypass_uid" };
-    } else {
-      decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
-    }
-
-    if (decoded.contact.toString().trim() !== phone.toString().trim() || !decoded.verified) {
-      throw new Error("Verification mismatch");
-    }
-
-    const userExists = await userRepository.findByPhone(phone);
+    const userExists = await userRepository.findByPhone(cleanPhone);
     if (userExists) throw new Error("User already exists");
 
     let age = null;
@@ -64,53 +50,38 @@ class AuthService {
       const m = today.getMonth() - birthDate.getMonth();
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
     }
-
     const locationString = (district && state) ? `${district}, ${state}` : state || district || "";
     const user = await userRepository.createUser({
-      name: name.trim(),
-      phone: phone.trim(),
-      firebaseUid: decoded.firebaseUid,
+      name: name.trim(), phone: cleanPhone, firebaseUid: decoded.firebaseUid,
       gender, dob, age, state, district, location: locationString, profilePicture, languages,
       lastLoginDate: new Date(), zoraPoints: 5, coins: 0,
     });
-
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.USER_JWT_EXPIRY || "30d" });
     const badge = getUserBadge(user.zoraPoints);
-
-    return {
-      success: true, token, 
-      user: { id: user._id, name: user.name, phone: user.phone, gender: user.gender, dob: user.dob, age: user.age, location: user.location, profilePicture: user.profilePicture, languages: user.languages, isHost: user.isHost, isVerified: user.isVerified, coins: user.coins, zoraPoints: user.zoraPoints, badge }
-    };
+    return { success: true, token, user: { id: user._id, name: user.name, phone: user.phone, gender: user.gender, dob: user.dob, age: user.age, location: user.location, profilePicture: user.profilePicture, languages: user.languages, isHost: user.isHost, isVerified: user.isVerified, coins: user.coins, zoraPoints: user.zoraPoints, badge } };
   }
 
   async login(contact, otp_verified_token) {
+    const cleanPhone = contact.toString().trim().replace(/\s+/g, "");
     if (!otp_verified_token) throw new Error("Verification token missing");
     let decoded;
     if (otp_verified_token === "bypass_token_123") {
-      decoded = { contact: contact, verified: true, firebaseUid: "bypass_uid" };
+      decoded = { contact: cleanPhone, verified: true };
     } else {
       decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
     }
+    if (decoded.contact.toString().replace(/\s+/g, "") !== cleanPhone || !decoded.verified) throw new Error("Verification mismatch");
 
-    if (decoded.contact.toString().trim() !== contact.toString().trim() || !decoded.verified) {
-      throw new Error("Verification mismatch");
-    }
-
-    const user = await userRepository.findByPhone(contact);
+    const user = await userRepository.findByPhone(cleanPhone);
     if (user) {
       if (user.isBanned) throw new Error("Account is banned");
       const today = new Date().setHours(0, 0, 0, 0);
       const lastLogin = user.lastLoginDate ? new Date(user.lastLoginDate).setHours(0, 0, 0, 0) : 0;
       let updatedUser = user;
       if (today > lastLogin || !user.lastLoginDate) updatedUser = await userRepository.updateLoginPoints(user._id);
-
       const token = jwt.sign({ id: updatedUser._id }, process.env.JWT_SECRET, { expiresIn: process.env.USER_JWT_EXPIRY || "30d" });
       const badge = getUserBadge(updatedUser.zoraPoints);
-
-      return {
-        success: true, token,
-        user: { id: updatedUser._id, name: updatedUser.name, phone: updatedUser.phone, gender: updatedUser.gender, dob: updatedUser.dob, age: updatedUser.age, location: updatedUser.location, profilePicture: updatedUser.profilePicture, languages: updatedUser.languages, isHost: updatedUser.isHost, isVerified: updatedUser.isVerified, coins: updatedUser.coins, zoraPoints: updatedUser.zoraPoints, badge }
-      };
+      return { success: true, token, user: { id: updatedUser._id, name: updatedUser.name, phone: updatedUser.phone, gender: updatedUser.gender, dob: updatedUser.dob, age: updatedUser.age, location: updatedUser.location, profilePicture: updatedUser.profilePicture, languages: updatedUser.languages, isHost: updatedUser.isHost, isVerified: updatedUser.isVerified, coins: updatedUser.coins, zoraPoints: updatedUser.zoraPoints, badge } };
     }
     throw new Error("User not found. Please register.");
   }
