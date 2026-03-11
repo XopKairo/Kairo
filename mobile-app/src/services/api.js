@@ -2,8 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// Public Environment Variable for Expo
-export const API_URL = 'https://kairo-b1i9.onrender.com/api';
+export const API_URL = 'https://kairo-b1i9.onrender.com/api/';
 export const BASE_URL = 'https://kairo-b1i9.onrender.com';
 
 const API = axios.create({
@@ -48,8 +47,7 @@ API.interceptors.response.use(
       } else if (status === 403) {
         onBlacklistTrigger(data.message || 'Access restricted');
       } else if (status === 401) {
-        // Clear token and logout if unauthorized (except on login path)
-        if (!error.config.url.includes('/login')) {
+        if (error.config.url && !error.config.url.includes('login')) {
           await logoutUser();
         }
       }
@@ -58,10 +56,9 @@ API.interceptors.response.use(
   }
 );
 
-// Compatibility logic for older calls
 export const loginUser = async (contact, otpToken) => {
   try {
-    const response = await API.post(`${API_URL}/user/auth/login`, { contact, otp_verified_token: otpToken });
+    const response = await API.post('user/auth/login', { contact, otp_verified_token: otpToken });
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
@@ -82,25 +79,26 @@ export const registerUser = async (name, contact, _, otpToken, additionalData = 
       payload = new FormData();
       payload.append('name', name);
       payload.append('otp_verified_token', otpToken);
-      payload.append('phone', contact); // phone field name in backend
-      payload.append('gender', additionalData.gender || '');
-      payload.append('dob', additionalData.dob || '');
-      payload.append('state', additionalData.state || '');
-      payload.append('district', additionalData.district || '');
-      payload.append('languages', JSON.stringify(additionalData.languages || []));
+      payload.append('phone', contact);
 
-      if (additionalData.profilePicture) {
-        const uri = additionalData.profilePicture;
-        const filename = uri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : `image`;
-        
-        payload.append('profilePicture', {
-          uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
-          name: filename,
-          type
-        });
-      }
+      Object.keys(additionalData).forEach(key => {
+        if (key === 'profilePicture' && additionalData[key]) {
+          const uri = additionalData[key];
+          const filename = uri.split('/').pop();
+          const match = /\.(\w+)$/.exec(filename);
+          const type = match ? `image/${match[1]}` : `image`;
+          
+          payload.append('profilePicture', {
+            uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+            name: filename,
+            type
+          });
+        } else if (Array.isArray(additionalData[key])) {
+          payload.append(key, JSON.stringify(additionalData[key]));
+        } else if (additionalData[key]) {
+          payload.append(key, additionalData[key]);
+        }
+      });
       headers = { 'Content-Type': 'multipart/form-data' };
     } else {
       payload = {
@@ -111,7 +109,7 @@ export const registerUser = async (name, contact, _, otpToken, additionalData = 
       };
     }
 
-    const response = await API.post(`${API_URL}/user/auth/register`, payload, { headers });
+    const response = await API.post('user/auth/register', payload, { headers });
 
     if (response.data.token) {
       await AsyncStorage.setItem('userToken', response.data.token);
@@ -125,7 +123,7 @@ export const registerUser = async (name, contact, _, otpToken, additionalData = 
 
 export const updateUserProfile = async (userId, data) => {
   try {
-    const response = await API.put(`${API_URL}/users/${userId}/profile`, data);
+    const response = await API.put(`users/${userId}/profile`, data);
     if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }
@@ -137,7 +135,7 @@ export const updateUserProfile = async (userId, data) => {
 
 export const sendOtp = async (contact) => {
   try {
-    const response = await API.post(`${API_URL}/user/auth/send-otp`, { contact });
+    const response = await API.post('user/auth/send-otp', { contact });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -146,7 +144,7 @@ export const sendOtp = async (contact) => {
 
 export const verifyOtp = async (contact, otp) => {
   try {
-    const response = await API.post(`${API_URL}/user/auth/verify-otp`, { contact, otp });
+    const response = await API.post('user/auth/verify-otp', { contact, otp });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -160,7 +158,7 @@ export const logoutUser = async () => {
 
 export const getAppSettings = async () => {
   try {
-    const response = await API.get(`${API_URL}/settings`);
+    const response = await API.get('settings');
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
