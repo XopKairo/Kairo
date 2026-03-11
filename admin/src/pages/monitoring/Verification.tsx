@@ -21,7 +21,7 @@ export default function Verification() {
 
   const fetchRequests = async () => {
     try {
-      const res = await apiClient.get("/admin/verification");
+      const res = await apiClient.get("/admin/verification/");
       setRequests(res.data);
     } catch (e) {
       console.error("Failed to fetch verification requests:", e);
