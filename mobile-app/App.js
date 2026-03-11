@@ -30,6 +30,8 @@ import EditProfileScreen from './src/screens/profile/EditProfileScreen';
 import VipScreen from './src/screens/profile/VipScreen';
 import ScratchCardScreen from './src/screens/profile/ScratchCardScreen';
 import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
+import HostRegistrationScreen from './src/screens/profile/host/HostRegistrationScreen';
+import HostOTPScreen from './src/screens/profile/host/HostOTPScreen';
 import WalletScreen from './src/screens/wallet/WalletScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
@@ -160,6 +162,8 @@ function NavigationStack() {
         <Stack.Screen name="Verification" component={VerificationScreen} />
         <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} />
         <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="HostRegistration" component={HostRegistrationScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="HostOTP" component={HostOTPScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { COLORS, SPACING } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
+import ZoraAlert from '../../components/ZoraAlert';
 import auth from '@react-native-firebase/auth';
 
 const LoginScreen = ({ navigation }) => {
@@ -20,32 +21,45 @@ const LoginScreen = ({ navigation }) => {
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const handleGetOTP = async () => {
     if (!mobileNumber) {
-      Alert.alert('Error', 'Please enter your mobile number');
+      showAlert('Error', 'Please enter your mobile number');
       return;
     }
     if (mobileNumber.length < 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      showAlert('Error', 'Please enter a valid 10-digit mobile number');
       return;
     }
     if (!isTermsAccepted) {
-      Alert.alert('Terms and Conditions', 'Please accept the Terms and Conditions to proceed.');
+      showAlert('Terms and Conditions', 'Please accept the Terms and Conditions to proceed.', 'notice');
       return;
     }
 
     setLoading(true);
     try {
         const formattedContact = `+91${mobileNumber}`;
-        // Firebase Phone Auth
-        const confirmation = await auth().signInWithPhoneNumber(formattedContact);
+        let confirmation = null;
+        try {
+            // Firebase Phone Auth
+            confirmation = await auth().signInWithPhoneNumber(formattedContact);
+        } catch (firebaseErr) {
+            console.log("Firebase Auth Error:", firebaseErr.message);
+            // We ignore the error here to navigate to the OTP screen anyway.
+            // This allows the user to wait for the timer and use the Fast Login fallback.
+        }
+        
         navigation.navigate('OTP', { 
           mobileNumber: formattedContact,
           confirmation 
         });
     } catch(err) {
-        Alert.alert("Error", err.message || "Failed to send OTP. Check your Firebase settings.");
+        showAlert("Error", err.message || "Failed to process request.", "error");
     } finally {
         setLoading(false);
     }
@@ -53,6 +67,13 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <ZoraAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}

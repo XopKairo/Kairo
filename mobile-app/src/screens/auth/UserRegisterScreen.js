@@ -17,6 +17,7 @@ import { registerUser } from '../../services/api';
 import { COLORS, SPACING } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
+import ZoraAlert from '../../components/ZoraAlert';
 import { useAuth } from '../../context/AuthContext';
 import { statesAndDistricts, statesList } from '../../constants/locations';
 
@@ -72,6 +73,13 @@ const UserRegisterScreen = ({ route, navigation }) => {
   const [name, setName] = useState('');
   const [profilePic, setProfilePic] = useState(null);
   
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
+  
   // DOB States
   const [day, setDay] = useState('');
   const [month, setMonth] = useState('');
@@ -122,11 +130,11 @@ const UserRegisterScreen = ({ route, navigation }) => {
   };
 
   const handleRegister = async () => {
-    if (!name.trim()) return Alert.alert('Error', 'Please enter your full name');
-    if (!profilePic) return Alert.alert('Error', 'Please select a profile picture');
-    if (!day || !month || !year) return Alert.alert('Error', 'Please select your full Date of Birth');
-    if (!state || !district) return Alert.alert('Error', 'Please select your Location (State and District)');
-    if (!gender) return Alert.alert('Error', 'Please select your Gender');
+    if (!name.trim()) return showAlert('Error', 'Please enter your full name');
+    if (!profilePic) return showAlert('Error', 'Please select a profile picture');
+    if (!day || !month || !year) return showAlert('Error', 'Please select your full Date of Birth');
+    if (!state || !district) return showAlert('Error', 'Please select your Location (State and District)');
+    if (!gender) return showAlert('Error', 'Please select your Gender');
 
     const dob = new Date(`${year}-${month}-${day}`);
 
@@ -153,7 +161,7 @@ const UserRegisterScreen = ({ route, navigation }) => {
            navigation.replace('Welcome');
         }
     } catch (error) {
-      Alert.alert('Registration Failed', error.message || 'Check your details and try again');
+      showAlert('Registration Failed', error.message || 'Check your details and try again');
     } finally {
       setLoading(false);
     }
@@ -161,6 +169,13 @@ const UserRegisterScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+      <ZoraAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <ChevronLeft color={COLORS.textWhite} size={28} />
       </TouchableOpacity>

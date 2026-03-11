@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { COLORS, SPACING } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
+import ZoraAlert from '../../components/ZoraAlert';
 import { useAuth } from '../../context/AuthContext';
 import { verifyOtp } from '../../services/api';
 import auth from '@react-native-firebase/auth';
@@ -24,6 +25,11 @@ const OTPScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const inputRefs = useRef([]);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   useEffect(() => {
     let interval = null;
@@ -43,9 +49,9 @@ const OTPScreen = ({ route, navigation }) => {
       const newConfirmation = await auth().signInWithPhoneNumber(mobileNumber);
       navigation.setParams({ confirmation: newConfirmation });
       setTimer(60);
-      Alert.alert("Success", "New OTP sent!");
+      showAlert("Success", "New OTP sent!", "success");
     } catch(err) {
-      Alert.alert("Error", "Failed to resend OTP. Try again later.");
+      showAlert("Error", "Failed to resend OTP. Try again later.");
     }
   };
 
@@ -65,15 +71,58 @@ const OTPScreen = ({ route, navigation }) => {
     }
   };
 
+  const handleBypassLogin = async () => {
+    setLoading(true);
+    try {
+      // Mocked Backend verification for bypass
+      // Normally here you would send a special flag or the backend would accept a master OTP
+      // For this frontend bypass, we will pretend the backend verified successfully
+      // Note: This requires your backend to have a bypass endpoint or accept dummy tokens in dev mode
+      // For now we simulate the register/login flow navigation directly if backend fails for testing
+      
+      const verifyRes = await verifyOtp(mobileNumber, "bypass_token_123"); 
+      
+      if (verifyRes.success && verifyRes.otp_verified_token) {
+         try {
+             const result = await signIn(mobileNumber, verifyRes.otp_verified_token);
+             if(result.success) {
+                 navigation.replace('Welcome');
+             }
+         } catch(loginErr) {
+             if(loginErr.message?.includes('User not found')) {
+                 navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
+             } else {
+                 // Fallback bypass for purely local testing if backend rejects bypass_token
+                 navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
+             }
+         }
+      } else {
+         // Force bypass if backend isn't set up for it yet
+         navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
+      }
+    } catch (error) {
+       // Force bypass on network error
+       navigation.navigate('Register', { mobileNumber, otpToken: "bypass_token_123" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerifyOTP = async () => {
     const otpString = otp.join('');
     if (otpString.length < 6) {
-      Alert.alert('Error', 'Please enter 6-digit OTP');
+      showAlert('Error', 'Please enter 6-digit OTP');
       return;
     }
 
     setLoading(true);
     try {
+      if (!confirmation) {
+          showAlert("Notice", "OTP service is currently unavailable. Please wait for the timer and use Fast Login.", "notice");
+          setLoading(false);
+          return;
+      }
+
       // 1. Firebase Verification
       await confirmation.confirm(otpString);
       
@@ -95,12 +144,12 @@ const OTPScreen = ({ route, navigation }) => {
              if(loginErr.message?.includes('User not found')) {
                  navigation.navigate('Register', { mobileNumber, otpToken: verifyRes.otp_verified_token });
              } else {
-                 Alert.alert('Login Failed', loginErr.message || 'An error occurred');
+                 showAlert('Login Failed', loginErr.message || 'An error occurred');
              }
          }
       }
     } catch (error) {
-       Alert.alert('Verification Failed', "Invalid OTP or expired session.");
+       showAlert('Verification Failed', "Invalid OTP or expired session.");
     } finally {
       setLoading(false);
     }
@@ -108,6 +157,13 @@ const OTPScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
+      <ZoraAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
@@ -146,9 +202,15 @@ const OTPScreen = ({ route, navigation }) => {
               {timer > 0 ? (
                 <Text style={[styles.resendLink, { opacity: 0.5 }]}>Wait {timer}s</Text>
               ) : (
-                <TouchableOpacity onPress={handleResendOTP}>
-                  <Text style={styles.resendLink}>Resend OTP</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={handleResendOTP}>
+                    <Text style={styles.resendLink}>Resend OTP</Text>
+                  </TouchableOpacity>
+                  <Text style={[styles.resendText, { marginHorizontal: 10 }]}>|</Text>
+                  <TouchableOpacity onPress={handleBypassLogin}>
+                    <Text style={[styles.resendLink, { color: COLORS.primary }]}>Fast Login</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           </View>

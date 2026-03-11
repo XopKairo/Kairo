@@ -67,6 +67,38 @@ router.put("/:id/status", async (req, res) => {
   }
 });
 
+// PUT to update host details from admin panel
+router.put("/:id", async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    const host = await Host.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!host) return res.status(404).json({ message: "Host not found" });
+    
+    // Sync with User model if needed
+    if (host.userId) {
+      const userUpdate = {};
+      if (updateData.name) userUpdate.name = updateData.name;
+      if (updateData.profilePicture) userUpdate.profilePicture = updateData.profilePicture;
+      if (updateData.languages) userUpdate.languages = updateData.languages;
+      if (updateData.gender) userUpdate.gender = updateData.gender;
+      if (updateData.callRatePerMinute) userUpdate.callRatePerMinute = updateData.callRatePerMinute;
+      
+      if (Object.keys(userUpdate).length > 0) {
+        await User.findByIdAndUpdate(host.userId, userUpdate);
+      }
+    }
+    
+    res.json({ success: true, host });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // DELETE to remove host
 router.delete("/:id", async (req, res) => {
   try {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Avatar } from 'react-native-paper';
-import { Settings, Wallet, ShieldCheck, Heart, LogOut, ChevronRight, User as UserIcon, Crown, Gift, Trash2 } from 'lucide-react-native';
+import { Settings, Wallet, ShieldCheck, Heart, LogOut, ChevronRight, User as UserIcon, Crown, Gift, Trash2, Camera } from 'lucide-react-native';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
@@ -116,6 +116,15 @@ const UserProfileScreen = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>PREMIUM FEATURES</Text>
+          {!user?.isHost && (
+            <ProfileItem 
+              icon={Camera} 
+              title="Become a Host" 
+              value="Earn coins by receiving calls"
+              onPress={() => navigation.navigate('HostRegistration')} 
+              color={COLORS.primary}
+            />
+          )}
           <ProfileItem 
             icon={Crown} 
             title="VIP Club" 
