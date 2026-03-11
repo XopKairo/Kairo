@@ -6,6 +6,7 @@ import { initRewardedAd, showRewardedAd } from '../../services/adService';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
+import ZoraAlert from '../../components/ZoraAlert';
 import { Wallet, Play, ArrowUpRight, History, Info, Tag, CheckCircle2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RazorpayCheckout from 'react-native-razorpay';
@@ -22,6 +23,11 @@ const WalletScreen = ({ navigation }) => {
   const [adLoading, setAdLoading] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+
+  const showAlert = (title, message, type = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const fetchUserData = async () => {
     try {
@@ -52,10 +58,10 @@ const WalletScreen = ({ navigation }) => {
       });
       if (res.data.success) {
         setAppliedCoupon(res.data);
-        Alert.alert('Coupon Applied!', `You saved ₹${res.data.discount}`);
+        showAlert('Coupon Applied!', `You saved ₹${res.data.discount}`, 'success');
       }
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.message || 'Invalid Coupon');
+      showAlert('Error', err.response?.data?.message || 'Invalid Coupon');
     }
   };
 
@@ -81,14 +87,14 @@ const WalletScreen = ({ navigation }) => {
                 description: `Purchase ${pkg.coins} Coins`,
                 image: 'https://i.imgur.com/3g7nmJC.png',
                 currency: 'INR',
-                key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_placeholder', 
+                key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SPOBSULcN0TXIq', 
                 amount: res.data.order.amount,
                 name: 'ZORA App',
                 order_id: res.data.order.id,
                 prefill: {
-                  email: `${user.phone}@zora.com`,
-                  contact: user.phone,
-                  name: user.name
+                  email: `${user?.phone}@zora.com`,
+                  contact: user?.phone,
+                  name: user?.name
                 },
                 theme: { color: COLORS.primary }
               };
@@ -96,15 +102,15 @@ const WalletScreen = ({ navigation }) => {
               RazorpayCheckout.open(options).then(async (data) => {
                 const verifyRes = await api.post('https://kairo-b1i9.onrender.com/api/user/payments/verify-razorpay', data);
                 if (verifyRes.data.success) {
-                  Alert.alert('Success', 'Coins added to your wallet!');
+                  showAlert('Success', 'Coins added to your wallet!', 'success');
                   fetchUserData();
                 }
               }).catch((error) => {
-                Alert.alert('Error', `Payment failed: ${error.description}`);
+                showAlert('Error', `Payment failed: ${error.description}`);
               });
 
             } catch (err) {
-              Alert.alert('Purchase Failed', err.response?.data?.message || 'Try again later.');
+              showAlert('Purchase Failed', err.response?.data?.message || 'Try again later.');
             } finally {
               setLoading(false);
             }
@@ -122,12 +128,10 @@ const WalletScreen = ({ navigation }) => {
               
               if (res.data.paymentLink) {
                 Linking.openURL(res.data.paymentLink);
-                Alert.alert('Payment Link Sent', 'Check your browser to complete payment.', [
-                  { text: 'Refresh Wallet', onPress: () => fetchUserData() }
-                ]);
+                showAlert('Payment Link Sent', 'Check your browser to complete payment.', 'notice');
               }
             } catch (err) {
-              Alert.alert('Cashfree Error', err.response?.data?.message || 'Failed to start Cashfree');
+              showAlert('Cashfree Error', err.response?.data?.message || 'Failed to start Cashfree');
             } finally {
               setLoading(false);
             }
@@ -139,9 +143,9 @@ const WalletScreen = ({ navigation }) => {
 
   const handleWithdraw = async () => {
     const amountNum = Number(withdrawAmount);
-    if (amountNum * COIN_TO_INR_RATE < 500) return Alert.alert('Error', 'Min withdrawal is ₹500 (5000 Coins).');
-    if (!upiId) return Alert.alert('Error', 'Enter UPI ID');
-    if (user?.coins < amountNum) return Alert.alert('Error', 'Insufficient balance');
+    if (amountNum * COIN_TO_INR_RATE < 500) return showAlert('Error', 'Min withdrawal is ₹500 (5000 Coins).');
+    if (!upiId) return showAlert('Error', 'Enter UPI ID');
+    if (user?.coins < amountNum) return showAlert('Error', 'Insufficient balance');
 
     setLoading(true);
     try {
@@ -152,12 +156,12 @@ const WalletScreen = ({ navigation }) => {
         clientRequestId: `req_${Date.now()}`
       });
       if (res.data.success) {
-        Alert.alert('Success', 'Withdrawal request submitted.');
+        showAlert('Success', 'Withdrawal request submitted.', 'success');
         setWithdrawAmount('');
         fetchUserData();
       }
     } catch (error) {
-      Alert.alert('Failed', error.response?.data?.error || 'Exceeded limits.');
+      showAlert('Failed', error.response?.data?.error || 'Exceeded limits.');
     } finally {
       setLoading(false);
     }
@@ -166,6 +170,13 @@ const WalletScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
+      <ZoraAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>WALLET</Text>
       </View>

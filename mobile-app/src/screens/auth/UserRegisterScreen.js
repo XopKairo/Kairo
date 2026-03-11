@@ -3,7 +3,6 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  Alert, 
   KeyboardAvoidingView, 
   Platform, 
   ScrollView, 
@@ -11,143 +10,71 @@ import {
   Image,
   Modal
 } from 'react-native';
-import { ChevronLeft, Camera, ChevronDown } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { registerUser } from '../../services/api';
-import { COLORS, SPACING } from '../../theme/theme';
+import { ChevronLeft, Camera, Calendar, MapPin, Globe, ChevronDown, Check } from 'lucide-react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
 import ZoraAlert from '../../components/ZoraAlert';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
-import { statesAndDistricts, statesList } from '../../constants/locations';
-
-// Helper component for Dropdown
-const ZoraDropdown = ({ label, value, options, onSelect, placeholder }) => {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <View style={styles.inputContainer}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity 
-        style={styles.dropdownBtn} 
-        onPress={() => setVisible(true)}
-      >
-        <Text style={[styles.dropdownBtnText, !value && { color: COLORS.textGray }]}>
-          {value || placeholder}
-        </Text>
-        <ChevronDown color={COLORS.textGray} size={20} />
-      </TouchableOpacity>
-
-      <Modal visible={visible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select {label}</Text>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {options.map((opt, i) => (
-                <TouchableOpacity 
-                  key={i} 
-                  style={styles.modalOption}
-                  onPress={() => {
-                    onSelect(opt);
-                    setVisible(false);
-                  }}
-                >
-                  <Text style={styles.modalOptionText}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setVisible(false)}>
-              <Text style={styles.modalCloseText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-};
+import { LOCATIONS } from '../../constants/locations';
 
 const UserRegisterScreen = ({ route, navigation }) => {
-  const { mobileNumber, otpToken } = route.params || {};
+  const { mobileNumber, otpToken } = route.params;
   const { signUp } = useAuth();
-  
+
   const [name, setName] = useState('');
   const [profilePic, setProfilePic] = useState(null);
+  const [day, setDay] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState('');
+  const [gender, setGender] = useState('');
+  const [state, setState] = useState('');
+  const [district, setDistrict] = useState('');
+  const [languages, setLanguages] = useState([]);
+  const [loading, setLoading] = useState(false);
   
-  // Custom Alert State
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
 
   const showAlert = (title, message, type = 'error') => {
     setAlertConfig({ visible: true, title, message, type });
   };
-  
-  // DOB States
-  const [day, setDay] = useState('');
-  const [month, setMonth] = useState('');
-  const [year, setYear] = useState('');
-  
-  // Location States
-  const [state, setState] = useState('');
-  const [district, setDistrict] = useState('');
-  
-  // Gender State
-  const [gender, setGender] = useState('');
-  
-  // Languages State
-  const [languages, setLanguages] = useState([]);
 
-  const [loading, setLoading] = useState(false);
-
-  // Lists for Pickers
-  const days = Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'));
-  const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({length: 100}, (_, i) => (currentYear - i).toString());
-  const genderOptions = ['Male', 'Female', 'Other'];
-  const languageOptions = ['English', 'Hindi', 'Malayalam', 'Tamil', 'Telugu', 'Kannada', 'Bengali', 'Marathi', 'Gujarati', 'Punjabi'];
-
-  const toggleLanguage = (lang) => {
-    if (languages.includes(lang)) {
-      setLanguages(languages.filter(l => l !== lang));
-    } else {
-      setLanguages([...languages, lang]);
-    }
-  };
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLangModal, setShowLangModal] = useState(false);
 
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        return showAlert('Permission Required', 'We need permission to access your gallery to pick a profile picture.');
+        return showAlert('Permission Required', 'We need gallery access to pick a profile picture.');
       }
 
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true, // Manual adjustment enable aakki
-        aspect: [1, 1], // Square crop
+        allowsEditing: true,
+        aspect: [1, 1],
         quality: 0.7,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        setProfilePic(asset.uri); // Direct URI use cheyyunnu
+        setProfilePic(result.assets[0].uri);
       }
     } catch (error) {
-      console.log('Error picking image', error);
-      showAlert('Error', `Failed: ${error.message || 'Unknown error'}`);
+      showAlert('Error', 'Failed to pick image');
     }
   };
 
   const handleRegister = async () => {
     if (!name.trim()) return showAlert('Error', 'Please enter your full name');
     if (!profilePic) return showAlert('Error', 'Please select a profile picture');
-    if (!day || !month || !year) return showAlert('Error', 'Please select your full Date of Birth');
-    if (!state || !district) return showAlert('Error', 'Please select your Location (State and District)');
+    if (!day || !month || !year) return showAlert('Error', 'Please select your Date of Birth');
+    if (!state || !district) return showAlert('Error', 'Please select your Location');
     if (!gender) return showAlert('Error', 'Please select your Gender');
-
-    const dob = new Date(`${year}-${month}-${day}`);
 
     setLoading(true);
     try {
+        const dob = new Date(`${year}-${month}-${day}`);
         const additionalData = {
            profilePicture: profilePic,
            dob: dob.toISOString(),
@@ -157,26 +84,47 @@ const UserRegisterScreen = ({ route, navigation }) => {
            languages
         };
 
-        const response = await signUp(
-          name.trim(), 
-          mobileNumber, 
-          null, // No password
-          otpToken,
-          additionalData
-        );
-        
+        const response = await signUp(name.trim(), mobileNumber, null, otpToken, additionalData);
         if (response.success) {
            navigation.replace('Welcome');
         } else {
-           showAlert('Registration Failed', response.message || 'Check your details and try again');
+           showAlert('Registration Failed', response.message || 'Please check your details');
         }
     } catch (error) {
-      console.log("Registration Error:", error);
-      showAlert('Registration Failed', error.message || 'Check your details and try again');
+      showAlert('Registration Failed', error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
+
+  const renderLocationModal = () => (
+    <Modal visible={showLocationModal} animationType="slide" transparent>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Select Location</Text>
+          <ScrollView>
+            {Object.keys(LOCATIONS).map(s => (
+              <View key={s} style={{ marginBottom: 15 }}>
+                <Text style={styles.stateHeader}>{s}</Text>
+                <View style={styles.districtGrid}>
+                  {LOCATIONS[s].map(d => (
+                    <TouchableOpacity 
+                      key={d} 
+                      style={[styles.districtChip, district === d && styles.districtChipActive]}
+                      onPress={() => { setState(s); setDistrict(d); setShowLocationModal(false); }}
+                    >
+                      <Text style={[styles.districtText, district === d && styles.districtTextActive]}>{d}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+          <ZoraButton title="Close" onPress={() => setShowLocationModal(false)} variant="outline" style={{ marginTop: 15 }} />
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <View style={styles.container}>
@@ -187,6 +135,7 @@ const UserRegisterScreen = ({ route, navigation }) => {
         type={alertConfig.type}
         onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
       />
+      
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <ChevronLeft color={COLORS.textWhite} size={28} />
       </TouchableOpacity>
@@ -194,279 +143,94 @@ const UserRegisterScreen = ({ route, navigation }) => {
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Text style={styles.title}>Complete Profile</Text>
-            <Text style={styles.subtitle}>Let's set up your identity</Text>
+            <Text style={styles.subtitle}>Set up your identity</Text>
+          </View>
+
+          <View style={styles.profilePicContainer}>
+            <TouchableOpacity style={styles.picWrapper} onPress={pickImage}>
+              {profilePic ? (
+                <Image source={{ uri: profilePic }} style={styles.image} />
+              ) : (
+                <View style={styles.picPlaceholder}>
+                  <Camera color={COLORS.primary} size={32} />
+                  <Text style={styles.picText}>Add Photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
 
           <View style={styles.formCard}>
-             
-             {/* Profile Picture */}
-             <View style={styles.picContainer}>
-                <TouchableOpacity onPress={pickImage} style={styles.picWrapper}>
-                   {profilePic ? (
-                      <Image source={{ uri: profilePic }} style={styles.profileImg} />
-                   ) : (
-                      <View style={styles.placeholderImg}>
-                         <Camera color={COLORS.textGray} size={32} />
-                      </View>
-                   )}
-                   <View style={styles.editBadge}>
-                      <Text style={styles.editBadgeText}>+</Text>
-                   </View>
+            <ZoraInput label="Full Name" value={name} onChangeText={setName} placeholder="Display Name" />
+
+            <Text style={styles.label}>Date of Birth</Text>
+            <View style={styles.dobRow}>
+              <ZoraInput value={day} onChangeText={setDay} placeholder="DD" keyboardType="numeric" maxLength={2} style={{ flex: 1 }} />
+              <ZoraInput value={month} onChangeText={setMonth} placeholder="MM" keyboardType="numeric" maxLength={2} style={{ flex: 1, marginHorizontal: 10 }} />
+              <ZoraInput value={year} onChangeText={setYear} placeholder="YYYY" keyboardType="numeric" maxLength={4} style={{ flex: 1.5 }} />
+            </View>
+
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.genderRow}>
+              {['Male', 'Female', 'Other'].map(g => (
+                <TouchableOpacity key={g} style={[styles.genderBtn, gender === g && styles.genderBtnActive]} onPress={() => setGender(g)}>
+                  <Text style={[styles.genderBtnText, gender === g && styles.genderBtnTextActive]}>{g}</Text>
                 </TouchableOpacity>
-                <Text style={styles.picHint}>Add a clear photo of yourself</Text>
-             </View>
+              ))}
+            </View>
 
-             <ZoraInput label="Full Name" placeholder="Your real name" value={name} onChangeText={setName} />
-             
-             {/* Gender */}
-             <ZoraDropdown 
-                label="Gender" 
-                value={gender} 
-                options={genderOptions} 
-                onSelect={setGender} 
-                placeholder="Select Gender" 
-             />
+            <TouchableOpacity style={styles.pickerField} onPress={() => setShowLocationModal(true)}>
+              <View style={styles.pickerLeft}>
+                <MapPin size={20} color={COLORS.primary} />
+                <Text style={styles.pickerText}>{district ? `${district}, ${state}` : 'Select Location'}</Text>
+              </View>
+              <ChevronDown size={20} color={COLORS.textGray} />
+            </TouchableOpacity>
 
-             {/* Date of Birth */}
-             <Text style={styles.label}>Date of Birth</Text>
-             <View style={styles.row}>
-                <View style={{flex: 1, marginRight: 5}}>
-                  <ZoraDropdown label="" value={day} options={days} onSelect={setDay} placeholder="DD" />
-                </View>
-                <View style={{flex: 1, marginHorizontal: 5}}>
-                  <ZoraDropdown label="" value={month} options={months} onSelect={setMonth} placeholder="MM" />
-                </View>
-                <View style={{flex: 1.5, marginLeft: 5}}>
-                  <ZoraDropdown label="" value={year} options={years} onSelect={setYear} placeholder="YYYY" />
-                </View>
-             </View>
-
-             {/* Location */}
-             <ZoraDropdown 
-                label="State" 
-                value={state} 
-                options={statesList} 
-                onSelect={(val) => { setState(val); setDistrict(''); }} 
-                placeholder="Select State" 
-             />
-             
-             {state ? (
-               <ZoraDropdown 
-                  label="District" 
-                  value={district} 
-                  options={statesAndDistricts[state] || []} 
-                  onSelect={setDistrict} 
-                  placeholder="Select District" 
-               />
-             ) : null}
-
-             {/* Languages */}
-             <Text style={styles.label}>Languages Known</Text>
-             <View style={styles.languagesContainer}>
-               {languageOptions.map((lang, idx) => (
-                 <TouchableOpacity 
-                   key={idx} 
-                   style={[styles.langChip, languages.includes(lang) && styles.langChipActive]}
-                   onPress={() => toggleLanguage(lang)}
-                 >
-                   <Text style={[styles.langChipText, languages.includes(lang) && styles.langChipTextActive]}>
-                     {lang}
-                   </Text>
-                 </TouchableOpacity>
-               ))}
-             </View>
-
-             <ZoraButton title="Create Account" onPress={handleRegister} loading={loading} style={{ marginTop: 20 }} />
+            <ZoraButton title="Register Account" onPress={handleRegister} loading={loading} style={{ marginTop: 20 }} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {renderLocationModal()}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundDark,
-  },
-  backBtn: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    zIndex: 10,
-  },
-  scrollContent: {
-    padding: SPACING.lg,
-    paddingTop: 10,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: COLORS.textWhite,
-  },
-  subtitle: {
-    color: COLORS.textGray,
-    fontSize: 16,
-    marginTop: 8,
-  },
-  formCard: {
-    backgroundColor: COLORS.cardBackground,
-    padding: SPACING.xl,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(159, 103, 255, 0.1)',
-  },
-  picContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  picWrapper: {
-    position: 'relative',
-  },
-  profileImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  placeholderImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: COLORS.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.cardBackground,
-  },
-  editBadgeText: {
-    color: COLORS.textWhite,
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginTop: -2,
-  },
-  picHint: {
-    color: COLORS.textGray,
-    fontSize: 12,
-    marginTop: 8,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    color: COLORS.textWhite,
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  dropdownBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    height: 56,
-    paddingHorizontal: 16,
-  },
-  dropdownBtnText: {
-    color: COLORS.textWhite,
-    fontSize: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(159, 103, 255, 0.2)',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.textWhite,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  modalOption: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  modalOptionText: {
-    color: COLORS.textWhite,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  modalCloseBtn: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: 'rgba(108, 43, 217, 0.2)',
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  modalCloseText: {
-    color: COLORS.accentGlow,
-    fontWeight: 'bold',
-  },
-  languagesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 20,
-  },
-  langChip: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  langChipActive: {
-    backgroundColor: 'rgba(108, 43, 217, 0.2)',
-    borderColor: COLORS.primary,
-  },
-  langChipText: {
-    color: COLORS.textGray,
-    fontSize: 14,
-  },
-  langChipTextActive: {
-    color: COLORS.textWhite,
-    fontWeight: 'bold',
-  }
+  container: { flex: 1, backgroundColor: COLORS.backgroundDark },
+  backBtn: { position: 'absolute', top: Platform.OS === 'ios' ? 50 : 20, left: 20, zIndex: 10, width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  scrollContent: { flexGrow: 1, padding: SPACING.lg, paddingBottom: 40 },
+  header: { alignItems: 'center', marginBottom: 30, marginTop: 60 },
+  title: { fontSize: 28, fontWeight: '900', color: COLORS.textWhite, marginBottom: 8 },
+  subtitle: { color: COLORS.textGray, fontSize: 16 },
+  profilePicContainer: { alignItems: 'center', marginBottom: 30 },
+  picWrapper: { width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.cardBackground, borderWidth: 2, borderColor: COLORS.primary, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
+  image: { width: '100%', height: '100%' },
+  picPlaceholder: { alignItems: 'center' },
+  picText: { color: COLORS.textGray, fontSize: 12, marginTop: 5 },
+  formCard: { backgroundColor: COLORS.cardBackground, padding: SPACING.xl, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)' },
+  label: { color: COLORS.textWhite, fontSize: 14, fontWeight: 'bold', marginBottom: 10, marginTop: 10 },
+  dobRow: { flexDirection: 'row' },
+  genderRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  genderBtn: { flex: 1, height: 45, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  genderBtnActive: { backgroundColor: COLORS.primary },
+  genderBtnText: { color: COLORS.textGray, fontWeight: 'bold' },
+  genderBtnTextActive: { color: COLORS.textWhite },
+  pickerField: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.05)', padding: 15, borderRadius: 12, marginTop: 10 },
+  pickerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pickerText: { color: COLORS.textWhite, fontSize: 14 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: COLORS.backgroundDark, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, height: '80%' },
+  modalTitle: { color: COLORS.textWhite, fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  stateHeader: { color: COLORS.primary, fontWeight: 'bold', fontSize: 16, marginBottom: 10, marginTop: 10 },
+  districtGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  districtChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  districtChipActive: { backgroundColor: 'rgba(108, 43, 217, 0.2)', borderColor: COLORS.primary },
+  districtText: { color: COLORS.textGray, fontSize: 12 },
+  districtTextActive: { color: COLORS.textWhite, fontWeight: 'bold' }
 });
 
 export default UserRegisterScreen;
