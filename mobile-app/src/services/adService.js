@@ -1,7 +1,7 @@
 import mobileAds, { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 import api from './api';
 
-const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy';
+const adUnitId = __DEV__ ? TestIds.REWARDED : 'process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID || "ca-app-pub-3940256099942544/5224354917"';
 
 const rewarded = RewardedAd.createForAdRequest(adUnitId, {
   keywords: ['fashion', 'gaming'],

@@ -6,32 +6,28 @@ import { getUserBadge } from "../utils/badgeSystem.js";
 
 class AuthService {
   async sendOtp(contact) {
-    return { success: true, message: "Please use Firebase Client SDK to send OTP" };
+    return { success: true, message: "Use Firebase Client SDK to send OTP" };
   }
 
   async verifyOtp(contact, firebaseToken) {
     try {
-      let phone, uid;
+      const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+      const phone = decodedToken.phone_number.replace(/\s+/g, "");
       const cleanContact = contact.toString().trim().replace(/\s+/g, "");
-      
-      if (firebaseToken === "9999") {
-        phone = cleanContact;
-        uid = "bypass_uid";
-      } else {
-        const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
-        phone = decodedToken.phone_number.replace(/\s+/g, "");
-        uid = decodedToken.uid;
+
+      if (!phone || phone !== cleanContact) {
+        throw new Error("Phone number mismatch with Firebase token");
       }
 
       const otpVerifiedToken = jwt.sign(
-        { contact: phone, verified: true, firebaseUid: uid },
+        { contact: phone, verified: true, firebaseUid: decodedToken.uid },
         process.env.JWT_SECRET,
         { expiresIn: "15m" },
       );
       return { success: true, message: "Token Verified", otp_verified_token: otpVerifiedToken };
     } catch (error) {
       console.error("Verify Error:", error.message);
-      throw new Error(error.message || "Verification failed");
+      throw new Error("Invalid or expired Firebase token");
     }
   }
 
@@ -39,14 +35,10 @@ class AuthService {
     const { name, phone, otp_verified_token, gender, dob, state, district, profilePicture, languages } = data;
     const cleanPhone = phone.toString().trim().replace(/\s+/g, "");
     
-    let decoded;
-    if (otp_verified_token === "9999") {
-      decoded = { contact: cleanPhone, verified: true, firebaseUid: "bypass_uid" };
-    } else {
-      decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
-    }
+    if (!otp_verified_token) throw new Error("Verification token missing");
+    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
 
-    if (decoded.contact.toString().replace(/\s+/g, "") !== cleanPhone || !decoded.verified) {
+    if (decoded.contact.replace(/\s+/g, "") !== cleanPhone || !decoded.verified) {
       throw new Error("Verification mismatch");
     }
 
@@ -66,14 +58,10 @@ class AuthService {
 
   async login(contact, otp_verified_token) {
     const cleanPhone = contact.toString().trim().replace(/\s+/g, "");
-    let decoded;
-    if (otp_verified_token === "9999") {
-      decoded = { contact: cleanPhone, verified: true };
-    } else {
-      decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
-    }
+    if (!otp_verified_token) throw new Error("Verification token missing");
+    const decoded = jwt.verify(otp_verified_token, process.env.JWT_SECRET);
 
-    if (decoded.contact.toString().replace(/\s+/g, "") !== cleanPhone || !decoded.verified) {
+    if (decoded.contact.replace(/\s+/g, "") !== cleanPhone || !decoded.verified) {
       throw new Error("Verification mismatch");
     }
 
