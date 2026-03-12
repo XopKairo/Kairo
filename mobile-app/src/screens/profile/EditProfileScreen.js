@@ -72,7 +72,7 @@ const EditProfileScreen = ({ navigation }) => {
   const pickMedia = async (type = 'image', isMoment = false) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: type === 'video' ? ImagePicker.MediaTypeOptions.Videos : ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: type === 'video' ? ImagePicker.MediaType.Videos : ImagePicker.MediaType.Images,
         allowsEditing: true,
         quality: 0.6,
       });
@@ -136,7 +136,7 @@ const EditProfileScreen = ({ navigation }) => {
           }
         });
       }
-      const response = await api.put('/users/me/profile', formData, {
+      const response = await api.put('user/profile/me/profile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 

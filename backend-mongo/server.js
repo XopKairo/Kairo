@@ -66,6 +66,7 @@ app.use("/api/public/settings", settingsRoutes);
 
 // USER ROUTES
 app.use("/api/user/auth", userAuthRoutes);
+app.use("/api/user/profile", protectUser, adminUsersRoutes);
 app.use("/api/user/payments", paymentsRoutes);
 app.use("/api/user/verification", protectUser, userVerificationRoutes);
 app.use("/api/user/wallet", protectUser, walletRoutes);
