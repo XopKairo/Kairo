@@ -32,7 +32,7 @@ router.post("/validate-coupon", protectUser, async (req, res) => {
 
 router.post("/create-razorpay-order", protectUser, async (req, res) => {
   try {
-    const { amount, currency } = req.body;
+    const { amount, coins, currency } = req.body;
     const userId = req.user._id || req.user.id;
     const options = {
       amount: Math.round(amount * 100),
@@ -46,7 +46,8 @@ router.post("/create-razorpay-order", protectUser, async (req, res) => {
       orderId: order.id,
       status: "pending",
       paymentId: "",
-      description: "Razorpay Deposit",
+      description: `Purchase ${coins} Coins`,
+      coinsCredited: coins || 0
     });
     res.json({ success: true, order });
   } catch (error) {
@@ -64,8 +65,10 @@ router.post("/verify-razorpay", protectUser, async (req, res) => {
       transaction.status = "completed";
       transaction.paymentId = razorpay_payment_id;
       await transaction.save();
-      await User.findByIdAndUpdate(userId, { $inc: { coins: Math.floor(transaction.amount) } });
-      return res.json({ success: true, message: "Razorpay verified" });
+      
+      const coinsToAdd = transaction.coinsCredited || Math.floor(transaction.amount);
+      await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
+      return res.json({ success: true, message: "Razorpay verified", coinsAdded: coinsToAdd });
     }
     res.status(404).json({ success: false, message: "Transaction not found" });
   } catch (error) {

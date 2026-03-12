@@ -48,6 +48,11 @@ const WalletScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchUserData();
+    const cleanup = initRewardedAd((newBalance) => {
+      setUser(prev => ({...prev, coins: newBalance}));
+      setAdLoading(false);
+    });
+    return cleanup;
   }, []);
 
   const handleApplyCoupon = async () => {
@@ -75,6 +80,7 @@ const WalletScreen = ({ navigation }) => {
     try {
       const res = await api.post('user/payments/create-razorpay-order', {
         amount: finalPrice,
+        coins: selectedPkg.coins + (selectedPkg.bonus || 0),
         currency: 'INR'
       });
       
@@ -222,7 +228,10 @@ const WalletScreen = ({ navigation }) => {
 
         <TouchableOpacity 
           style={styles.adCard} 
-          onPress={() => { setAdLoading(true); initRewardedAd((newBalance) => { setUser(prev => ({...prev, coins: newBalance})); setAdLoading(false); }); showRewardedAd(); }}
+          onPress={() => { 
+            setAdLoading(true);
+            showRewardedAd(); 
+          }}
           disabled={adLoading}
         >
           <View style={styles.adLeft}>
