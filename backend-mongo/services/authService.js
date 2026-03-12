@@ -132,35 +132,45 @@ class AuthService {
   }
 
   async fastLogin(contact) {
-    const cleanPhone = contact.toString().trim().replace(/\s+/g, "");
-    let user = await userRepository.findByPhone(cleanPhone);
-    
-    if (!user) {
-        // Auto register if user doesn't exist (Fast Login)
-        user = await userRepository.createUser({
-            name: `User_${cleanPhone.slice(-4)}`, 
-            phone: cleanPhone,
-            firebaseUid: `FAST_${Date.now()}_${cleanPhone}`,
-            lastLoginDate: new Date(), 
-            zoraPoints: 5, 
-            coins: 0,
-            gender: "Female", // Default for Fast Login or can be asked later
-        });
-    }
+    try {
+      const cleanPhone = contact.toString().trim().replace(/\s+/g, "");
+      if (!cleanPhone) throw new Error("Invalid contact info");
 
-    if (user.isBanned) {
-      if (user.banUntil && new Date() > user.banUntil) {
-          user.isBanned = false;
-          user.banUntil = null;
-          user.banReason = "";
-          await user.save();
-      } else {
-          throw new Error(`Account is banned: ${user.banReason || 'No reason provided'}`);
+      let user = await userRepository.findByPhone(cleanPhone);
+      
+      if (!user) {
+          // Auto register if user doesn't exist (Fast Login)
+          // We must ensure firebaseUid is unique
+          user = await userRepository.createUser({
+              name: `User_${cleanPhone.slice(-4)}`, 
+              phone: cleanPhone,
+              firebaseUid: `FAST_${Date.now()}_${cleanPhone}`,
+              lastLoginDate: new Date(), 
+              zoraPoints: 5, 
+              coins: 0,
+              gender: "Female", // Default for Fast Login or can be asked later
+              isVerified: false,
+              isHost: false
+          });
       }
-    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
-    return { success: true, token, user, isNewUser: user.createdAt.getTime() === user.updatedAt.getTime() };
+      if (user.isBanned) {
+        if (user.banUntil && new Date() > user.banUntil) {
+            user.isBanned = false;
+            user.banUntil = null;
+            user.banReason = "";
+            await user.save();
+        } else {
+            throw new Error(`Account is banned: ${user.banReason || 'No reason provided'}`);
+        }
+      }
+
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+      return { success: true, token, user, isNewUser: user.createdAt.getTime() === user.updatedAt.getTime() };
+    } catch (error) {
+      console.error("Fast Login Error Service:", error.message);
+      throw error;
+    }
   }
 
   async deleteAccount(userId) {

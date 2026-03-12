@@ -97,11 +97,14 @@ const OTPScreen = ({ route, navigation }) => {
     setFastLoading(true);
     try {
       const res = await fastSignIn(mobileNumber);
-      if (res.success) {
+      if (res && res.success) {
         navigation.replace('Welcome');
+      } else {
+        showAlert('Error', (res && res.message) || 'Fast login failed.');
       }
     } catch (error) {
-      showAlert('Error', error.message || 'Fast login failed.');
+      const msg = error.message || (error.data && error.data.message) || 'Fast login failed.';
+      showAlert('Error', msg);
     } finally {
       setFastLoading(false);
     }

@@ -104,10 +104,11 @@ class UserAuthController {
       const result = await authService.fastLogin(contact);
       res.status(200).json(result);
     } catch (error) {
+      console.error("Fast Login Controller Error:", error.message);
       if (error.message.startsWith("Account is banned")) {
         return res.status(403).json({ success: false, message: error.message });
       }
-      res.status(500).json({ success: false, message: error.message });
+      res.status(500).json({ success: false, message: error.message || "Internal server error during fast login" });
     }
   }
 
