@@ -92,8 +92,8 @@ export const authAdmin = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error during login",
-      errorDetails:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+      errorDetails: error.message,
+      stack: error.stack
     });
   }
 };
