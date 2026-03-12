@@ -72,7 +72,7 @@ const EditProfileScreen = ({ navigation }) => {
   const pickMedia = async (type = 'image', isMoment = false) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: type === 'video' ? ImagePicker.MediaType.Videos : ImagePicker.MediaType.Images,
+        mediaTypes: type === 'video' ? ImagePicker.MediaTypeOptions.Videos : ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.6,
       });
