@@ -75,6 +75,7 @@ export default {
       "./plugins/withManifestFix",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
+      "@react-native-google-signin/google-signin",
       "expo-notifications",
       "expo-image-picker",
       "expo-asset",

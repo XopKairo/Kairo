@@ -56,6 +56,19 @@ API.interceptors.response.use(
   }
 );
 
+export const googleLoginUser = async (idToken) => {
+  try {
+    const response = await API.post('user/auth/google-login', { idToken });
+    if (response.data.token) {
+      await AsyncStorage.setItem('userToken', response.data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
 export const loginUser = async (contact, otpToken) => {
   try {
     const response = await API.post('user/auth/login', { contact, otp_verified_token: otpToken });

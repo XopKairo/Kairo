@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -15,16 +15,63 @@ import { COLORS, SPACING } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraAlert from '../../components/ZoraAlert';
 import auth from '@react-native-firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen = ({ navigation }) => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
+  const { googleSignIn } = useAuth();
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: '343792605839-1siolslgaeo03t4a3he0tq3nbi7cfns0.apps.googleusercontent.com', // Web Client ID from your google-services.json oauth_client
+    });
+  }, []);
 
   const showAlert = (title, message, type = 'error') => {
     setAlertConfig({ visible: true, title, message, type });
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (!isTermsAccepted) {
+      showAlert('Terms and Conditions', 'Please accept the Terms and Conditions to proceed.', 'notice');
+      return;
+    }
+    setGoogleLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.idToken || userInfo.data?.idToken; // handle both new and old package responses
+      
+      if (!idToken) throw new Error('Failed to get Google Token');
+
+      const loginRes = await googleSignIn(idToken);
+      if (loginRes.success) {
+        if (loginRes.isNewUser) {
+           // Could optionally navigate to a setup profile screen here if needed, but going to Welcome is fine.
+           navigation.replace('Welcome');
+        } else {
+           navigation.replace('Welcome'); // AuthContext state update might handle the actual navigation via root stack, but this is safe
+        }
+      }
+    } catch (error) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // user cancelled the login flow
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        // operation (e.g. sign in) is in progress already
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        showAlert("Error", "Play services not available or outdated");
+      } else {
+        showAlert("Error", error.message || "Google Sign-In failed", "error");
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleGetOTP = async () => {
@@ -126,6 +173,28 @@ const LoginScreen = ({ navigation }) => {
               loading={loading}
               style={{ marginTop: SPACING.md }}
             />
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <TouchableOpacity 
+              style={styles.googleButton} 
+              onPress={handleGoogleSignIn}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color={COLORS.textWhite} />
+              ) : (
+                <>
+                  <Text style={styles.googleIcon}>G</Text>
+                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -238,6 +307,43 @@ const styles = StyleSheet.create({
   },
   termsLink: {
     color: COLORS.accentGlow,
+    fontWeight: '600',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  dividerText: {
+    color: COLORS.textGray,
+    paddingHorizontal: 15,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    height: 56,
+    borderRadius: 16,
+  },
+  googleIcon: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  googleButtonText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

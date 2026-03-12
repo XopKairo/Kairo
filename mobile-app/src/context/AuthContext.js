@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api, { loginUser, registerUser, setMaintenanceHandler, setBlacklistHandler } from '../services/api';
+import api, { loginUser, googleLoginUser, registerUser, setMaintenanceHandler, setBlacklistHandler } from '../services/api';
 import socketService from '../services/socketService';
 import { Alert } from 'react-native';
 
@@ -92,6 +92,15 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const googleSignIn = async (idToken) => {
+    const data = await googleLoginUser(idToken);
+    if (data.success) {
+      setUser(data.user);
+      socketService.connect(data.user.id);
+    }
+    return data;
+  };
+
   const signUp = async (name, contact, password, otpToken, additionalData) => {
     const data = await registerUser(name, contact, password, otpToken, additionalData);
     if (data.success) {
@@ -108,7 +117,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isMaintenance, signIn, signUp, signOut, checkMaintenance }}>
+    <AuthContext.Provider value={{ user, loading, isMaintenance, signIn, googleSignIn, signUp, signOut, checkMaintenance }}>
       {children}
     </AuthContext.Provider>
   );
