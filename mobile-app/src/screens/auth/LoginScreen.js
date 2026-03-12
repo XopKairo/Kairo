@@ -184,14 +184,17 @@ const LoginScreen = ({ navigation }) => {
               style={styles.googleButton} 
               onPress={handleGoogleSignIn}
               disabled={googleLoading}
+              activeOpacity={0.8}
             >
               {googleLoading ? (
                 <ActivityIndicator color={COLORS.textWhite} />
               ) : (
-                <>
-                  <Text style={styles.googleIcon}>G</Text>
+                <View style={styles.googleButtonContent}>
+                  <View style={styles.googleIconCircle}>
+                    <Text style={styles.googleIconText}>G</Text>
+                  </View>
                   <Text style={styles.googleButtonText}>Continue with Google</Text>
-                </>
+                </View>
               )}
             </TouchableOpacity>
 
@@ -326,25 +329,38 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   googleButton: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    height: 58,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  googleButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    height: 56,
-    borderRadius: 16,
   },
-  googleIcon: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginRight: 10,
+  googleIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  googleIconText: {
+    color: COLORS.backgroundDark,
+    fontSize: 18,
+    fontWeight: '900',
   },
   googleButtonText: {
-    color: '#FFF',
+    color: COLORS.textWhite,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
 
