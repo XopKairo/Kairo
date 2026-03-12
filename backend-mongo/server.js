@@ -7,30 +7,37 @@ import http from "http";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
-import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 import xss from "xss-clean";
 
-// Route Imports
+// Admin Route Imports
 import authRoutes from "./routes/auth.js";
 import dashboardRoutes from "./routes/dashboard.js";
-import userAuthRoutes from "./routes/userAuth.js";
 import adminUsersRoutes from "./routes/users.js";
 import hostRoutes from "./routes/hosts.js";
 import agencyRoutes from "./routes/agencies.js";
 import economyRoutes from "./routes/economy.js";
+import monitoringRoutes from "./routes/monitoring.js";
 import reportRoutes from "./routes/reports.js";
-import callRoutes from "./routes/calls.js";
+import notificationsRoutes from "./routes/notifications.js";
+import settingsRoutes from "./routes/settings.js";
+import payoutRoutes from "./routes/payouts.js";
+import bannerRoutes from "./routes/banners.js";
+import ticketRoutes from "./routes/tickets.js";
+import adminPostsRoutes from "./routes/posts.js";
+
+// User Route Imports
+import userAuthRoutes from "./routes/userAuth.js";
+import paymentsRoutes from "./routes/payments.js";
+import userVerificationRoutes from "./routes/verification.js";
+import walletRoutes from "./routes/wallet.js";
 import chatRoutes from "./routes/chat.js";
+import callRoutes from "./routes/calls.js";
 import growthRoutes from "./routes/growth.js";
 import vipRoutes from "./routes/vip.js";
-import settingsRoutes from "./routes/settings.js";
-import monitoringRoutes from "./routes/monitoring.js";
-import verificationRoutes from "./routes/verification.js";
-import notificationsRoutes from "./routes/notifications.js";
-import walletRoutes from "./routes/wallet.js";
-import paymentsRoutes from "./routes/payments.js";
+import reviewRoutes from "./routes/reviews.js";
+import interactionRoutes from "./routes/interactions.js";
 
 import { protectAdmin, protectUser } from "./middleware/authMiddleware.js";
 import errorHandler from "./middleware/errorMiddleware.js";
@@ -39,7 +46,7 @@ import { seedAdmin, seedInterests } from "./utils/initDb.js";
 const app = express();
 const server = http.createServer(app);
 
-// Security Middleware
+// Standard Middlewares
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
@@ -49,40 +56,48 @@ app.use(compression());
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 
-// Public Routes
-app.get("/", (req, res) => res.send("Welcome to Kairo API. Use /api/health for status."));
+// Root & Health
+app.get("/", (req, res) => res.send("ZORA API Active."));
 app.use("/api/health", (req, res) => res.json({ status: "ok" }));
-app.use("/api/economy", economyRoutes); // Public coins fetching
 
-// User Routes
+// PUBLIC ROUTES
+app.use("/api/public/economy", economyRoutes);
+app.use("/api/public/settings", settingsRoutes);
+
+// USER ROUTES
 app.use("/api/user/auth", userAuthRoutes);
 app.use("/api/user/payments", paymentsRoutes);
-app.use("/api/verification", protectUser, verificationRoutes);
-app.use("/api/wallet", protectUser, walletRoutes);
-app.use("/api/chat", protectUser, chatRoutes);
-app.use("/api/calls", protectUser, callRoutes);
+app.use("/api/user/verification", protectUser, userVerificationRoutes);
+app.use("/api/user/wallet", protectUser, walletRoutes);
+app.use("/api/user/chat", protectUser, chatRoutes);
+app.use("/api/user/calls", protectUser, callRoutes);
+app.use("/api/user/growth", protectUser, growthRoutes);
+app.use("/api/user/vip", protectUser, vipRoutes);
+app.use("/api/user/reviews", protectUser, reviewRoutes);
 
-// Admin Routes (Standardized Prefix: /api/admin/...)
+// ADMIN ROUTES
 app.use("/api/admin/auth", authRoutes);
 app.use("/api/admin/dashboard", protectAdmin, dashboardRoutes);
 app.use("/api/admin/users", protectAdmin, adminUsersRoutes);
 app.use("/api/admin/hosts", protectAdmin, hostRoutes);
 app.use("/api/admin/agencies", protectAdmin, agencyRoutes);
 app.use("/api/admin/economy", protectAdmin, economyRoutes);
-app.use("/api/admin/verification", protectAdmin, verificationRoutes);
 app.use("/api/admin/monitoring", protectAdmin, monitoringRoutes);
+app.use("/api/admin/payouts", protectAdmin, payoutRoutes);
 app.use("/api/admin/reports", protectAdmin, reportRoutes);
 app.use("/api/admin/notifications", protectAdmin, notificationsRoutes);
-app.use("/api/settings", settingsRoutes);
+app.use("/api/admin/settings", protectAdmin, settingsRoutes);
+app.use("/api/admin/banners", protectAdmin, bannerRoutes);
+app.use("/api/admin/tickets", protectAdmin, ticketRoutes);
+app.use("/api/admin/posts", protectAdmin, adminPostsRoutes);
 
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 10, serverSelectionTimeoutMS: 5000 })
   .then(async () => {
-    console.log("✅ MongoDB Connected");
+    console.log("✅ Database Ready");
     await seedAdmin();
     await seedInterests();
-    server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  })
-  .catch((err) => console.error("❌ Connection Error:", err));
+    server.listen(PORT, () => console.log(`🚀 Node Active on ${PORT}`));
+  });
