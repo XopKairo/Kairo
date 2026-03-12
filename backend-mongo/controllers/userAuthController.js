@@ -128,26 +128,37 @@ class UserAuthController {
 
   async updateProfile(req, res) {
     try {
-      const userId = req.user._id;
+      const userId = req.user._id || req.user.id;
       console.log("Updating profile for user:", userId, "Data:", req.body);
-      const { name, bio, age, location, gender, languages, isVipOnly, callRatePerMinute, interests } = req.body;
+      
+      const updateData = {};
+      const fields = ['name', 'bio', 'age', 'location', 'gender', 'isVipOnly', 'callRatePerMinute', 'interests', 'languages'];
+      
+      fields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          if (field === 'languages' || field === 'interests') {
+            updateData[field] = Array.isArray(req.body[field]) ? req.body[field] : 
+                               (typeof req.body[field] === 'string' ? req.body[field].split(',') : req.body[field]);
+          } else if (field === 'isVipOnly') {
+            updateData[field] = req.body[field] === "true" || req.body[field] === true;
+          } else if (field === 'callRatePerMinute' || field === 'age') {
+            updateData[field] = parseInt(req.body[field]);
+          } else {
+            updateData[field] = req.body[field];
+          }
+        }
+      });
 
-      const updateData = { 
-        name, bio, age, location, gender, 
-        languages: Array.isArray(languages) ? languages : languages ? languages.split(',') : [],
-        isVipOnly: isVipOnly === "true",
-        callRatePerMinute: parseInt(callRatePerMinute) || 30,
-        interests: Array.isArray(interests) ? interests : []
-      };
-
-      if (req.files && req.files["image"]) updateData.profilePicture = req.files["image"][0].path;
-      if (req.files && req.files["moments"]) updateData.photos = req.files["moments"].map(f => f.path);
-      if (req.files && req.files["video"]) updateData.shortVideoUrl = req.files["video"][0].path;
+      if (req.files) {
+        if (req.files["image"]) updateData.profilePicture = req.files["image"][0].path;
+        if (req.files["moments"]) updateData.photos = req.files["moments"].map(f => f.path);
+        if (req.files["video"]) updateData.shortVideoUrl = req.files["video"][0].path;
+      }
 
       // Fallback for single upload (image)
       if (req.file) updateData.profilePicture = req.file.path;
 
-      const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+      const user = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true });
 
       // Also update Host model if it exists
       await Host.findOneAndUpdate(
