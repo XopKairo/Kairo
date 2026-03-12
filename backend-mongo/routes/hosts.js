@@ -8,7 +8,9 @@ import { protectUser } from "../middleware/authMiddleware.js";
 router.get("/", async (req, res) => {
   try {
     const { targetGender, tabFilter, userId } = req.query;
-    let query = { isVerified: true };
+    
+    // If Admin, show all. If User/Public, show only verified.
+    let query = req.admin ? {} : { isVerified: true };
 
     if (targetGender) query.gender = targetGender;
 

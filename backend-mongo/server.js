@@ -83,6 +83,7 @@ app.use("/api/admin/auth", authRoutes);
 app.use("/api/admin/dashboard", protectAdmin, dashboardRoutes);
 app.use("/api/admin/users", protectAdmin, adminUsersRoutes);
 app.use("/api/admin/hosts", protectAdmin, hostRoutes);
+app.use("/api/admin/verification", protectAdmin, userVerificationRoutes);
 app.use("/api/admin/agencies", protectAdmin, agencyRoutes);
 app.use("/api/admin/economy", protectAdmin, economyRoutes);
 app.use("/api/admin/monitoring", protectAdmin, monitoringRoutes);
