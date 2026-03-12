@@ -14,6 +14,7 @@ import xss from "xss-clean";
 
 // Route Imports
 import authRoutes from "./routes/auth.js";
+import dashboardRoutes from "./routes/dashboard.js";
 import userAuthRoutes from "./routes/userAuth.js";
 import adminUsersRoutes from "./routes/users.js";
 import hostRoutes from "./routes/hosts.js";
@@ -63,6 +64,7 @@ app.use("/api/calls", protectUser, callRoutes);
 
 // Admin Routes (Standardized Prefix: /api/admin/...)
 app.use("/api/admin/auth", authRoutes);
+app.use("/api/admin/dashboard", protectAdmin, dashboardRoutes);
 app.use("/api/admin/users", protectAdmin, adminUsersRoutes);
 app.use("/api/admin/hosts", protectAdmin, hostRoutes);
 app.use("/api/admin/agencies", protectAdmin, agencyRoutes);
