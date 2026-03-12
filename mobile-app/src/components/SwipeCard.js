@@ -13,7 +13,7 @@ const SwipeCard = ({ item, onCall, onChat }) => {
   return (
     <View style={styles.card}>
       <Image 
-        source={{ uri: item.profilePicture || 'https://via.placeholder.com/400x600' }} 
+        source={{ uri: item.profilePicture || 'https://ui-avatars.com/api/?name=Host&background=random&size=400' }} 
         style={styles.image}
         resizeMode="cover"
       />

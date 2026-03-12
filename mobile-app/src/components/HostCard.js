@@ -22,7 +22,7 @@ const HostCard = React.memo(({ item, currentUser, navigation }) => {
     >
       <View style={styles.imageWrapper}>
         <Image 
-          source={{ uri: item.profilePicture || 'https://via.placeholder.com/200x250' }} 
+          source={{ uri: item.profilePicture || 'https://ui-avatars.com/api/?name=Host&background=random' }} 
           style={styles.hostImage}
           resizeMode="cover"
         />

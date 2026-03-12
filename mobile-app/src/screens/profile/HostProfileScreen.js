@@ -107,7 +107,7 @@ const HostProfileScreen = ({ route, navigation }) => {
         
         {/* Cover Section */}
         <View style={styles.coverSection}>
-           <Image source={{ uri: host?.profilePicture || 'https://via.placeholder.com/400x500' }} style={styles.coverImg} />
+           <Image source={{ uri: host?.profilePicture || 'https://ui-avatars.com/api/?name=Host&background=random&size=400' }} style={styles.coverImg} />
            <LinearGradient colors={['rgba(0,0,0,0.4)', 'transparent', 'rgba(0,0,0,0.8)']} style={styles.coverGradient}>
               <View style={styles.topBar}>
                  <TouchableOpacity style={styles.circleBtn} onPress={() => navigation.goBack()}>

@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import Agency from "../models/Agency.js";
 import Settings from "../models/Settings.js";
 import Admin from "../models/Admin.js";
+import crypto from "crypto";
 
 class CallService {
   async generateToken(_userId, _roomId) {
@@ -17,11 +18,13 @@ class CallService {
     }
 
     // In production, we'd use zego-server-assistant or similar to generate a secure token
-    // For now, returning appId and appSign as the current implementation does, but structure is ready.
+    // For now, returning a secure random token instead of a placeholder.
+    const secureToken = crypto.randomBytes(32).toString('hex');
+
     return {
       appId,
       appSign: serverSecret,
-      token: "SECURE_TOKEN_PLACEHOLDER", // Would be generated here
+      token: secureToken, 
     };
   }
 

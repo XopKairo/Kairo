@@ -6,6 +6,7 @@ import Host from "../models/Host.js";
 import Payout from "../models/Payout.js";
 import Call from "../models/Call.js";
 import Transaction from "../models/Transaction.js";
+import Report from "../models/Report.js";
 import redisClient from "../config/redis.js";
 
 const router = express.Router();
@@ -20,7 +21,7 @@ router.get("/stats", async (req, res) => {
     const totalUsers = await User.countDocuments();
     const verifiedHosts = await Host.countDocuments({ isVerified: true });
     const pendingPayouts = await Payout.countDocuments({ status: "Pending" });
-    const totalReports = await User.countDocuments({ isVerified: false }); // Placeholder count
+    const totalReports = await Report.countDocuments({ status: "Open" });
     const totalCalls = await Call.countDocuments();
     const totalTransactions = await Transaction.countDocuments({
       status: "completed",
