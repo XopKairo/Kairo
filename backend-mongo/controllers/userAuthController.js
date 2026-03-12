@@ -194,6 +194,20 @@ class UserAuthController {
       const user = await User.findById(userId);
       if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
+      // --- Smart Phone Validation (Anti-Fake Guard) ---
+      const phone = user.phone ? user.phone.replace("+91", "").trim() : "";
+      
+      const isRepeated = /^(\d)\1{9}$/.test(phone);
+      const isSequence = ["1234567890", "0123456789", "9876543210", "0987654321"].includes(phone);
+      const isInvalidStart = !/^[6-9]/.test(phone);
+
+      if (phone && (isRepeated || isSequence || isInvalidStart)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Host registration denied: Please update your profile with a valid personal mobile number first." 
+        });
+      }
+
       // Update User model
       user.isHost = true;
       await user.save();

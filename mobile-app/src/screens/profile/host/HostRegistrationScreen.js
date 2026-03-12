@@ -18,9 +18,27 @@ const HostRegistrationScreen = ({ navigation }) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
+  const validatePhoneNumber = (number) => {
+    // 1. Check length
+    if (number.length !== 10) return "Please enter a 10-digit mobile number.";
+    
+    // 2. Check if starts with 6-9 (Indian standard)
+    if (!/^[6-9]/.test(number)) return "Please enter a valid Indian mobile number.";
+
+    // 3. Block all same digits (0000000000, 9999999999, etc.)
+    if (/^(\d)\1{9}$/.test(number)) return "Invalid mobile number. Repeated digits detected.";
+
+    // 4. Block common sequences
+    const sequences = ["1234567890", "0123456789", "9876543210", "0987654321"];
+    if (sequences.includes(number)) return "Suspicious number detected. Please use a real mobile number.";
+
+    return null;
+  };
+
   const handleGetOTP = async () => {
-    if (!mobileNumber || mobileNumber.length < 10) {
-      return showAlert('Invalid Number', 'Please enter a valid 10-digit mobile number.');
+    const validationError = validatePhoneNumber(mobileNumber);
+    if (validationError) {
+      return showAlert('Invalid Number', validationError);
     }
 
     setLoading(true);
