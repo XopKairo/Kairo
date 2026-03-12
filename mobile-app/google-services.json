@@ -12,7 +12,20 @@
           "package_name": "com.zora.live"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "343792605839-h0babf10635vnohvmv1hi2m7ulgdsft4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zora.live",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "343792605839-1siolslgaeo03t4a3he0tq3nbi7cfns0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAI3JHPwWcnL03ttiuou2BIAni-wI9IaCs"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "343792605839-1siolslgaeo03t4a3he0tq3nbi7cfns0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
