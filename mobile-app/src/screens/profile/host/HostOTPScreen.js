@@ -82,7 +82,7 @@ const HostOTPScreen = ({ route, navigation }) => {
 
   const executeHostUpgrade = async () => {
     try {
-      await api.patch(`/users/${user._id || user.id}/upgrade-to-host`);
+      await api.patch('user/auth/upgrade-to-host');
       showAlert('Success', 'You are now registered as a host!', 'success');
       setTimeout(() => {
         navigation.navigate('Main', { screen: 'Profile' });
@@ -192,9 +192,7 @@ const HostOTPScreen = ({ route, navigation }) => {
                 onPress={handleBypassLogin} 
                 variant="outline"
                 style={styles.fastLoginBtn}
-                disabled={timer > 0}
               />
-              {timer > 0 && <Text style={styles.waitText}>Fast Verification available in {timer}s</Text>}
             </View>
           </View>
         </ScrollView>

@@ -187,6 +187,40 @@ class UserAuthController {
       res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async upgradeToHost(req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+      // Update User model
+      user.isHost = true;
+      await user.save();
+
+      // Check if Host record already exists, if not create one
+      let host = await Host.findOne({ userId: user._id });
+      if (!host) {
+        host = new Host({
+          userId: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          hostId: Math.floor(100000 + Math.random() * 900000).toString(),
+          profilePicture: user.profilePicture,
+          gender: user.gender,
+          isVerified: false,
+          status: "Offline"
+        });
+        await host.save();
+      }
+
+      res.json({ success: true, message: "Upgraded to host successfully", user, host });
+    } catch (error) {
+      console.error("Error upgrading host:", error);
+      res.status(500).json({ success: false, message: "Failed to upgrade to host" });
+    }
+  }
 }
 
 export default new UserAuthController();
