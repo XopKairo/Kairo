@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, CheckCircle, Edit, Eye, XCircle } from 'lucide-react';
+import { MoreHorizontal, CheckCircle, Edit, Eye, XCircle, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Host {
