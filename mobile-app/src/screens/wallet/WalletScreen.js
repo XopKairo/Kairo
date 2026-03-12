@@ -45,10 +45,13 @@ const WalletScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchUserData();
-    const cleanup = initRewardedAd((newBalance) => {
-      setUser(prev => ({...prev, coins: newBalance}));
-      setAdLoading(false);
-    });
+    const cleanup = initRewardedAd(
+      (newBalance) => {
+        setUser(prev => ({...prev, coins: newBalance}));
+        setAdLoading(false);
+      },
+      () => setAdLoading(false)
+    );
     return cleanup;
   }, []);
 
@@ -164,7 +167,11 @@ const WalletScreen = ({ navigation }) => {
           style={styles.adCard} 
           onPress={() => { 
             setAdLoading(true);
-            showRewardedAd(); 
+            const shown = showRewardedAd(); 
+            if (!shown) {
+              setAdLoading(false);
+              showAlert('Ad not ready', 'Please wait a moment and try again.', 'notice');
+            }
           }}
           disabled={adLoading}
         >
