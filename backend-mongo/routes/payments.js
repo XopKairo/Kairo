@@ -1,10 +1,6 @@
 import express from "express";
 const router = express.Router();
 import { protectUser } from "../middleware/authMiddleware.js";
-import {
-  createCashfreeOrder,
-  getCashfreeOrderStatus,
-} from "../utils/cashfree.js";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
 import Razorpay from "razorpay";
@@ -71,33 +67,6 @@ router.post("/verify-razorpay", protectUser, async (req, res) => {
       return res.json({ success: true, message: "Razorpay verified", coinsAdded: coinsToAdd });
     }
     res.status(404).json({ success: false, message: "Transaction not found" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-router.post("/create-order", protectUser, async (req, res) => {
-  try {
-    const { amount, currency } = req.body;
-    const userId = req.user._id || req.user.id;
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    const orderId = `order_${Date.now()}_${userId.toString().substring(0, 5)}`;
-    const cashfreeOrder = await createCashfreeOrder({
-      orderId, amount, currency: currency || "INR", userId: userId.toString(),
-      customerPhone: user.phone || "9999999999", customerEmail: `${user.phone}@zora.com`,
-    });
-    await Transaction.create({
-      userId, amount, orderId,
-      status: "pending", paymentId: cashfreeOrder.order_id,
-      description: "Cashfree Deposit",
-    });
-    res.status(201).json({
-      success: true,
-      orderId: cashfreeOrder.order_id,
-      paymentSessionId: cashfreeOrder.payment_session_id,
-      paymentLink: cashfreeOrder.payment_link,
-    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

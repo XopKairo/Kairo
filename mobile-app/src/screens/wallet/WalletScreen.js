@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Modal, TouchableOpacity, Text, SafeAreaView, StatusBar, ActivityIndicator, Linking, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, SafeAreaView, StatusBar, ActivityIndicator, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import { initRewardedAd, showRewardedAd } from '../../services/adService';
@@ -7,7 +7,7 @@ import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
 import ZoraAlert from '../../components/ZoraAlert';
-import { Wallet, Play, ArrowUpRight, History, Info, Tag, CheckCircle2, CreditCard, Smartphone, X } from 'lucide-react-native';
+import { Wallet, Play, ArrowUpRight, Info, CheckCircle2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RazorpayCheckout from 'react-native-razorpay';
 
@@ -24,9 +24,6 @@ const WalletScreen = ({ navigation }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
   
-  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [selectedPkg, setSelectedPkg] = useState(null);
-
   const showAlert = (title, message, type = 'error') => {
     setAlertConfig({ visible: true, title, message, type });
   };
@@ -71,21 +68,19 @@ const WalletScreen = ({ navigation }) => {
     }
   };
 
-  const initiateRazorpay = async () => {
-    if (!selectedPkg) return;
-    setPaymentModalVisible(false);
-    const finalPrice = appliedCoupon ? Math.max(selectedPkg.priceINR - appliedCoupon.discount, 1) : selectedPkg.priceINR;
+  const handlePurchase = async (pkg) => {
+    const finalPrice = appliedCoupon ? Math.max(pkg.priceINR - appliedCoupon.discount, 1) : pkg.priceINR;
     
     setLoading(true);
     try {
       const res = await api.post('user/payments/create-razorpay-order', {
         amount: finalPrice,
-        coins: selectedPkg.coins + (selectedPkg.bonus || 0),
+        coins: pkg.coins + (pkg.bonus || 0),
         currency: 'INR'
       });
       
       const options = {
-        description: `Purchase ${selectedPkg.coins} Coins`,
+        description: `Purchase ${pkg.coins} Coins`,
         image: 'https://i.imgur.com/3g7nmJC.png',
         currency: 'INR',
         key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SPOBSULcN0TXIq', 
@@ -117,29 +112,6 @@ const WalletScreen = ({ navigation }) => {
     }
   };
 
-  const initiateCashfree = async () => {
-    if (!selectedPkg) return;
-    setPaymentModalVisible(false);
-    const finalPrice = appliedCoupon ? Math.max(selectedPkg.priceINR - appliedCoupon.discount, 1) : selectedPkg.priceINR;
-
-    setLoading(true);
-    try {
-      const res = await api.post('user/payments/create-order', {
-        amount: finalPrice,
-        currency: 'INR'
-      });
-      
-      if (res.data.paymentLink) {
-        Linking.openURL(res.data.paymentLink);
-        showAlert('Payment Link Sent', 'Check your browser to complete payment.', 'notice');
-      }
-    } catch (err) {
-      showAlert('Cashfree Error', err.response?.data?.message || 'Failed to start Cashfree');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleWithdraw = async () => {
     const amountNum = Number(withdrawAmount);
     if (amountNum * COIN_TO_INR_RATE < 500) return showAlert('Error', 'Min withdrawal is ₹500 (5000 Coins).');
@@ -165,44 +137,6 @@ const WalletScreen = ({ navigation }) => {
       setLoading(false);
     }
   };
-
-  const renderPaymentModal = () => (
-    <Modal visible={paymentModalVisible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Choose Payment Method</Text>
-            <TouchableOpacity onPress={() => setPaymentModalVisible(false)}><X color="#FFF" size={24}/></TouchableOpacity>
-          </View>
-          
-          <Text style={styles.pkgSummary}>Buying {selectedPkg?.coins} Coins for ₹{appliedCoupon ? Math.max(selectedPkg?.priceINR - appliedCoupon.discount, 1) : selectedPkg?.priceINR}</Text>
-
-          <TouchableOpacity style={styles.paymentOption} onPress={initiateRazorpay}>
-            <View style={[styles.paymentIcon, { backgroundColor: '#3395FF' }]}><CreditCard color="#FFF" size={24}/></View>
-            <View style={styles.paymentInfo}>
-              <Text style={styles.paymentName}>Razorpay Checkout</Text>
-              <Text style={styles.paymentDesc}>Cards, Netbanking, Wallets</Text>
-            </View>
-            <ArrowUpRight color={COLORS.textGray} size={20}/>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.paymentOption} onPress={initiateCashfree}>
-            <View style={[styles.paymentIcon, { backgroundColor: '#1DB954' }]}><Smartphone color="#FFF" size={24}/></View>
-            <View style={styles.paymentInfo}>
-              <Text style={styles.paymentName}>Cashfree Instant</Text>
-              <Text style={styles.paymentDesc}>UPI, GPay, PhonePe, Cards</Text>
-            </View>
-            <ArrowUpRight color={COLORS.textGray} size={20}/>
-          </TouchableOpacity>
-
-          <View style={styles.secureNotice}>
-            <Info size={14} color={COLORS.textGray}/>
-            <Text style={styles.secureText}>Secure SSL encrypted payments</Text>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -271,7 +205,7 @@ const WalletScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   key={pkg._id} 
                   style={styles.packageCard}
-                  onPress={() => { setSelectedPkg(pkg); setPaymentModalVisible(true); }}
+                  onPress={() => handlePurchase(pkg)}
                 >
                    {pkg.bonus > 0 && (
                      <View style={styles.bonusBadge}>
@@ -317,7 +251,6 @@ const WalletScreen = ({ navigation }) => {
            <View style={styles.ruleItem}><Info size={14} color={COLORS.textGray} /><Text style={styles.ruleText}>Min withdrawal: ₹500 (5000 Coins)</Text></View>
         </View>
       </ScrollView>
-      {renderPaymentModal()}
     </SafeAreaView>
   );
 };
@@ -356,19 +289,7 @@ const styles = StyleSheet.create({
   rules: { marginTop: 30, paddingBottom: 50 },
   ruleTitle: { color: COLORS.textWhite, fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
   ruleItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  ruleText: { color: COLORS.textGray, fontSize: 12 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: COLORS.backgroundDark, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { color: COLORS.textWhite, fontSize: 20, fontWeight: 'bold' },
-  pkgSummary: { color: COLORS.accentGlow, fontSize: 16, fontWeight: 'bold', marginBottom: 25, backgroundColor: 'rgba(108, 43, 217, 0.1)', padding: 15, borderRadius: 15, textAlign: 'center' },
-  paymentOption: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, marginBottom: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  paymentIcon: { width: 48, height: 48, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
-  paymentInfo: { flex: 1 },
-  paymentName: { color: COLORS.textWhite, fontSize: 16, fontWeight: 'bold' },
-  paymentDesc: { color: COLORS.textGray, fontSize: 12, marginTop: 2 },
-  secureNotice: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10 },
-  secureText: { color: COLORS.textGray, fontSize: 11 }
+  ruleText: { color: COLORS.textGray, fontSize: 12 }
 });
 
 export default WalletScreen;
