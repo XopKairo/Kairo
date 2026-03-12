@@ -33,14 +33,13 @@ const WalletScreen = ({ navigation }) => {
 
   const fetchUserData = async () => {
     try {
-      const userDataStr = await AsyncStorage.getItem('userData');
-      if (userDataStr) {
-        const u = JSON.parse(userDataStr);
-        const res = await api.get(`users/${u.id || u._id}`);
+      const res = await api.get('user/auth/me');
+      if (res.data) {
         setUser(res.data);
+        await AsyncStorage.setItem('userData', JSON.stringify(res.data));
       }
       
-      const pkgRes = await api.get('https://kairo-b1i9.onrender.com/api/economy/coins');
+      const pkgRes = await api.get('public/economy/coins');
       setPackages(pkgRes.data || []);
     } catch (err) {
       console.log('Error fetching wallet data', err);
@@ -143,7 +142,7 @@ const WalletScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const res = await api.post('wallet/withdraw', {
+      const res = await api.post('user/wallet/withdraw', {
         userId: user?._id || user?.id,
         amountCoins: amountNum,
         paymentDetails: `UPI: ${upiId}`,

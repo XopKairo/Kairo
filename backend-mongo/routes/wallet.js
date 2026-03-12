@@ -3,6 +3,7 @@ const router = express.Router();
 import { protectUser } from "../middleware/authMiddleware.js";
 import User from "../models/User.js";
 import Settings from "../models/Settings.js";
+import walletController from "../controllers/walletController.js";
 
 // Secure Ad Reward Sync
 router.post("/ad-reward", protectUser, async (req, res) => {
@@ -35,5 +36,8 @@ router.post("/ad-reward", protectUser, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// Withdrawal Request
+router.post("/withdraw", protectUser, walletController.withdraw);
 
 export default router;

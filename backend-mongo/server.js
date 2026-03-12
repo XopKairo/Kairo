@@ -42,7 +42,7 @@ import interactionRoutes from "./routes/interactions.js";
 
 import { protectAdmin, protectUser } from "./middleware/authMiddleware.js";
 import errorHandler from "./middleware/errorMiddleware.js";
-import { seedAdmin, seedInterests } from "./utils/initDb.js";
+import { seedAdmin, seedInterests, seedPackages } from "./utils/initDb.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -101,5 +101,6 @@ mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 10, serverSelectionTimeou
     console.log("✅ Database Ready");
     await seedAdmin();
     await seedInterests();
+    await seedPackages();
     server.listen(PORT, () => console.log(`🚀 Node Active on ${PORT}`));
   });
