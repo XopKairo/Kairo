@@ -107,8 +107,8 @@ export default function Hosts() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Hosts & Verification</h1>
 
-      <div className="bg-white dark:bg-surface-900 rounded-[32px] overflow-hidden shadow-sm">
-        <table className="w-full text-left">
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] shadow-sm overflow-x-auto">
+        <table className="w-full text-left min-w-[800px]">
           <thead className="bg-gray-50 dark:bg-surface-800 text-gray-500 text-sm">
             <tr>
               <th className="p-6">Host</th>
@@ -119,7 +119,7 @@ export default function Hosts() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-            {hosts.map(host => {
+            {hosts.map((host, index) => {
               const rowId = (host._id || host.id || "").toString();
               return (
                 <tr key={rowId}>
@@ -147,7 +147,7 @@ export default function Hosts() {
                     <button onClick={() => window.open(host.verificationSelfie, '_blank')} className="text-blue-500 mr-2 p-2 hover:bg-blue-50 rounded-lg"><Eye size={18}/></button>
                     <button onClick={() => toggleMenu(rowId)} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-lg"><MoreHorizontal /></button>
                     {activeMenu === rowId && (
-                      <div className="absolute right-6 top-12 w-48 bg-white dark:bg-surface-800 border rounded-2xl shadow-xl z-50 p-2">
+                      <div className={`absolute right-6 ${index > hosts.length - 4 ? 'bottom-12' : 'top-12'} w-48 bg-white dark:bg-surface-800 border rounded-2xl shadow-xl z-50 p-2`}>
                         <button onClick={() => { setEditingHost(host); setEditForm({...host}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-gray-50 rounded-xl flex gap-2 text-sm"><Edit size={16}/> Edit Host</button>
                         {host.isVerified ? 
                            <button onClick={() => handleVerify(rowId, false)} className="w-full text-left p-3 hover:bg-orange-50 rounded-xl flex gap-2 text-sm text-orange-600"><XCircle size={16}/> Unverify Host</button> :
