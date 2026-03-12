@@ -1,17 +1,11 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { name: 'Mon', revenue: 4000 },
-  { name: 'Tue', revenue: 3000 },
-  { name: 'Wed', revenue: 5000 },
-  { name: 'Thu', revenue: 2780 },
-  { name: 'Fri', revenue: 1890 },
-  { name: 'Sat', revenue: 2390 },
-  { name: 'Sun', revenue: 3490 },
-];
+interface RevenueChartProps {
+  data: { name: string; revenue: number }[];
+}
 
-export const RevenueChart: React.FC = () => {
+export const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data}>

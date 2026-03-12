@@ -236,7 +236,7 @@ export default function Users() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Full Name</label>
-                  <input required value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="John Doe" />
+                  <input required value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="Enter full name" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Gender</label>
@@ -248,7 +248,7 @@ export default function Users() {
                 </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Phone Number</label>
-                <input required value={addForm.phone} onChange={e => setAddForm({...addForm, phone: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="+919876543210" />
+                <input required value={addForm.phone} onChange={e => setAddForm({...addForm, phone: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="Enter phone number" />
               </div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Login Password</label>
                 <input required type="password" value={addForm.password} onChange={e => setAddForm({...addForm, password: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" placeholder="••••••••" />

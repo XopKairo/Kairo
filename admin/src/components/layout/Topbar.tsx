@@ -15,10 +15,10 @@ export const Topbar = ({ onMenuClick }: { onMenuClick: () => void }) => {
       try {
         const res = await apiClient.get('/admin/dashboard/stats');
         // Bell icon: pendingPayouts
-        // Message icon: reports (if any) + totalTransactions (as placeholder for purchases)
+        // Message icon: unread reports
         setStats({
           payouts: res.data.pendingPayouts || 0,
-          messages: (res.data.totalReports || 0) // Placeholder logic
+          messages: res.data.totalReports || 0
         });
       } catch (e) {
         console.error('Failed to fetch topbar stats', e);

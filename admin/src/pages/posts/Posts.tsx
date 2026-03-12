@@ -17,16 +17,10 @@ export default function Posts() {
 
   const fetchPosts = async () => {
     try {
-      const response = await apiClient.get('/admin/economy/posts/admin'); // Placeholder if you have separate admin posts route
+      const response = await apiClient.get('/admin/posts/admin');
       setPosts(response.data);
-    } catch {
-      // Fallback to general feed if admin route fails
-      try {
-        const res = await apiClient.get('/admin/posts'); 
-        setPosts(res.data);
-      } catch (err) {
-        console.error('Failed to fetch posts', err);
-      }
+    } catch (err) {
+      console.error('Failed to fetch posts', err);
     } finally {
       setLoading(false);
     }

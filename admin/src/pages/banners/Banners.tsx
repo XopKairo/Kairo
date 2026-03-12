@@ -185,7 +185,7 @@ export default function Banners() {
                 <input
                   type="url"
                   required
-                  placeholder="https://example.com/banner.jpg"
+                  placeholder="Enter image URL"
                   value={formData.imageUrl}
                   onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-surface-800 border border-transparent focus:border-brand-500 rounded-xl text-sm outline-none dark:text-white transition-all"
