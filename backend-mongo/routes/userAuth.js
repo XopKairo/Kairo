@@ -1,5 +1,6 @@
 import express from "express";
 import userAuthController from "../controllers/userAuthController.js";
+import { protectUser } from "../middleware/authMiddleware.js";
 import {
   registerSchema,
   loginSchema,
@@ -42,5 +43,16 @@ router.post("/fast-login", userAuthController.fastLogin);
 
 // Delete Account
 router.delete("/delete-account/:id", userAuthController.deleteAccount);
+
+// Profile Update
+const profileUpload = multer({ 
+  storage: getStorage("profiles"),
+}).fields([
+  { name: "image", maxCount: 1 },
+  { name: "moments", maxCount: 6 },
+  { name: "video", maxCount: 1 }
+]);
+
+router.put("/profile-update", protectUser, profileUpload, userAuthController.updateProfile);
 
 export default router;

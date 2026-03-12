@@ -136,7 +136,7 @@ const EditProfileScreen = ({ navigation }) => {
           }
         });
       }
-      const response = await api.put('user/profile/me/profile', formData, {
+      const response = await api.put('user/auth/profile-update', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 

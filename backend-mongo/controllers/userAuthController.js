@@ -1,4 +1,6 @@
 import authService from "../services/authService.js";
+import User from "../models/User.js";
+import Host from "../models/Host.js";
 
 class UserAuthController {
   async sendOtp(req, res) {
@@ -120,6 +122,41 @@ class UserAuthController {
       if (error.message === "User not found") {
         return res.status(404).json({ success: false, message: error.message });
       }
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async updateProfile(req, res) {
+    try {
+      const userId = req.user._id;
+      const { name, bio, age, location, gender, languages, isVipOnly, callRatePerMinute } = req.body;
+
+      const updateData = { 
+        name, bio, age, location, gender, 
+        languages: Array.isArray(languages) ? languages : languages ? languages.split(',') : [],
+        isVipOnly: isVipOnly === "true",
+        callRatePerMinute: parseInt(callRatePerMinute) || 30
+      };
+
+      if (req.files && req.files["image"]) updateData.profilePicture = req.files["image"][0].path;
+      if (req.files && req.files["moments"]) updateData.photos = req.files["moments"].map(f => f.path);
+      if (req.files && req.files["video"]) updateData.shortVideoUrl = req.files["video"][0].path;
+
+      // Fallback for single upload (image)
+      if (req.file) updateData.profilePicture = req.file.path;
+
+      const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+      // Also update Host model if it exists
+      await Host.findOneAndUpdate(
+        { userId: user._id }, 
+        { ...updateData, profilePicture: user.profilePicture, photos: user.photos }, 
+        { new: true }
+      );
+
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error("Update Profile Error:", error.message);
       res.status(500).json({ success: false, message: error.message });
     }
   }
