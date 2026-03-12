@@ -24,7 +24,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      if (error.response.status === 401 \&\& !error.config.url.includes("admin/auth/login")) {
+      if (error.response.status === 401 && error.config.url && !error.config.url.includes("admin/auth/login")) {
         localStorage.removeItem("token");
         window.location.href = "/login";
       }
