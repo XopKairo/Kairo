@@ -54,9 +54,28 @@ router.post("/create-razorpay-order", protectUser, async (req, res) => {
 
 router.post("/verify-razorpay", protectUser, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = req.body;
+    const finalOrderId = razorpay_order_id || order_id;
     const userId = req.user._id || req.user.id;
-    const transaction = await Transaction.findOne({ orderId: razorpay_order_id, status: "pending" });
+
+    console.log(`Verifying Razorpay: Order=${finalOrderId}, Payment=${razorpay_payment_id}`);
+
+    // 1. Signature Verification (Security)
+    if (razorpay_signature) {
+      const crypto = await import("crypto");
+      const generated_signature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "rzp_secret_placeholder")
+        .update(finalOrderId + "|" + razorpay_payment_id)
+        .digest("hex");
+
+      if (generated_signature !== razorpay_signature) {
+        console.error("Invalid Razorpay Signature");
+        return res.status(400).json({ success: false, message: "Invalid payment signature" });
+      }
+    }
+
+    // 2. Find and update transaction
+    const transaction = await Transaction.findOne({ orderId: finalOrderId, status: "pending" });
     if (transaction) {
       transaction.status = "completed";
       transaction.paymentId = razorpay_payment_id;
@@ -64,10 +83,15 @@ router.post("/verify-razorpay", protectUser, async (req, res) => {
       
       const coinsToAdd = transaction.coinsCredited || Math.floor(transaction.amount);
       await User.findByIdAndUpdate(userId, { $inc: { coins: coinsToAdd } });
+      
+      console.log(`Success: Credited ${coinsToAdd} coins to user ${userId}`);
       return res.json({ success: true, message: "Razorpay verified", coinsAdded: coinsToAdd });
     }
-    res.status(404).json({ success: false, message: "Transaction not found" });
+
+    console.warn(`Transaction not found for Order ID: ${finalOrderId}`);
+    res.status(404).json({ success: false, message: "Transaction record not found in system" });
   } catch (error) {
+    console.error("Verification Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });

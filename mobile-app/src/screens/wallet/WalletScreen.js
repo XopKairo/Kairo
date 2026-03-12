@@ -99,13 +99,22 @@ const WalletScreen = ({ navigation }) => {
       };
 
       RazorpayCheckout.open(options).then(async (data) => {
-        const verifyRes = await api.post('user/payments/verify-razorpay', data);
-        if (verifyRes.data.success) {
-          showAlert('Success', 'Coins added to your wallet!', 'success');
-          fetchUserData();
+        try {
+          const verifyRes = await api.post('user/payments/verify-razorpay', data);
+          if (verifyRes.data.success) {
+            showAlert('Success', 'Coins added to your wallet!', 'success');
+            fetchUserData();
+          } else {
+            showAlert('Verification Failed', verifyRes.data.message || 'System could not verify payment.');
+          }
+        } catch (vErr) {
+          console.error('Verification Error:', vErr);
+          showAlert('Error', vErr.response?.data?.message || 'Server verification failed.');
         }
       }).catch((error) => {
-        showAlert('Error', `Payment failed: ${error.description}`);
+        if (error.code !== 2) { // 2 is user cancelled
+          showAlert('Payment Error', error.description || 'Payment process failed.');
+        }
       });
 
     } catch (err) {
