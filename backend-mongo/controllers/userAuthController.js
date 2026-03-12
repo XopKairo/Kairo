@@ -130,13 +130,14 @@ class UserAuthController {
     try {
       const userId = req.user._id;
       console.log("Updating profile for user:", userId, "Data:", req.body);
-      const { name, bio, age, location, gender, languages, isVipOnly, callRatePerMinute } = req.body;
+      const { name, bio, age, location, gender, languages, isVipOnly, callRatePerMinute, interests } = req.body;
 
       const updateData = { 
         name, bio, age, location, gender, 
         languages: Array.isArray(languages) ? languages : languages ? languages.split(',') : [],
         isVipOnly: isVipOnly === "true",
-        callRatePerMinute: parseInt(callRatePerMinute) || 30
+        callRatePerMinute: parseInt(callRatePerMinute) || 30,
+        interests: Array.isArray(interests) ? interests : []
       };
 
       if (req.files && req.files["image"]) updateData.profilePicture = req.files["image"][0].path;

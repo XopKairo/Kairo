@@ -19,15 +19,13 @@ const SelectInterestsScreen = ({ navigation }) => {
   const fetchInterests = async () => {
     try {
       const [allRes, userRes] = await Promise.all([
-        api.get('/interests'),
-        AsyncStorage.getItem('userData').then(async (data) => {
-           const u = data ? JSON.parse(data) : {};
-           return api.get(`/users/${u.id || u._id}`);
-        })
+        api.get('/public/interests/active'),
+        api.get('/user/auth/me')
       ]);
       setInterests(allRes.data || []);
       setSelected(userRes.data?.interests || []);
     } catch (error) {
+      console.error('Fetch Interests Error:', error);
     } finally {
       setLoading(false);
     }
@@ -44,11 +42,7 @@ const SelectInterestsScreen = ({ navigation }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const userDataStr = await AsyncStorage.getItem('userData');
-      const u = userDataStr ? JSON.parse(userDataStr) : {};
-      if(u.id || u._id) {
-        await api.put(`/users/${u.id || u._id}/profile`, { interests: selected });
-      }
+      await api.put('user/auth/profile-update', { interests: selected });
       Alert.alert('Success', 'Interests updated!');
       navigation.goBack();
     } catch (error) {

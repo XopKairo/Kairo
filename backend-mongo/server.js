@@ -27,6 +27,7 @@ import bannerRoutes from "./routes/banners.js";
 import ticketRoutes from "./routes/tickets.js";
 import adminPostsRoutes from "./routes/posts.js";
 import adminRoutes from "./routes/admin.js";
+import interestsRoutes from "./routes/interests.js";
 
 // User Route Imports
 import userAuthRoutes from "./routes/userAuth.js";
@@ -64,6 +65,7 @@ app.use("/api/health", (req, res) => res.json({ status: "ok" }));
 // PUBLIC ROUTES
 app.use("/api/public/economy", economyRoutes);
 app.use("/api/public/settings", settingsRoutes);
+app.use("/api/public/interests", interestsRoutes);
 
 // USER ROUTES
 app.use("/api/user/auth", userAuthRoutes);
@@ -91,6 +93,7 @@ app.use("/api/admin/settings", protectAdmin, settingsRoutes);
 app.use("/api/admin/banners", protectAdmin, bannerRoutes);
 app.use("/api/admin/tickets", protectAdmin, ticketRoutes);
 app.use("/api/admin/posts", protectAdmin, adminPostsRoutes);
+app.use("/api/admin/interests", protectAdmin, interestsRoutes);
 app.use("/api/admin", protectAdmin, adminRoutes);
 
 app.use(errorHandler);
