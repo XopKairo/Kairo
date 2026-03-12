@@ -2,7 +2,8 @@ import express from "express";
 const router = express.Router();
 import Payout from "../models/Payout.js";
 import User from "../models/User.js";
-import { processTransfer } from "../utils/payoutProvider.js";
+import payoutProvider from "../utils/payoutProvider.js";
+const { processTransfer } = payoutProvider;
 
 // Get all payouts
 router.get("/", async (req, res) => {
