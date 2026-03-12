@@ -19,7 +19,7 @@ router.post("/refresh", refreshTokens);
 
 // Profile Routes
 router.get("/me", protectAdmin, getAdminProfile);
-router.post("/admin/request-update-otp", protectAdmin, requestAdminUpdateOTP);
-router.put("/admin/update-profile", protectAdmin, updateAdminProfile);
+router.post("/request-update-otp", protectAdmin, requestAdminUpdateOTP);
+router.put("/update-profile", protectAdmin, updateAdminProfile);
 
 export default router;
