@@ -47,7 +47,7 @@ API.interceptors.response.use(
       } else if (status === 403) {
         onBlacklistTrigger(data.message || 'Access restricted');
       } else if (status === 401) {
-        if (error.config.url && !error.config.url.includes('login')) {
+        if (error.config.url && !error.config.url.endsWith('login')) {
           await logoutUser();
         }
       }

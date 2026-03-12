@@ -71,12 +71,12 @@ app.use("/api/admin/verification", protectAdmin, verificationRoutes);
 app.use("/api/admin/monitoring", protectAdmin, monitoringRoutes);
 app.use("/api/admin/reports", protectAdmin, reportRoutes);
 app.use("/api/admin/notifications", protectAdmin, notificationsRoutes);
-app.use("/api/settings", protectAdmin, settingsRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 10, serverSelectionTimeoutMS: 5000 })
   .then(async () => {
     console.log("✅ MongoDB Connected");
     await seedAdmin();
