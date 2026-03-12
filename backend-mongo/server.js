@@ -26,6 +26,7 @@ import payoutRoutes from "./routes/payouts.js";
 import bannerRoutes from "./routes/banners.js";
 import ticketRoutes from "./routes/tickets.js";
 import adminPostsRoutes from "./routes/posts.js";
+import adminRoutes from "./routes/admin.js";
 
 // User Route Imports
 import userAuthRoutes from "./routes/userAuth.js";
@@ -90,6 +91,7 @@ app.use("/api/admin/settings", protectAdmin, settingsRoutes);
 app.use("/api/admin/banners", protectAdmin, bannerRoutes);
 app.use("/api/admin/tickets", protectAdmin, ticketRoutes);
 app.use("/api/admin/posts", protectAdmin, adminPostsRoutes);
+app.use("/api/admin", protectAdmin, adminRoutes);
 
 app.use(errorHandler);
 
