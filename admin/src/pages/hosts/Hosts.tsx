@@ -116,11 +116,11 @@ export default function Hosts() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-40">
       <h1 className="text-2xl font-bold">Hosts & Verification</h1>
 
-      <div className="bg-white dark:bg-surface-900 rounded-[32px] shadow-sm overflow-x-auto">
-        <table className="w-full text-left min-w-[800px]">
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] shadow-sm overflow-x-auto border border-gray-100 dark:border-surface-800">
+        <table className="w-full text-left min-w-[900px]">
           <thead className="bg-gray-50 dark:bg-surface-800 text-gray-500 text-sm">
             <tr>
               <th className="p-6">Host</th>
@@ -130,47 +130,70 @@ export default function Hosts() {
               <th className="p-6 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm relative">
             {hosts.map((host, index) => {
               const rowId = (host._id || host.id || "").toString();
+              const isLastRows = index > hosts.length - 4;
               return (
-                <tr key={rowId}>
+                <tr key={rowId} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
                   <td className="p-6 flex items-center gap-3">
-                    <img src={host.profilePicture || "https://ui-avatars.com/api/?name="+host.name} className="w-10 h-10 rounded-full" />
-                    <div>
-                       <span className="font-bold text-gray-900 dark:text-white block">{host.name}</span>
-                       <span className="text-[10px] text-gray-400">{host.agency || 'Independent'}</span>
+                    <img src={host.profilePicture || "https://ui-avatars.com/api/?name="+host.name} className="w-10 h-10 rounded-full border-2 border-brand-50" />
+                    <div className="min-w-0 flex-1">
+                       <span className="font-bold text-gray-900 dark:text-white block truncate">{host.name}</span>
+                       <span className="text-[10px] text-gray-400 font-medium">{host.agency || 'Independent'}</span>
                     </div>
                   </td>
                   <td className="p-6 text-center">
-                    <p className="font-bold">{host.totalCalls || 0}</p>
-                    <p className="text-[10px] text-gray-400">{host.totalMinutes || 0} mins</p>
+                    <p className="font-bold text-gray-900 dark:text-white">{host.totalCalls || 0}</p>
+                    <p className="text-[10px] text-gray-400 font-medium">{host.totalMinutes || 0} mins</p>
                   </td>
                   <td className="p-6 text-center">
                     <p className="font-black text-brand-600">₹{((host.earnings || 0) * 0.1).toFixed(2)}</p>
-                    <p className="text-[10px] text-gray-400">({host.earnings || 0} coins)</p>
+                    <p className="text-[10px] text-gray-400 font-medium">({host.earnings || 0} coins)</p>
                   </td>
                   <td className="p-6">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${host.status === 'Online' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                       {host.status}
                     </span>
                   </td>
-                  <td className="p-6 text-right relative">
-                    <button onClick={() => window.open(host.verificationSelfie, '_blank')} className="text-blue-500 mr-2 p-2 hover:bg-blue-50 rounded-lg"><Eye size={18}/></button>
-                    <button onClick={() => toggleMenu(rowId)} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-lg"><MoreHorizontal /></button>
+                  <td className="p-6 text-right relative overflow-visible">
+                    <div className="flex items-center justify-end gap-1">
+                      <button 
+                        onClick={() => window.open(host.verificationSelfie, '_blank')} 
+                        className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-colors"
+                        title="View Selfie"
+                      >
+                        <Eye size={18}/>
+                      </button>
+                      <button 
+                        onClick={() => toggleMenu(rowId)} 
+                        className={`p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-xl transition-colors ${activeMenu === rowId ? 'bg-gray-100 dark:bg-surface-800' : ''}`}
+                      >
+                        <MoreHorizontal size={20} />
+                      </button>
+                    </div>
+
                     {activeMenu === rowId && (
-                      <div className={`absolute right-6 ${index > hosts.length - 4 ? 'bottom-12' : 'top-12'} w-48 bg-white dark:bg-surface-800 border rounded-2xl shadow-xl z-50 p-2`}>
-                        <button onClick={() => { setEditingHost(host); setEditForm({...host}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-gray-50 rounded-xl flex gap-2 text-sm"><Edit size={16}/> Edit Host</button>
+                      <div className={`absolute right-6 ${isLastRows ? 'bottom-full mb-2' : 'top-full mt-2'} w-52 bg-white dark:bg-surface-800 border border-gray-100 dark:border-surface-700 rounded-2xl shadow-2xl z-[100] p-2 ring-1 ring-black/5`}>
+                        <button onClick={() => { setEditingHost(host); setEditForm({...host}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-xl flex gap-3 text-sm font-semibold transition-colors"><Edit size={16} className="text-brand-500"/> Edit Host</button>
+                        
+                        <div className="h-px bg-gray-100 dark:bg-surface-700 my-1 mx-2" />
+
                         {host.isVerified ? 
-                           <button onClick={() => handleVerify(rowId, false)} className="w-full text-left p-3 hover:bg-orange-50 rounded-xl flex gap-2 text-sm text-orange-600"><XCircle size={16}/> Unverify Host</button> :
-                           <button onClick={() => handleVerify(rowId, true)} className="w-full text-left p-3 hover:bg-green-50 rounded-xl flex gap-2 text-sm text-green-600"><CheckCircle size={16}/> Approve</button>
+                           <button onClick={() => handleVerify(rowId, false)} className="w-full text-left p-3 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl flex gap-3 text-sm text-orange-600 font-semibold transition-colors"><XCircle size={16}/> Unverify Host</button> :
+                           <button onClick={() => handleVerify(rowId, true)} className="w-full text-left p-3 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-xl flex gap-3 text-sm text-green-600 font-semibold transition-colors"><CheckCircle size={16}/> Approve Host</button>
                         }
+
                         {host.isBanned ?
-                           <button onClick={() => handleUnban(rowId)} className="w-full text-left p-3 hover:bg-green-50 rounded-xl flex gap-2 text-sm text-green-600"><CheckCircle size={16}/> Unban Host</button> :
-                           <button onClick={() => { setEditingHost(host); setIsBanModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-red-50 rounded-xl flex gap-2 text-sm text-red-600"><XCircle size={16}/> Ban Host</button>
+                           <button onClick={() => handleUnban(rowId)} className="w-full text-left p-3 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-xl flex gap-3 text-sm text-green-600 font-semibold transition-colors"><CheckCircle size={16}/> Unban Host</button> :
+                           <button onClick={() => { setEditingHost(host); setIsBanModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl flex gap-3 text-sm text-red-600 font-semibold transition-colors"><XCircle size={16}/> Ban Host</button>
                         }
-                        <button onClick={() => removeHostRole(rowId)} className="w-full text-left p-3 hover:bg-red-50 rounded-xl flex gap-2 text-sm text-red-600 font-bold mt-1 border-t"><XCircle size={16}/> Remove Host Role</button>
-                        <button onClick={() => deletePermanently(rowId)} className="w-full text-left p-3 hover:bg-red-100 rounded-xl flex gap-2 text-sm text-red-800 font-black"><XCircle size={16}/> PERMANENT DELETE</button>
+
+                        <div className="h-px bg-gray-100 dark:bg-surface-700 my-1 mx-2" />
+                        
+                        <button onClick={() => removeHostRole(rowId)} className="w-full text-left p-3 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl flex gap-3 text-sm text-red-600 font-bold transition-colors"><XCircle size={16}/> Remove Host Role</button>
+                        
+                        <button onClick={() => deletePermanently(rowId)} className="w-full text-left p-3 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-xl flex gap-3 text-sm text-red-800 font-black transition-colors"><Trash2 size={16}/> PERMANENT DELETE</button>
                       </div>
                     )}
                   </td>
