@@ -1,4 +1,4 @@
-import mobileAds, { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
+import mobileAds, { RewardedAd, RewardedAdEventType, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 import api from './api';
 
 const adUnitId = __DEV__ ? TestIds.REWARDED : (process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID || "ca-app-pub-2842532668081504/4662026359");
@@ -27,8 +27,8 @@ export const initRewardedAd = (onEarnReward, onFail) => {
     },
   );
 
-  // Handle errors
-  const unsubscribeClosed = rewarded.addAdEventListener(RewardedAdEventType.CLOSED, () => {
+  // Handle close/errors
+  const unsubscribeClosed = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
     rewarded.load();
     if (onFail) onFail();
   });
