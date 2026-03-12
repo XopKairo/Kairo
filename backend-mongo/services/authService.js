@@ -67,6 +67,17 @@ class AuthService {
 
     const user = await userRepository.findByPhone(cleanPhone);
     if (user) {
+      if (user.isBanned) {
+        // Check if ban has expired
+        if (user.banUntil && new Date() > user.banUntil) {
+           user.isBanned = false;
+           user.banUntil = null;
+           user.banReason = "";
+           await user.save();
+        } else {
+           throw new Error(`Account is banned: ${user.banReason || 'No reason provided'}`);
+        }
+      }
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
       return { success: true, token, user };
     }

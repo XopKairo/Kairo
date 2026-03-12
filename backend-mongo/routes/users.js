@@ -164,10 +164,12 @@ router.put("/:id", async (req, res) => {
 });
 
 router.post("/:id/ban", async (req, res) => {
-  const { isBanned, reason, durationDays } = req.body;
+  const { isBanned, reason, durationDays, customDate } = req.body;
   try {
     const update = { isBanned, banReason: reason || "" };
-    if (isBanned && durationDays && durationDays !== "permanent") {
+    if (isBanned && durationDays === "custom" && customDate) {
+      update.banUntil = new Date(customDate);
+    } else if (isBanned && durationDays && durationDays !== "permanent") {
       const date = new Date();
       date.setDate(date.getDate() + parseInt(durationDays));
       update.banUntil = date;

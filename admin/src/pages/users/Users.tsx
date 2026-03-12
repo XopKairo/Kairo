@@ -32,7 +32,7 @@ export default function Users() {
   const [addForm, setAddForm] = useState({ name: '', phone: '', password: '', gender: 'Male' });
 
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
-  const [banForm, setBanForm] = useState({ reason: '', duration: '1' });
+  const [banForm, setBanForm] = useState({ reason: '', duration: '1', customDate: '' });
 
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletForm, setWalletForm] = useState({ amount: '', type: 'ADD', reason: '' });
@@ -99,7 +99,8 @@ export default function Users() {
       await apiClient.post('/admin/users/' + editingUser._id + '/ban', {
         isBanned: true,
         reason: banForm.reason,
-        durationDays: banForm.duration
+        durationDays: banForm.duration,
+        customDate: banForm.duration === 'custom' ? banForm.customDate : undefined
       });
       fetchUsers();
       setIsBanModalOpen(false);
@@ -309,13 +310,14 @@ export default function Users() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Ban Duration</label>
-                <select value={banForm.duration} onChange={e => setBanForm({...banForm, duration: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm">
+                <select value={banForm.duration} onChange={e => setBanForm({...banForm, duration: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm mb-3">
                   <option value="1">1 Day</option>
-                  <option value="3">3 Days</option>
-                  <option value="7">1 Week</option>
-                  <option value="30">1 Month</option>
+                  <option value="custom">Custom Date</option>
                   <option value="permanent">Permanent</option>
                 </select>
+                {banForm.duration === 'custom' && (
+                  <input type="date" value={banForm.customDate} onChange={e => setBanForm({...banForm, customDate: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm" />
+                )}
               </div>
               <button onClick={handleBanSubmit} className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20 transition-all">Suspend Account</button>
               <button onClick={() => setIsBanModalOpen(false)} className="w-full py-2 text-gray-500 font-bold">Cancel</button>

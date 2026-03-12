@@ -74,7 +74,7 @@ class UserAuthController {
       if (error.message === "User not found. Please register." || error.message === "OTP verification mismatch" || error.message === "OTP token missing") {
         return res.status(401).json({ success: false, message: error.message });
       }
-      if (error.message === "Account is banned") {
+      if (error.message.startsWith("Account is banned")) {
         return res.status(403).json({ success: false, message: error.message });
       }
       res.status(500).json({ success: false, message: error.message });
