@@ -81,6 +81,21 @@ class UserAuthController {
     }
   }
 
+  async googleLogin(req, res) {
+    try {
+      const { idToken } = req.body;
+      if (!idToken) return res.status(400).json({ success: false, message: "Google ID token required" });
+      
+      const result = await authService.googleLogin(idToken);
+      res.status(200).json(result);
+    } catch (error) {
+      if (error.message.startsWith("Account is banned")) {
+        return res.status(403).json({ success: false, message: error.message });
+      }
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   async deleteAccount(req, res) {
     try {
       const result = await authService.deleteAccount(req.params.id);

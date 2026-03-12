@@ -1,12 +1,59 @@
 import admin from "firebase-admin";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import userRepository from "../repositories/userRepository.js";
 import Post from "../models/Post.js";
 import { getUserBadge } from "../utils/badgeSystem.js";
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "343792605839-1siolslgaeo03t4a3he0tq3nbi7cfns0.apps.googleusercontent.com");
+
 class AuthService {
   async sendOtp(contact) {
     return { success: true, message: "Use Firebase Client SDK to send OTP" };
+  }
+
+  async googleLogin(idToken) {
+    const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: [
+            "343792605839-1siolslgaeo03t4a3he0tq3nbi7cfns0.apps.googleusercontent.com", // Web client ID (often used for backend validation)
+            "343792605839-h0babf10635vnohvmv1hi2m7ulgdsft4.apps.googleusercontent.com", // Android Client ID
+        ],
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) throw new Error("Invalid Google Token");
+
+    // Check if user exists by email (or a custom googleId field)
+    // For now we will use email as the unique identifier for google users
+    let user = await userRepository.findByPhone(payload.email); // using findByPhone to find by unique identifier since email isn't in schema. Let's update that.
+    
+    if (!user) {
+        // Auto register if user doesn't exist
+        user = await userRepository.createUser({
+            name: payload.name || "Google User", 
+            phone: payload.email, // using email in phone field for now to bypass schema limits, or you need to add email.
+            firebaseUid: payload.sub,
+            profilePicture: payload.picture || "",
+            lastLoginDate: new Date(), 
+            zoraPoints: 5, 
+            coins: 0,
+        });
+    }
+
+    if (user.isBanned) {
+      if (user.banUntil && new Date() > user.banUntil) {
+          user.isBanned = false;
+          user.banUntil = null;
+          user.banReason = "";
+          await user.save();
+      } else {
+          throw new Error(`Account is banned: ${user.banReason || 'No reason provided'}`);
+      }
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    return { success: true, token, user, isNewUser: user.createdAt.getTime() === user.updatedAt.getTime() };
   }
 
   async verifyOtp(contact, firebaseToken) {

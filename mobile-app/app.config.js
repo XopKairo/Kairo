@@ -32,7 +32,8 @@ export default {
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.zora.live"
+      "bundleIdentifier": "com.zora.live",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "package": "com.zora.live",

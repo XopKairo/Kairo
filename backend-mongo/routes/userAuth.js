@@ -34,6 +34,9 @@ router.post(
 // User Login
 router.post("/login", validateRequest(loginSchema), userAuthController.login);
 
+// Google Login
+router.post("/google-login", userAuthController.googleLogin);
+
 // Delete Account
 router.delete("/delete-account/:id", userAuthController.deleteAccount);
 
