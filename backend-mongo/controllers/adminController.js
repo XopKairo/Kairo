@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Host from "../models/Host.js";
 import Call from "../models/Call.js";
 import Report from "../models/Report.js";
 import Blacklist from "../models/Blacklist.js";
@@ -207,6 +208,42 @@ class AdminController {
     try {
       await Blacklist.findByIdAndDelete(req.params.id);
       res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // 7. Permanent Delete Host/User
+  async deleteHostPermanently(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const host = await Host.findById(id);
+      let userId = id;
+
+      if (host) {
+        userId = host.userId;
+        await Host.findByIdAndDelete(id);
+      }
+
+      const user = await User.findByIdAndDelete(userId);
+      
+      if (!user && !host) {
+        return res.status(404).json({ success: false, message: "User/Host not found" });
+      }
+
+      try {
+        await AdminActionLog.create({
+          adminId: req.admin?._id,
+          action: "BAN_USER", // Using an existing enum-like action if available, or just a string
+          targetId: userId,
+          details: `Permanently deleted ${host ? 'Host' : 'User'}.`,
+        });
+      } catch (logErr) {
+        console.error("Delete logging failed:", logErr.message);
+      }
+
+      res.json({ success: true, message: "User permanently deleted from system" });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }

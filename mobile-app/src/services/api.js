@@ -82,6 +82,19 @@ export const loginUser = async (contact, otpToken) => {
   }
 };
 
+export const fastLoginUser = async (contact) => {
+  try {
+    const response = await API.post('user/auth/fast-login', { contact });
+    if (response.data.token) {
+      await AsyncStorage.setItem('userToken', response.data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
+    }
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
 export const registerUser = async (name, contact, _, otpToken, additionalData = {}) => {
   try {
     const isMultipart = !!additionalData.profilePicture;

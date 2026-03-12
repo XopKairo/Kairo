@@ -120,9 +120,9 @@ export default function Users() {
   const deleteUser = async (id: string) => {
     if (!window.confirm('Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) return;
     try {
-      await apiClient.delete('/admin/users/' + id);
+      await apiClient.delete('/admin/delete-permanent/' + id);
       fetchUsers();
-      alert('User deleted successfully');
+      alert('User permanently deleted');
     } catch {
       alert('Failed to delete user');
     }

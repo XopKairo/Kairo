@@ -96,6 +96,21 @@ class UserAuthController {
     }
   }
 
+  async fastLogin(req, res) {
+    try {
+      const { contact } = req.body;
+      if (!contact) return res.status(400).json({ success: false, message: "Contact required" });
+      
+      const result = await authService.fastLogin(contact);
+      res.status(200).json(result);
+    } catch (error) {
+      if (error.message.startsWith("Account is banned")) {
+        return res.status(403).json({ success: false, message: error.message });
+      }
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   async deleteAccount(req, res) {
     try {
       const result = await authService.deleteAccount(req.params.id);

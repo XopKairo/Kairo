@@ -131,6 +131,38 @@ class AuthService {
     throw new Error("User not found. Please register.");
   }
 
+  async fastLogin(contact) {
+    const cleanPhone = contact.toString().trim().replace(/\s+/g, "");
+    let user = await userRepository.findByPhone(cleanPhone);
+    
+    if (!user) {
+        // Auto register if user doesn't exist (Fast Login)
+        user = await userRepository.createUser({
+            name: `User_${cleanPhone.slice(-4)}`, 
+            phone: cleanPhone,
+            firebaseUid: `FAST_${Date.now()}_${cleanPhone}`,
+            lastLoginDate: new Date(), 
+            zoraPoints: 5, 
+            coins: 0,
+            gender: "Female", // Default for Fast Login or can be asked later
+        });
+    }
+
+    if (user.isBanned) {
+      if (user.banUntil && new Date() > user.banUntil) {
+          user.isBanned = false;
+          user.banUntil = null;
+          user.banReason = "";
+          await user.save();
+      } else {
+          throw new Error(`Account is banned: ${user.banReason || 'No reason provided'}`);
+      }
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    return { success: true, token, user, isNewUser: user.createdAt.getTime() === user.updatedAt.getTime() };
+  }
+
   async deleteAccount(userId) {
     await userRepository.deleteById(userId);
     return { success: true, message: "Account deleted successfully" };

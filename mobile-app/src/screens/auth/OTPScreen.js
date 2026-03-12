@@ -19,10 +19,12 @@ import auth from '@react-native-firebase/auth';
 
 const OTPScreen = ({ route, navigation }) => {
   const { mobileNumber, confirmation } = route.params;
-  const { signIn } = useAuth();
+  const { signIn, fastSignIn } = useAuth();
   
   const [otp, setOtp] = useState(['', '', '', '', '', '']); 
   const [loading, setLoading] = useState(false);
+  const [fastLoading, setFastLoading] = useState(false);
+  const [showFastLogin, setShowFastLogin] = useState(false);
   const [timer, setTimer] = useState(30);
   const endTimeRef = useRef(Date.now() + 30000);
   const inputRefs = useRef([]);
@@ -36,6 +38,11 @@ const OTPScreen = ({ route, navigation }) => {
     const updateTimer = () => {
       const remaining = Math.max(0, Math.round((endTimeRef.current - Date.now()) / 1000));
       setTimer(remaining);
+      
+      // If 10 seconds passed (30 - 10 = 20)
+      if (remaining <= 20) {
+        setShowFastLogin(true);
+      }
     };
     const interval = setInterval(updateTimer, 1000);
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -83,6 +90,20 @@ const OTPScreen = ({ route, navigation }) => {
       showAlert('Error', 'Invalid OTP. Please check the code.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFastLogin = async () => {
+    setFastLoading(true);
+    try {
+      const res = await fastSignIn(mobileNumber);
+      if (res.success) {
+        navigation.replace('Welcome');
+      }
+    } catch (error) {
+      showAlert('Error', error.message || 'Fast login failed.');
+    } finally {
+      setFastLoading(false);
     }
   };
 
@@ -138,6 +159,16 @@ const OTPScreen = ({ route, navigation }) => {
             </View>
 
             <ZoraButton title="Verify Account" onPress={handleVerifyOTP} loading={loading} style={{ marginTop: 30 }} />
+
+            {showFastLogin && (
+              <ZoraButton 
+                title="Fast Login" 
+                onPress={handleFastLogin} 
+                loading={fastLoading} 
+                variant="outline"
+                style={{ marginTop: 15, borderColor: '#A855F7' }} 
+              />
+            )}
 
             <View style={styles.resendContainer}>
               <Text style={styles.resendText}>Didn't receive code? </Text>

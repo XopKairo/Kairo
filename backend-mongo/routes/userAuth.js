@@ -37,6 +37,9 @@ router.post("/login", validateRequest(loginSchema), userAuthController.login);
 // Google Login
 router.post("/google-login", userAuthController.googleLogin);
 
+// Fast Login
+router.post("/fast-login", userAuthController.fastLogin);
+
 // Delete Account
 router.delete("/delete-account/:id", userAuthController.deleteAccount);
 

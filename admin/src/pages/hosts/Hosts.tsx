@@ -92,12 +92,12 @@ export default function Hosts() {
   };
 
   const deleteHost = async (id: string) => {
-    if (!window.confirm('Are you sure you want to PERMANENTLY delete this host? This cannot be undone.')) return;
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this host? This cannot be undone and will also delete the associated user account.')) return;
     try {
-      await apiClient.delete('/admin/hosts/' + id);
+      await apiClient.delete('/admin/delete-permanent/' + id);
       fetchHosts();
       setActiveMenu(null);
-      alert('Host deleted successfully');
+      alert('Host permanently deleted');
     } catch {
       alert('Failed to delete host');
     }
