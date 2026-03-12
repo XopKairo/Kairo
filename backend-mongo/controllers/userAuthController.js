@@ -129,6 +129,7 @@ class UserAuthController {
   async updateProfile(req, res) {
     try {
       const userId = req.user._id;
+      console.log("Updating profile for user:", userId, "Data:", req.body);
       const { name, bio, age, location, gender, languages, isVipOnly, callRatePerMinute } = req.body;
 
       const updateData = { 
