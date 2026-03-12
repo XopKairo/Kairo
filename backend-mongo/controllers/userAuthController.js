@@ -161,6 +161,20 @@ class UserAuthController {
       res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async getProfile(req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Get Profile Error:", error.message);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 }
 
 export default new UserAuthController();

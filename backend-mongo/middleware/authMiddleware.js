@@ -79,7 +79,7 @@ export const protectUser = async (req, res, next) => {
 
       // If not in cache, fallback to Database
       const user = await User.findById(decoded.id).select(
-        "isBanned name phone coins zoraPoints gender",
+        "isBanned name phone coins zoraPoints gender profilePicture isHost",
       );
 
       if (!user) {
@@ -108,6 +108,8 @@ export const protectUser = async (req, res, next) => {
         coins: user.coins,
         zoraPoints: user.zoraPoints,
         gender: user.gender,
+        profilePicture: user.profilePicture,
+        isHost: user.isHost,
       };
 
       await redisClient.setEx(cacheKey, 600, JSON.stringify(userData));

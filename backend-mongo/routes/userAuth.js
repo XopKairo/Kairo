@@ -41,6 +41,9 @@ router.post("/google-login", userAuthController.googleLogin);
 // Fast Login
 router.post("/fast-login", userAuthController.fastLogin);
 
+// Get Profile
+router.get("/me", protectUser, userAuthController.getProfile);
+
 // Delete Account
 router.delete("/delete-account/:id", userAuthController.deleteAccount);
 

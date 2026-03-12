@@ -7,19 +7,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
+import { useAuth } from '../../context/AuthContext';
 
 const UserProfileScreen = ({ navigation }) => {
-  const [user, setUser] = useState(null);
+  const { user: authUser } = useAuth();
+  const [user, setUser] = useState(authUser);
 
   const fetchUserData = async () => {
     try {
-      const storedUserStr = await AsyncStorage.getItem('userData');
-      if (storedUserStr) {
-        const storedUser = JSON.parse(storedUserStr);
-        const response = await api.get(`/users/${storedUser._id || storedUser.id}`);
+      const response = await api.get('/user/auth/me');
+      if (response.data) {
         setUser(response.data);
+        await AsyncStorage.setItem('userData', JSON.stringify(response.data));
       }
     } catch (error) {
+      console.error('Fetch User Data Error:', error);
+      // Fallback to AsyncStorage if API fails
+      const storedUserStr = await AsyncStorage.getItem('userData');
+      if (storedUserStr) {
+        setUser(JSON.parse(storedUserStr));
+      }
     }
   };
 

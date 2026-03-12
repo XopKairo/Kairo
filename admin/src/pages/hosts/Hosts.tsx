@@ -157,7 +157,16 @@ export default function Hosts() {
                            <button onClick={() => handleUnban(rowId)} className="w-full text-left p-3 hover:bg-green-50 rounded-xl flex gap-2 text-sm text-green-600"><CheckCircle size={16}/> Unban Host</button> :
                            <button onClick={() => { setEditingHost(host); setIsBanModalOpen(true); setActiveMenu(null); }} className="w-full text-left p-3 hover:bg-red-50 rounded-xl flex gap-2 text-sm text-red-600"><XCircle size={16}/> Ban Host</button>
                         }
-                        <button onClick={() => deleteHost(rowId)} className="w-full text-left p-3 hover:bg-red-50 rounded-xl flex gap-2 text-sm text-red-600 font-bold mt-1 border-t"><XCircle size={16}/> Delete Host</button>
+                        <button onClick={() => deleteHost(rowId)} className="w-full text-left p-3 hover:bg-red-50 rounded-xl flex gap-2 text-sm text-red-600 font-bold mt-1 border-t"><XCircle size={16}/> Remove Host Role</button>
+                        <button onClick={async () => {
+                          if (!window.confirm('WARNING: This will PERMANENTLY DELETE the user account and all data. This cannot be undone. Proceed?')) return;
+                          try {
+                            await apiClient.delete('/admin/delete-permanent/' + rowId);
+                            fetchHosts();
+                            setActiveMenu(null);
+                            alert('User and Host permanently deleted');
+                          } catch { alert('Failed'); }
+                        }} className="w-full text-left p-3 hover:bg-red-100 rounded-xl flex gap-2 text-sm text-red-800 font-black"><XCircle size={16}/> PERMANENT DELETE</button>
                       </div>
                     )}
                   </td>
