@@ -1,9 +1,23 @@
 import express from "express";
 import LiveCall from "../models/LiveCall.js";
 import CallScreenshot from "../models/CallScreenshot.js";
+import Transaction from "../models/Transaction.js";
 import { protectAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// @desc    Get all financial transactions (Admin Monitoring)
+router.get("/transactions", protectAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({})
+      .populate("userId", "name phone profilePicture")
+      .sort({ createdAt: -1 })
+      .limit(100);
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // @desc    Store a screenshot during call
 router.post("/screenshots", async (req, res) => {

@@ -66,6 +66,8 @@ app.use("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/public/economy", economyRoutes);
 app.use("/api/public/settings", settingsRoutes);
 app.use("/api/public/interests", interestsRoutes);
+app.use("/api/public/banners", bannerRoutes);
+app.use("/api/public/hosts", hostRoutes);
 
 // USER ROUTES
 app.use("/api/user/auth", userAuthRoutes);

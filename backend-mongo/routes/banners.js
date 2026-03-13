@@ -3,10 +3,20 @@ import Banner from "../models/Banner.js";
 
 const router = express.Router();
 
-// GET all banners
+// GET all banners (Admin)
 router.get("/", async (req, res) => {
   try {
     const banners = await Banner.find().sort({ order: 1, createdAt: -1 });
+    res.json(banners);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET active banners (Public/App)
+router.get("/active", async (req, res) => {
+  try {
+    const banners = await Banner.find({ status: "Active" }).sort({ order: 1, createdAt: -1 });
     res.json(banners);
   } catch (error) {
     res.status(500).json({ message: error.message });

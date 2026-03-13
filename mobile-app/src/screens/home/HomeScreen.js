@@ -57,9 +57,9 @@ const HomeScreen = ({ navigation }) => {
       }
 
       const [bannerRes, hostRes, settingsRes] = await Promise.all([
-        api.get('admin/banners').catch(() => ({ data: [] })), 
-        api.get('hosts', { params: { targetGender, tabFilter: activeTab, userId: user?.id || user?._id } }).catch(() => ({ data: [] })),
-        api.get('settings').catch(() => ({ data: { callRate: 30 } }))
+        api.get('public/banners/active').catch(() => ({ data: [] })), 
+        api.get('public/hosts', { params: { targetGender, tabFilter: activeTab, userId: user?.id || user?._id } }).catch(() => ({ data: [] })),
+        api.get('public/settings/app').catch(() => ({ data: { callRate: 30 } }))
       ]);
       
       setBanners(bannerRes.data || []);
@@ -73,7 +73,7 @@ const HomeScreen = ({ navigation }) => {
 
   const handleInteraction = async (hostId, action) => {
     try {
-      await api.post('hosts/interaction', { hostId, action });
+      await api.post('public/hosts/interaction', { hostId, action });
     } catch (e) {}
   };
 
