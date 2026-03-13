@@ -152,7 +152,7 @@ const HostProfileScreen = ({ route, navigation }) => {
                  <View style={styles.infoItem}><MapPin color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{host.location || 'India'}</Text></View>
                  <View style={styles.infoItem}><Globe2 color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{Array.isArray(host.languages) ? host.languages.join(', ') : host.languages || 'English'}</Text></View>
               </View>
-           </section>
+           </View>
 
            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Gallery</Text>
