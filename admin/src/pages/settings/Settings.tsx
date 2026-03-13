@@ -35,7 +35,7 @@ export default function Settings() {
 
   const fetchSettings = async () => {
     try {
-      const response = await apiClient.get('/settings');
+      const response = await apiClient.get('/admin/settings');
       if (response.data) {
         setMaintenance(response.data.maintenance || false);
         setRewardPerAd(response.data.rewardPerAd || 5);
@@ -56,7 +56,7 @@ export default function Settings() {
     setSaving(true);
     const newStatus = !maintenance;
     try {
-      await apiClient.put('/settings', { maintenance: newStatus });
+      await apiClient.put('/admin/settings', { maintenance: newStatus });
       setMaintenance(newStatus);
     } catch (error: any) {
       console.error('Failed to update maintenance mode:', error);
@@ -71,7 +71,7 @@ export default function Settings() {
     setProfileMsg({ type: '', text: '' });
     setSaving(true);
     try {
-      const res = await apiClient.post('/auth/admin/request-update-otp');
+      const res = await apiClient.post('/admin/auth/request-update-otp');
       setStep('OTP_SENT');
       setProfileMsg({ type: 'success', text: res.data.message });
     } catch (err) {
@@ -88,7 +88,7 @@ export default function Settings() {
     setProfileMsg({ type: '', text: '' });
     setSaving(true);
     try {
-      await apiClient.put('/auth/admin/update-profile', {
+      await apiClient.put('/admin/auth/update-profile', {
         otp,
         newUsername: username,
         newEmail: email,
@@ -115,7 +115,7 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      await apiClient.put('/settings', { rewardPerAd, dailyLimit });
+      await apiClient.put('/admin/settings', { rewardPerAd, dailyLimit });
       alert('Ad settings updated!');
     } catch {
       alert('Update failed');
@@ -128,7 +128,7 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     try {
-      await apiClient.put('/settings', { 
+      await apiClient.put('/admin/settings', { 
         callRate, 
         commission, 
         isAiModerationEnabled, 
