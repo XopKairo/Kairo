@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Receipt, Clock, Users, PhoneCall, ShieldAlert, Monitor } from 'lucide-react';
+import { Receipt, Users, PhoneCall, ShieldAlert } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import apiClient from '../api/apiClient';
 

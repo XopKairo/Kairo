@@ -54,7 +54,7 @@ export default function Hosts() {
   const handleUpdateHost = async () => {
     if (!editingHost) return;
     try {
-      await apiClient.put('/admin/hosts/' + (editingHost._id || editingHost.id), editForm);
+      await apiClient.put('/admin/hosts/' + editingHost._id, editForm);
       fetchHosts();
       setIsEditModalOpen(false);
     } catch { alert('Failed'); }
@@ -73,7 +73,7 @@ export default function Hosts() {
 
   const handleBanSubmit = async () => {
     if (!editingHost) return;
-    const rowId = (editingHost._id || editingHost.id);
+    const rowId = editingHost._id;
     try {
       await apiClient.post('/admin/hosts/' + rowId + '/ban', {
         isBanned: true,
