@@ -36,7 +36,7 @@ const UserProfileScreen = ({ navigation }) => {
   const processAccountDeletion = async () => {
     try {
       setDeleting(true);
-      await api.delete('/user/auth/delete-account');
+      await api.delete('user/auth/delete-account');
       setDeleteModalVisible(false);
       await AsyncStorage.clear();
       navigation.replace('Login');
