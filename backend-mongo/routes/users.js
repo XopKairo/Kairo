@@ -65,7 +65,6 @@ router.post("/", async (req, res) => {
   try {
     const { name, phone, password, gender } = req.body;
 
-    // Build query to check duplicates only for provided values
     const query = [];
     if (phone && phone.trim() !== "") query.push({ phone: phone.trim() });
 
@@ -103,7 +102,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Profile Update with Image Upload
 router.put("/:id/profile", upload.single("image"), async (req, res) => {
   try {
     const updateData = { ...req.body };
@@ -122,7 +120,6 @@ router.put("/:id/profile", upload.single("image"), async (req, res) => {
   }
 });
 
-// Configure Multer for multiple uploads
 const profileUpload = multer({ 
   storage: getStorage("profiles"),
 }).fields([
@@ -149,9 +146,8 @@ router.put("/me/profile", protectUser, profileUpload, async (req, res) => {
 
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
     
-    // Also update Host model if it exists
     await Host.findOneAndUpdate(
-      { phone: user.phone }, 
+      { userId: user._id }, 
       { ...updateData, profilePicture: user.profilePicture, photos: user.photos }, 
       { new: true }
     );
@@ -171,11 +167,9 @@ router.post("/block/:targetId", protectUser, async (req, res) => {
   }
 });
 
-// Generic Admin Update
 router.put("/:id", async (req, res) => {
   try {
     const updateData = { ...req.body };
-    // Prevent empty strings from causing unique index issues
     if (updateData.phone === "") delete updateData.phone;
 
     const user = await User.findByIdAndUpdate(req.params.id, updateData, {
@@ -207,7 +201,6 @@ router.post("/:id/ban", async (req, res) => {
       new: true,
     });
 
-    // Notify user via Socket
     if (isBanned && req.io) {
       req.io
         .to(`user-${user._id}`)
@@ -226,7 +219,6 @@ router.delete("/:id", async (req, res) => {
     const userId = req.params.id;
     await User.findByIdAndDelete(userId);
     
-    // Cleanup related data
     await Promise.all([
       VerificationRequest.deleteMany({ userId }),
       Host.deleteMany({ userId }),
@@ -236,40 +228,6 @@ router.delete("/:id", async (req, res) => {
     res.json({ success: true, message: "User and related verification data deleted" });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-// User upgrades to Host
-router.patch("/:id/upgrade-to-host", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    // Update User model
-    user.isHost = true;
-    await user.save();
-
-    // Check if Host record already exists, if not create one
-    let host = await Host.findOne({ userId: user._id });
-    if (!host) {
-      host = new Host({
-        userId: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        hostId: Math.floor(100000 + Math.random() * 900000).toString(), // Random 6 digit ID
-        profilePicture: user.profilePicture,
-        gender: user.gender,
-        isVerified: false,
-        status: "Offline"
-      });
-      await host.save();
-    }
-
-    res.json({ success: true, message: "Upgraded to host successfully", user, host });
-  } catch (error) {
-    console.error("Error upgrading host:", error);
-    res.status(500).json({ success: false, message: "Failed to upgrade to host" });
   }
 });
 
@@ -286,12 +244,10 @@ router.post("/follow/:id", async (req, res) => {
     const isFollowing = currentUser.following && currentUser.following.includes(targetId);
 
     if (isFollowing) {
-      // Unfollow
       await User.findByIdAndUpdate(currentUserId, { $pull: { following: targetId } });
       await User.findByIdAndUpdate(targetId, { $pull: { followers: currentUserId } }).catch(() => {});
       return res.json({ success: true, following: false });
     } else {
-      // Follow
       await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: targetId } });
       await User.findByIdAndUpdate(targetId, { $addToSet: { followers: currentUserId } }).catch(() => {});
       return res.json({ success: true, following: true });

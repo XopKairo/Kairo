@@ -58,7 +58,4 @@ const profileUpload = multer({
 
 router.put("/profile-update", protectUser, profileUpload, userAuthController.updateProfile);
 
-// Upgrade to Host
-router.patch("/upgrade-to-host", protectUser, userAuthController.upgradeToHost);
-
 export default router;
