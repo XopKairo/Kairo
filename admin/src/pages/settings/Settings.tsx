@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Settings as SettingsIcon, Shield, Key } from 'lucide-react';
+import { Settings as SettingsIcon, Shield } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import { AuthContext } from '../../context/AuthContext';
 
