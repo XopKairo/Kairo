@@ -80,25 +80,16 @@ const HostOTPScreen = ({ route, navigation }) => {
     }
   };
 
-  const executeHostUpgrade = async () => {
-    try {
-      await api.patch('user/auth/upgrade-to-host');
-      showAlert('Success', 'You are now registered as a host!', 'success');
-      setTimeout(() => {
-        navigation.navigate('Main', { screen: 'Profile' });
-      }, 2000);
-    } catch (err) {
-      showAlert('Upgrade Failed', err.response?.data?.message || 'Could not upgrade account to host.');
-    }
-  };
-
   const handleBypassLogin = async () => {
-    setLoading(true);
-    try {
-      await executeHostUpgrade();
-    } finally {
-      setLoading(false);
-    }
+    // Logic Sync: Bypass OTP and go to documents upload
+    showAlert(
+      'OTP Bypassed',
+      'Phone verification skipped. Please upload your documents to finalize host registration.',
+      'success'
+    );
+    setTimeout(() => {
+      navigation.replace('Verification');
+    }, 1500);
   };
 
   const handleVerifyOTP = async () => {
@@ -111,13 +102,14 @@ const HostOTPScreen = ({ route, navigation }) => {
     setLoading(true);
     try {
       if (!confirmation) {
-          showAlert('Notice', 'OTP service is currently unavailable. Please wait for the timer and use Fast Verification.', 'notice');
-          setLoading(false);
+          showAlert('Notice', 'OTP service bypassed.', 'notice');
+          setTimeout(() => { navigation.replace('Verification'); }, 1000);
           return;
       }
 
       await confirmation.confirm(otpString);
-      await executeHostUpgrade();
+      showAlert('Verified', 'Phone verified. Redirecting to document upload...', 'success');
+      setTimeout(() => { navigation.replace('Verification'); }, 1500);
       
     } catch (error) {
        showAlert('Verification Failed', 'Invalid OTP or expired session.');
