@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell, CreditCard, Video, History, ShieldAlert, Crown } from "lucide-react";
+import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell, CreditCard, Video, History, ShieldAlert, Crown, Trash2 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

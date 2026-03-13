@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, RotateCcw, AlertTriangle, User as UserIcon } from 'lucide-react';
+import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface DeletedUser {
