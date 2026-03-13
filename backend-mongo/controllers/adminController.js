@@ -223,7 +223,27 @@ class AdminController {
     }
   }
 
-  // 7. Permanent Delete Host/User (Deep Cleanup)
+  // 7. Deletion Requests Management
+  async getDeletionRequests(req, res) {
+    try {
+      const users = await User.find({ isDeleted: true }).sort({ deletionRequestedAt: -1 });
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async restoreUser(req, res) {
+    try {
+      const user = await User.findByIdAndUpdate(req.params.id, { isDeleted: false, deletionRequestedAt: null }, { new: true });
+      if (!user) return res.status(404).json({ message: "User not found" });
+      res.json({ success: true, message: "User account restored", user });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // 8. Permanent Delete Host/User (Deep Cleanup)
   async deleteHostPermanently(req, res) {
     try {
       const { id } = req.params;

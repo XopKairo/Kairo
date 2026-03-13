@@ -2,17 +2,17 @@ import User from "../models/User.js";
 
 class UserRepository {
   async findById(userId, session) {
-    const query = User.findById(userId);
+    const query = User.findOne({ _id: userId, isDeleted: false });
     if (session) query.session(session);
     return await query;
   }
 
   async findByContact(contact) {
-    return await User.findOne({ phone: contact });
+    return await User.findOne({ phone: contact, isDeleted: false });
   }
 
   async findByPhone(phone) {
-    return await User.findOne({ phone: phone.trim() });
+    return await User.findOne({ phone: phone.trim(), isDeleted: false });
   }
 
   async createUser(userData) {

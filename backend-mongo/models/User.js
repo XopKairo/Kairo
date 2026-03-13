@@ -60,7 +60,8 @@ const userSchema = new Schema(
       default: "None",
     },
     vipExpiry: { type: Date },
-    isVip: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletionRequestedAt: { type: Date, default: null },
     favoriteHosts: [{ type: Schema.Types.ObjectId, ref: "Host" }],
     freeCallsRemaining: { type: Number, default: 2 }, // New users get 2 free calls
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],

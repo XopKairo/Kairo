@@ -33,6 +33,7 @@ const hostSchema = new Schema(
     rankingScore: { type: Number, default: 0 },
     isBoosted: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false, index: true },
     callRatePerMinute: { type: Number, default: 30 },
   },
   { timestamps: true },

@@ -22,6 +22,7 @@ const navItems = [
   { icon: Flag, label: "Reports", path: "/reports" },
   { icon: Image, label: "Banners", path: "/banners" },
   { icon: History, label: "Audit Logs", path: "/audit-logs" },
+  { icon: Trash2, label: "Deletion Requests", path: "/deletion-requests" },
   { icon: ShieldAlert, label: "Security Blacklist", path: "/blacklist" },
   { icon: Settings, label: "App Settings", path: "/settings" },
 ];

@@ -31,7 +31,7 @@ const upload = multer({ storage });
 router.get("/", async (req, res) => {
   try {
     const { search, gender, minCoins, maxCoins, isHost, isVerified, sortBy } = req.query;
-    let query = {};
+    let query = { isDeleted: false };
 
     if (search) {
       query.$or = [

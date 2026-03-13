@@ -27,6 +27,10 @@ router.get("/blacklist", adminController.getBlacklist);
 router.post("/blacklist", adminController.addToBlacklist);
 router.delete("/blacklist/:id", adminController.removeFromBlacklist);
 
+// Deletion Management
+router.get("/deletion-requests", adminController.getDeletionRequests);
+router.post("/restore-user/:id", adminController.restoreUser);
+
 // 7. Permanent Delete Host/User
 router.delete("/delete-permanent/:id", adminController.deleteHostPermanently);
 

@@ -9,12 +9,8 @@ router.get("/", async (req, res) => {
   try {
     const { targetGender, tabFilter, userId } = req.query;
     
-    // If Admin, show all. If User/Public, show only verified.
-    // Check if req.admin or req.user is an admin
-    const isAdmin = req.headers.authorization && req.headers.authorization.startsWith("Bearer"); 
-    // Simplified check, normally use a separate admin fetch or verify token role
-    
-    let query = {}; // Default query
+    // Default query: exclude deleted records
+    let query = { isDeleted: false };
 
     if (targetGender) query.gender = targetGender;
 

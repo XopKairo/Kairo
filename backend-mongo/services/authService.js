@@ -176,17 +176,20 @@ class AuthService {
   }
 
   async deleteAccount(userId) {
-    // 1. Delete user record
-    await userRepository.deleteById(userId);
-    
-    // 2. Parallel cleanup of associated records
-    await Promise.all([
-      VerificationRequest.deleteMany({ userId }),
-      Host.deleteMany({ userId }),
-      Post.deleteMany({ userId })
-    ]);
+    // Logic Sync: Instead of purging, mark as isDeleted for admin review
+    const user = await userRepository.findById(userId);
+    if (!user) throw new Error("User not found");
 
-    return { success: true, message: "Account and associated data deleted successfully" };
+    user.isDeleted = true;
+    user.deletionRequestedAt = new Date();
+    user.status = "offline";
+    user.pushToken = ""; // Stop notifications
+    await user.save();
+
+    // Also mark Host as deleted if exists
+    await Host.findOneAndUpdate({ userId }, { isDeleted: true });
+
+    return { success: true, message: "Account deletion request submitted. Your data will be wiped by admin." };
   }
 }
 

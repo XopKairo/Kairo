@@ -23,6 +23,7 @@ import Posts from "./pages/posts/Posts";
 import MarketingNotifications from './pages/MarketingNotifications';
 import Payouts from './pages/payouts/Payouts';
 import Verification from "./pages/monitoring/Verification";
+import DeletionRequests from "./pages/users/DeletionRequests";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const authContext = useContext(AuthContext);
@@ -58,6 +59,7 @@ function App() {
             <Route path="/notifications" element={<ProtectedRoute><Layout><MarketingNotifications /></Layout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
             <Route path="/audit-logs" element={<ProtectedRoute><Layout><AuditLogs /></Layout></ProtectedRoute>} />
+            <Route path="/deletion-requests" element={<ProtectedRoute><Layout><DeletionRequests /></Layout></ProtectedRoute>} />
             <Route path="/blacklist" element={<ProtectedRoute><Layout><Blacklist /></Layout></ProtectedRoute>} />
             
             {/* Fallback route */}
