@@ -116,7 +116,10 @@ class UserAuthController {
 
   async deleteAccount(req, res) {
     try {
-      const result = await authService.deleteAccount(req.params.id);
+      const userId = req.user?._id || req.user?.id;
+      if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      const result = await authService.deleteAccount(userId);
       res.status(200).json(result);
     } catch (error) {
       if (error.message === "User not found") {

@@ -45,7 +45,7 @@ router.post("/fast-login", userAuthController.fastLogin);
 router.get("/me", protectUser, userAuthController.getProfile);
 
 // Delete Account
-router.delete("/delete-account/:id", userAuthController.deleteAccount);
+router.delete("/delete-account", protectUser, userAuthController.deleteAccount);
 
 // Profile Update
 const profileUpload = multer({ 
