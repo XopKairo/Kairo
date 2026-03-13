@@ -128,8 +128,16 @@ const EditProfileScreen = ({ navigation }) => {
         <View style={{ width: 28 }} />
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={{ flex: 1 }} 
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      >
+        <ScrollView 
+          contentContainerStyle={[styles.content, { flexGrow: 1 }]} 
+          showsVerticalScrollIndicator={false} 
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.label}>Profile Cover</Text>
           <TouchableOpacity style={styles.mainUpload} onPress={() => pickMedia('image')}>
              {selfie || user?.profilePicture ? <Image source={{ uri: selfie?.uri || user?.profilePicture }} style={styles.image} /> : <View style={styles.placeholder}><Camera color={COLORS.primary} size={40} /><Text style={styles.uploadText}>Select Cover</Text></View>}
