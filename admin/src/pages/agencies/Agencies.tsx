@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Edit, Trash2, ShieldCheck, X } from 'lucide-react';
+import { Building2, Plus, Edit, Trash2, ShieldCheck } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface Agency {
