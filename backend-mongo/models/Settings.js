@@ -6,7 +6,9 @@ const settingsSchema = new Schema(
     // Revenue Control
     callRate: { type: Number, default: 30 },
     commission: { type: Number, default: 30 },
-    giftCommission: { type: Number, default: 30 }, // Admin's cut from gifts
+    coinToInrRate: { type: Number, default: 0.1 }, // Default: 10 coins = 1 INR
+    giftCommission: { type: Number, default: 30 },
+ // Admin's cut from gifts
     freeCallsDefault: { type: Number, default: 2 }, // Free calls for new users
 
     // System Control

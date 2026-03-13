@@ -5,31 +5,28 @@ import { AuthContext } from '../../context/AuthContext';
 
 export default function Settings() {
   const authContext = useContext(AuthContext);
-  const [maintenance, setMaintenance] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // App Config
+  const [maintenance, setMaintenance] = useState(false);
   const [rewardPerAd, setRewardPerAd] = useState(5);
   const [dailyLimit, setDailyLimit] = useState(10);
-  
-  // App Config
   const [callRate, setCallRate] = useState(30);
   const [commission, setCommission] = useState(30);
+  const [coinToInrRate, setCoinToInrRate] = useState(0.1);
   const [isAiModerationEnabled, setIsAiModerationEnabled] = useState(true);
   const [aiSensitivity, setAiSensitivity] = useState('High');
-  
-  // Profile Update State
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+
+  // Admin Profile
+  const [username, setUsername] = useState(authContext?.user?.username || '');
+  const [email, setEmail] = useState(authContext?.user?.email || '');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'IDLE' | 'OTP_SENT'>('IDLE');
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    if (authContext?.user) {
-      setUsername(authContext.user.username || authContext.user.name || '');
-      setEmail(authContext.user.email || '');
-    }
     fetchSettings();
   }, [authContext?.user]);
 
@@ -42,6 +39,7 @@ export default function Settings() {
         setDailyLimit(response.data.dailyLimit || 10);
         setCallRate(response.data.callRate || 30);
         setCommission(response.data.commission || 30);
+        setCoinToInrRate(response.data.coinToInrRate || 0.1);
         setIsAiModerationEnabled(response.data.isAiModerationEnabled !== undefined ? response.data.isAiModerationEnabled : true);
         setAiSensitivity(response.data.aiSensitivity || 'High');
       }
@@ -75,9 +73,7 @@ export default function Settings() {
       setStep('OTP_SENT');
       setProfileMsg({ type: 'success', text: res.data.message });
     } catch (err) {
-      if (err instanceof Error) {
-        setProfileMsg({ type: 'error', text: 'Failed to send OTP' });
-      }
+      setProfileMsg({ type: 'error', text: 'Failed to send OTP' });
     } finally {
       setSaving(false);
     }
@@ -98,18 +94,13 @@ export default function Settings() {
       setStep('IDLE');
       setPassword('');
       setOtp('');
-      setTimeout(() => {
-         authContext?.logout();
-      }, 3000);
+      setTimeout(() => { authContext?.logout(); }, 3000);
     } catch (err) {
-      if (err instanceof Error) {
-        setProfileMsg({ type: 'error', text: 'Failed to update profile' });
-      }
+      setProfileMsg({ type: 'error', text: 'Failed to update profile' });
     } finally {
       setSaving(false);
     }
   };
-
 
   const handleUpdateAds = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +122,7 @@ export default function Settings() {
       await apiClient.put('/admin/settings', { 
         callRate, 
         commission, 
+        coinToInrRate,
         isAiModerationEnabled, 
         aiSensitivity 
       });
@@ -142,201 +134,130 @@ export default function Settings() {
     }
   };
 
-  if (loading) {
-    return <div className="p-6">Loading settings...</div>;
-  }
+  if (loading) return <div className="p-8 text-gray-500">Loading settings...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">App Settings</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Configure global application variables and features.</p>
+    <div className="max-w-4xl space-y-8 pb-20">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">App Settings</h1>
+        <p className="text-sm text-gray-500">Configure global app parameters and security.</p>
+      </div>
+
+      {/* Global Configuration */}
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-2xl">
+            <SettingsIcon className="text-brand-600 w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold">Global Configuration</h2>
         </div>
-      </div>
 
-      <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 p-6 mb-6">
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <form onSubmit={handleUpdateConfig} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Call Rate (Coins/Min)</label>
+            <input type="number" value={callRate} onChange={e => setCallRate(parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Admin Commission (%)</label>
+            <input type="number" value={commission} onChange={e => setCommission(parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Coin Rate (1 Coin = ? INR)</label>
+            <input type="number" step="0.01" value={coinToInrRate} onChange={e => setCoinToInrRate(parseFloat(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold text-brand-600" />
+            <p className="text-[10px] text-gray-400 mt-1 font-bold italic">Current: 10 Coins = ₹{(10 * coinToInrRate).toFixed(2)}</p>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Moderation Sensitivity</label>
+            <select value={aiSensitivity} onChange={e => setAiSensitivity(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold">
+              <option value="Low">Low (Permissive)</option>
+              <option value="Medium">Medium (Standard)</option>
+              <option value="High">High (Strict)</option>
+            </select>
+          </div>
+          <div className="md:col-span-2 flex items-center justify-between p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-brand-500" /> Global Configuration
-              </h3>
-              <form onSubmit={handleUpdateConfig} className="space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Call Rate (Coins/Min)</label>
-                      <input type="number" value={callRate} onChange={e => setCallRate(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Admin Commission (%)</label>
-                      <input type="number" value={commission} onChange={e => setCommission(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm" />
-                    </div>
-                 </div>
-
-                 <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">AI Nudity/Abuse Moderation</h4>
-                      <p className="text-xs text-gray-500 mt-1">Automatically detects and terminates explicit calls.</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setIsAiModerationEnabled(!isAiModerationEnabled)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isAiModerationEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isAiModerationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                 </div>
-
-                 {isAiModerationEnabled && (
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">Moderation Sensitivity</label>
-                      <select value={aiSensitivity} onChange={e => setAiSensitivity(e.target.value)} className="w-full px-4 py-2 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm">
-                        <option value="Low">Low (Permissive)</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High (Strict)</option>
-                      </select>
-                    </div>
-                 )}
-
-                 <button type="submit" disabled={saving} className="w-full py-2.5 bg-brand-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20 disabled:opacity-50">
-                    {saving ? 'Saving...' : 'Update Configuration'}
-                 </button>
-              </form>
+              <p className="text-sm font-bold">AI Nudity/Abuse Moderation</p>
+              <p className="text-xs text-gray-500">Automatically detects and terminates explicit calls.</p>
             </div>
-            
-            <div className="space-y-4">
-                 <div className="p-4 bg-gray-50 dark:bg-surface-800 rounded-xl flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">System Maintenance Mode</h4>
-                      <p className="text-xs text-gray-500 mt-1">Disable app access for all users.</p>
-                    </div>
-                    <button 
-                      onClick={toggleMaintenance}
-                      disabled={saving}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                        maintenance ? 'bg-red-500' : 'bg-gray-300 dark:bg-gray-600'
-                      } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <span className="sr-only">Toggle maintenance mode</span>
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          maintenance ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                 </div>
-              </div>
-         </div>
+            <button type="button" onClick={() => setIsAiModerationEnabled(!isAiModerationEnabled)} className={`w-12 h-6 rounded-full transition-colors ${isAiModerationEnabled ? 'bg-brand-600' : 'bg-gray-300'}`}>
+              <div className={`w-4 h-4 bg-white rounded-full mx-1 transition-transform ${isAiModerationEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
+          <button type="submit" disabled={saving} className="md:col-span-2 py-4 bg-brand-600 text-white rounded-2xl font-bold shadow-lg shadow-brand-500/20">Update Configuration</button>
+        </form>
       </div>
 
-      {/* Admin Security Section */}
-      <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 p-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-brand-500" /> Admin Account Security
-        </h3>
-        
+      {/* Ad Rewards */}
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+        <h2 className="text-xl font-bold mb-8">Ad Rewards & Limits</h2>
+        <form onSubmit={handleUpdateAds} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Reward Per Ad (Coins)</label>
+            <input type="number" value={rewardPerAd} onChange={e => setRewardPerAd(parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Daily Limit Per User</label>
+            <input type="number" value={dailyLimit} onChange={e => setDailyLimit(parseInt(e.target.value))} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+          </div>
+          <button type="submit" disabled={saving} className="md:col-span-2 py-4 bg-gray-50 hover:bg-gray-100 text-gray-900 dark:bg-surface-800 dark:text-white rounded-2xl font-bold transition-all">Update Ad Settings</button>
+        </form>
+      </div>
+
+      {/* Maintenance Mode */}
+      <div className="bg-red-50 dark:bg-red-950/20 rounded-[32px] p-8 border border-red-100 dark:border-red-900/30">
+        <h2 className="text-xl font-bold text-red-600 mb-2">System Maintenance Mode</h2>
+        <p className="text-sm text-red-500 mb-8 font-medium">Disable app access for all users during scheduled maintenance.</p>
+        <button onClick={toggleMaintenance} disabled={saving} className={`px-8 py-4 rounded-2xl font-black transition-all ${maintenance ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200'}`}>
+          {maintenance ? 'ACTIVATE SYSTEM NOW' : 'TOGGLE MAINTENANCE MODE'}
+        </button>
+      </div>
+
+      {/* Admin Security */}
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl">
+            <Shield className="text-blue-600 w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold">Admin Account Security</h2>
+        </div>
+
         {profileMsg.text && (
-          <div className={`p-3 mb-4 rounded-xl text-sm font-medium ${profileMsg.type === 'error' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
+          <div className={`p-4 rounded-2xl mb-6 font-bold text-sm ${profileMsg.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
             {profileMsg.text}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <form onSubmit={step === 'IDLE' ? handleRequestOTP : handleUpdateProfile} className="space-y-4">
+        <form onSubmit={step === 'IDLE' ? handleRequestOTP : handleUpdateProfile} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
-              <input
-                type="text"
-                required
-                disabled={step === 'OTP_SENT'}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-surface-800 border border-transparent focus:border-brand-500 dark:focus:border-brand-500 rounded-xl text-sm text-gray-900 dark:text-white outline-none transition-colors disabled:opacity-50"
-              />
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Username</label>
+              <input disabled={step === 'IDLE'} value={username} onChange={e => setUsername(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
-              <input
-                type="email"
-                required
-                disabled={step === 'OTP_SENT'}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-surface-800 border border-transparent focus:border-brand-500 dark:focus:border-brand-500 rounded-xl text-sm text-gray-900 dark:text-white outline-none transition-colors disabled:opacity-50"
-              />
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
+              <input disabled={step === 'IDLE'} value={email} onChange={e => setEmail(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">New Password (Optional)</label>
-              <input
-                type="password"
-                disabled={step === 'OTP_SENT'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Leave blank to keep current password"
-                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-surface-800 border border-transparent focus:border-brand-500 dark:focus:border-brand-500 rounded-xl text-sm text-gray-900 dark:text-white outline-none transition-colors disabled:opacity-50"
-              />
-            </div>
-
             {step === 'OTP_SENT' && (
-              <div className="pt-2 animate-in fade-in slide-in-from-top-2">
-                <label className="block text-sm font-medium text-brand-600 dark:text-brand-400 mb-1.5 flex items-center gap-2">
-                  <Key className="w-4 h-4" /> Enter Verification Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="6-digit OTP sent to your current email"
-                  className="w-full px-4 py-2.5 bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/30 focus:border-brand-500 rounded-xl text-sm text-gray-900 dark:text-white outline-none transition-colors"
-                />
-              </div>
+              <>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-brand-600 animate-pulse">Enter OTP Sent to Email</label>
+                  <input required placeholder="6-digit code" value={otp} onChange={e => setOtp(e.target.value)} className="w-full p-4 bg-brand-50 dark:bg-brand-900/20 border-2 border-brand-500 rounded-2xl font-mono text-center text-2xl font-black" maxLength={6} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">New Password (Optional)</label>
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+                </div>
+              </>
             )}
-
-            <div className="flex gap-3 pt-2">
-              {step === 'OTP_SENT' && (
-                <button
-                  type="button"
-                  onClick={() => setStep('IDLE')}
-                  disabled={saving}
-                  className="px-4 py-2.5 bg-gray-100 dark:bg-surface-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-surface-700 transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={saving || (!username && !email)}
-                className="flex-1 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm shadow-brand-500/20 disabled:opacity-50"
-              >
-                {saving ? 'Processing...' : step === 'IDLE' ? 'Request Update OTP' : 'Verify & Save Changes'}
-              </button>
-            </div>
-          </form>
-
-          <div className="hidden lg:flex flex-col justify-center items-center text-center p-6 bg-gray-50 dark:bg-surface-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <Shield className="w-12 h-12 text-brand-500 mb-4" />
-            <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">Secure Modifications</h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              For your security, changing core administrator credentials requires OTP verification. 
-              The verification code will be sent to your <strong>currently registered email address</strong>.
-            </p>
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-surface-900 rounded-[24px] shadow-soft border border-gray-100 dark:border-gray-800 p-6 mb-6">
-        <h3 className="text-lg font-medium mb-4">Ad Rewards & Limits</h3>
-        <form onSubmit={handleUpdateAds} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Reward Per Ad (Coins)</label>
-            <input type="number" value={rewardPerAd} onChange={e => setRewardPerAd(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 border rounded-xl" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Daily Limit Per User</label>
-            <input type="number" value={dailyLimit} onChange={e => setDailyLimit(parseInt(e.target.value))} className="w-full px-4 py-2 bg-gray-50 border rounded-xl" />
-          </div>
-          <button type="submit" disabled={saving} className="md:col-span-2 py-3 bg-brand-600 text-white rounded-xl font-bold">Update Ad Settings</button>
+          
+          <button type="submit" disabled={saving} className={`w-full py-5 rounded-2xl font-black shadow-lg transition-all ${step === 'IDLE' ? 'bg-blue-600 text-white shadow-blue-500/20' : 'bg-brand-600 text-white shadow-brand-500/20'}`}>
+            {saving ? 'PROCESSING...' : step === 'IDLE' ? 'REQUEST UPDATE OTP' : 'CONFIRM PROFILE UPDATE'}
+          </button>
+          
+          {step === 'OTP_SENT' && (
+            <button type="button" onClick={() => setStep('IDLE')} className="w-full py-2 text-gray-400 font-bold uppercase text-xs tracking-widest">Back</button>
+          )}
         </form>
       </div>
     </div>

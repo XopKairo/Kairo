@@ -11,8 +11,6 @@ import { Wallet, Play, ArrowUpRight, Info, CheckCircle2 } from 'lucide-react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import RazorpayCheckout from 'react-native-razorpay';
 
-const COIN_TO_INR_RATE = 0.1;
-
 const WalletScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const [packages, setPackages] = useState([]);
@@ -22,6 +20,7 @@ const WalletScreen = ({ navigation }) => {
   const [adLoading, setAdLoading] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [coinRate, setCoinRate] = useState(0.1);
   const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'error' });
   
   const showAlert = (title, message, type = 'error') => {
@@ -38,6 +37,11 @@ const WalletScreen = ({ navigation }) => {
       
       const pkgRes = await api.get('public/economy/coins');
       setPackages(pkgRes.data || []);
+
+      const settingsRes = await api.get('public/settings/app');
+      if (settingsRes.data && settingsRes.data.coinToInrRate) {
+        setCoinRate(settingsRes.data.coinToInrRate);
+      }
     } catch (err) {
       console.log('Error fetching wallet data', err);
     }
@@ -73,7 +77,6 @@ const WalletScreen = ({ navigation }) => {
 
   const handlePurchase = async (pkg) => {
     const finalPrice = appliedCoupon ? Math.max(pkg.priceINR - appliedCoupon.discount, 1) : pkg.priceINR;
-    
     setLoading(true);
     try {
       const res = await api.post('user/payments/create-razorpay-order', {
@@ -88,13 +91,9 @@ const WalletScreen = ({ navigation }) => {
         currency: 'INR',
         key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SPOBSULcN0TXIq', 
         amount: res.data.order.amount,
-        name: 'ZORA App',
+        name: 'ZORA Live',
         order_id: res.data.order.id,
-        prefill: {
-          email: `${user?.phone}@zora.com`,
-          contact: user?.phone,
-          name: user?.name
-        },
+        prefill: { email: `${user?.phone}@zora.com`, contact: user?.phone, name: user?.name },
         theme: { color: COLORS.primary }
       };
 
@@ -104,29 +103,19 @@ const WalletScreen = ({ navigation }) => {
           if (verifyRes.data.success) {
             showAlert('Success', 'Coins added to your wallet!', 'success');
             fetchUserData();
-          } else {
-            showAlert('Verification Failed', verifyRes.data.message || 'System could not verify payment.');
-          }
-        } catch (vErr) {
-          console.error('Verification Error:', vErr);
-          showAlert('Error', vErr.response?.data?.message || 'Server verification failed.');
-        }
+          } else { showAlert('Verification Failed', verifyRes.data.message || 'System could not verify payment.'); }
+        } catch (vErr) { showAlert('Error', 'Server verification failed.'); }
       }).catch((error) => {
-        if (error.code !== 2) { // 2 is user cancelled
-          showAlert('Payment Error', error.description || 'Payment process failed.');
-        }
+        if (error.code !== 2) showAlert('Payment Error', error.description || 'Payment process failed.');
       });
-
     } catch (err) {
       showAlert('Purchase Failed', err.response?.data?.message || 'Try again later.');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleWithdraw = async () => {
     const amountNum = Number(withdrawAmount);
-    if (amountNum * COIN_TO_INR_RATE < 500) return showAlert('Error', 'Min withdrawal is ₹500 (5000 Coins).');
+    if (amountNum * coinRate < 500) return showAlert('Error', 'Min withdrawal is ₹500.');
     if (!upiId) return showAlert('Error', 'Enter UPI ID');
     if (user?.coins < amountNum) return showAlert('Error', 'Insufficient balance');
 
@@ -143,33 +132,25 @@ const WalletScreen = ({ navigation }) => {
         setWithdrawAmount('');
         fetchUserData();
       }
-    } catch (error) {
-      showAlert('Failed', error.response?.data?.error || 'Exceeded limits.');
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { showAlert('Failed', error.response?.data?.error || 'Exceeded limits.');
+    } finally { setLoading(false); }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ZoraAlert 
-        visible={alertConfig.visible}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        type={alertConfig.type}
+        visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type}
         onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
       />
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>WALLET</Text>
-      </View>
+      <View style={styles.header}><Text style={styles.headerTitle}>WALLET</Text></View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <LinearGradient colors={[COLORS.primary, COLORS.accentGlow]} style={styles.balanceCard}>
            <Wallet color="rgba(255,255,255,0.6)" size={40} style={styles.walletIcon} />
            <Text style={styles.balanceLabel}>Current Balance</Text>
            <Text style={styles.coinCount}>{user?.coins || 0}</Text>
-           <Text style={styles.inrValue}>≈ ₹{((user?.coins || 0) * COIN_TO_INR_RATE).toFixed(2)}</Text>
+           <Text style={styles.inrValue}>≈ ₹{((user?.coins || 0) * coinRate).toFixed(2)}</Text>
         </LinearGradient>
 
         <TouchableOpacity 
@@ -177,62 +158,26 @@ const WalletScreen = ({ navigation }) => {
           onPress={() => { 
             setAdLoading(true);
             const shown = showRewardedAd(); 
-            if (!shown) {
-              setAdLoading(false);
-              showAlert('Ad not ready', 'Please wait a moment and try again.', 'notice');
-            }
+            if (!shown) { setAdLoading(false); showAlert('Ad not ready', 'Please wait a moment.', 'notice'); }
           }}
           disabled={adLoading}
         >
           <View style={styles.adLeft}>
              <View style={styles.playBox}><Play color={COLORS.textWhite} size={20} fill={COLORS.textWhite} /></View>
-             <View>
-                <Text style={styles.adTitle}>Free Coins</Text>
-                <Text style={styles.adSubtitle}>Watch ad & earn 5 coins</Text>
-             </View>
+             <View><Text style={styles.adTitle}>Free Coins</Text><Text style={styles.adSubtitle}>Watch ad & earn 5 coins</Text></View>
           </View>
           {adLoading ? <ActivityIndicator color={COLORS.accentGlow} /> : <ArrowUpRight color={COLORS.accentGlow} size={24} />}
         </TouchableOpacity>
-
-        <View style={styles.couponSection}>
-           <Text style={styles.sectionTitle}>Apply Coupon</Text>
-           <View style={styles.couponInputRow}>
-              <View style={{ flex: 1 }}>
-                <ZoraInput 
-                  placeholder="Enter Code" 
-                  value={couponCode} 
-                  onChangeText={setCouponCode}
-                  autoCapitalize="characters"
-                />
-              </View>
-              <TouchableOpacity 
-                style={[styles.applyBtn, appliedCoupon && styles.appliedBtn]} 
-                onPress={handleApplyCoupon}
-              >
-                {appliedCoupon ? <CheckCircle2 color="#FFF" size={20} /> : <Text style={styles.applyBtnText}>Apply</Text>}
-              </TouchableOpacity>
-           </View>
-        </View>
 
         <View style={styles.storeSection}>
            <Text style={styles.sectionTitle}>Coin Store</Text>
            <View style={styles.packageGrid}>
               {packages.map((pkg) => (
-                <TouchableOpacity 
-                  key={pkg._id} 
-                  style={styles.packageCard}
-                  onPress={() => handlePurchase(pkg)}
-                >
-                   {pkg.bonus > 0 && (
-                     <View style={styles.bonusBadge}>
-                        <Text style={styles.bonusText}>+{pkg.bonus}</Text>
-                     </View>
-                   )}
+                <TouchableOpacity key={pkg._id} style={styles.packageCard} onPress={() => handlePurchase(pkg)}>
+                   {pkg.bonus > 0 && <View style={styles.bonusBadge}><Text style={styles.bonusText}>+{pkg.bonus}</Text></View>}
                    <Text style={styles.pkgCoins}>{pkg.coins}</Text>
                    <Text style={styles.pkgLabel}>Coins</Text>
-                   <View style={styles.pkgPriceBox}>
-                      <Text style={styles.pkgPrice}>₹{pkg.priceINR}</Text>
-                   </View>
+                   <View style={styles.pkgPriceBox}><Text style={styles.pkgPrice}>₹{pkg.priceINR}</Text></View>
                 </TouchableOpacity>
               ))}
            </View>
@@ -241,31 +186,11 @@ const WalletScreen = ({ navigation }) => {
         {user?.isHost && (
           <View style={styles.withdrawSection}>
              <Text style={styles.sectionTitle}>Withdraw Funds</Text>
-             <ZoraInput 
-               label="Amount in Coins" 
-               placeholder="Min 5000" 
-               value={withdrawAmount} 
-               onChangeText={setWithdrawAmount} 
-               keyboardType="numeric" 
-             />
-             <ZoraInput 
-               label="UPI ID" 
-               placeholder="yourname@upi" 
-               value={upiId} 
-               onChangeText={setUpiId} 
-             />
-             <ZoraButton 
-               title="Request Withdrawal" 
-               onPress={handleWithdraw} 
-               loading={loading}
-             />
+             <ZoraInput label="Amount in Coins" placeholder="Min 5000" value={withdrawAmount} onChangeText={setWithdrawAmount} keyboardType="numeric" />
+             <ZoraInput label="UPI ID" placeholder="yourname@upi" value={upiId} onChangeText={setUpiId} />
+             <ZoraButton title="Request Withdrawal" onPress={handleWithdraw} loading={loading} />
           </View>
         )}
-
-        <View style={styles.rules}>
-           <Text style={styles.ruleTitle}>Rules & Limits</Text>
-           <View style={styles.ruleItem}><Info size={14} color={COLORS.textGray} /><Text style={styles.ruleText}>Min withdrawal: ₹500 (5000 Coins)</Text></View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -286,11 +211,6 @@ const styles = StyleSheet.create({
   playBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   adTitle: { color: COLORS.textWhite, fontSize: 16, fontWeight: '700' },
   adSubtitle: { color: COLORS.textGray, fontSize: 12, marginTop: 2 },
-  couponSection: { backgroundColor: 'rgba(255,255,255,0.03)', padding: 20, borderRadius: 24, marginBottom: 30, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  couponInputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  applyBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 20, height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
-  appliedBtn: { backgroundColor: COLORS.success },
-  applyBtnText: { color: '#FFF', fontWeight: 'bold' },
   storeSection: { marginBottom: 30 },
   packageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   packageCard: { width: '31%', backgroundColor: COLORS.cardBackground, padding: 15, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.1)', position: 'relative' },
@@ -301,11 +221,7 @@ const styles = StyleSheet.create({
   pkgPriceBox: { backgroundColor: COLORS.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   pkgPrice: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
   withdrawSection: { backgroundColor: COLORS.cardBackground, padding: 25, borderRadius: 30, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
-  sectionTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '800', marginBottom: 20 },
-  rules: { marginTop: 30, paddingBottom: 50 },
-  ruleTitle: { color: COLORS.textWhite, fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
-  ruleItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  ruleText: { color: COLORS.textGray, fontSize: 12 }
+  sectionTitle: { color: COLORS.textWhite, fontSize: 18, fontWeight: '800', marginBottom: 20 }
 });
 
 export default WalletScreen;

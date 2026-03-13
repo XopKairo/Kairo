@@ -88,7 +88,7 @@ router.delete("/coupons/:id", protectAdmin, async (req, res) => {
 });
 
 // --- Coin Packages ---
-router.get("/coins", protectAdmin, async (req, res) => {
+router.get("/coins", async (req, res) => {
   res.json(await CoinPackage.find({}));
 });
 
