@@ -12,7 +12,8 @@ class UserRepository {
   }
 
   async findByPhone(phone) {
-    return await User.findOne({ phone: phone.trim(), isDeleted: false });
+    const cleanPhone = phone ? phone.toString().trim().replace(/\s+/g, "") : "";
+    return await User.findOne({ phone: cleanPhone, isDeleted: false });
   }
 
   async createUser(userData) {

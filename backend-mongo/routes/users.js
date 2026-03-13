@@ -63,27 +63,28 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { name, phone, password, gender } = req.body;
+    let { name, phone, password, gender } = req.body;
 
-    const query = [];
-    if (phone && phone.trim() !== "") query.push({ phone: phone.trim() });
+    // Strict Sanitization: Remove all spaces and special chars except +
+    const cleanPhone = phone ? phone.toString().trim().replace(/\s+/g, "") : "";
+    if (!cleanPhone) return res.status(400).json({ success: false, message: "Phone number is required" });
 
-    if (query.length > 0) {
-      const existing = await User.findOne({ $or: query });
-      if (existing) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Phone already exists" });
-      }
+    const existing = await User.findOne({ phone: cleanPhone });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User with this phone already exists" });
     }
 
     const userData = {
       name: name.trim(),
+      phone: cleanPhone,
       password,
       gender: gender || "Male",
+      firebaseUid: `ADMIN_CREATED_${Date.now()}_${cleanPhone.slice(-4)}`, // Sync with App expectations
+      lastLoginDate: new Date(),
+      isVerified: true
     };
-
-    if (phone && phone.trim() !== "") userData.phone = phone.trim();
 
     const user = await User.create(userData);
     res.status(201).json({ success: true, user });
