@@ -10,6 +10,7 @@ import morgan from "morgan";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 import xss from "xss-clean";
+import rateLimit from "express-rate-limit";
 
 // Admin Route Imports
 import authRoutes from "./routes/auth.js";
@@ -48,6 +49,19 @@ import { seedAdmin, seedInterests, seedPackages } from "./utils/initDb.js";
 const app = express();
 const server = http.createServer(app);
 
+// God-Mode Security: Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 1000, 
+  message: { message: "System busy. Too many requests. Try again later." }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, 
+  message: { message: "Too many login/auth attempts. Wait 15 minutes." }
+});
+
 // Standard Middlewares
 app.use(helmet());
 app.use(mongoSanitize());
@@ -57,9 +71,10 @@ app.use(cors({ origin: "*", credentials: true }));
 app.use(compression());
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
+app.use(globalLimiter);
 
-// Root & Health
-app.get("/", (req, res) => res.send("ZORA API Active."));
+// Health
+app.get("/", (req, res) => res.send("ZORA SUPREME API Active."));
 app.use("/api/health", (req, res) => res.json({ status: "ok" }));
 
 // PUBLIC ROUTES
@@ -70,7 +85,7 @@ app.use("/api/public/banners", bannerRoutes);
 app.use("/api/public/hosts", hostRoutes);
 
 // USER ROUTES
-app.use("/api/user/auth", userAuthRoutes);
+app.use("/api/user/auth", authLimiter, userAuthRoutes);
 app.use("/api/user/payments", paymentsRoutes);
 app.use("/api/user/verification", protectUser, userVerificationRoutes);
 app.use("/api/user/wallet", protectUser, walletRoutes);
@@ -81,7 +96,7 @@ app.use("/api/user/vip", protectUser, vipRoutes);
 app.use("/api/user/reviews", protectUser, reviewRoutes);
 
 // ADMIN ROUTES
-app.use("/api/admin/auth", authRoutes);
+app.use("/api/admin/auth", authLimiter, authRoutes);
 app.use("/api/admin/dashboard", protectAdmin, dashboardRoutes);
 app.use("/api/admin/users", protectAdmin, adminUsersRoutes);
 app.use("/api/admin/hosts", protectAdmin, hostRoutes);
@@ -104,9 +119,9 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 10, serverSelectionTimeoutMS: 5000 })
   .then(async () => {
-    console.log("✅ Database Ready");
+    console.log("✅ God-Mode Database Synced");
     await seedAdmin();
     await seedInterests();
     await seedPackages();
-    server.listen(PORT, () => console.log(`🚀 Node Active on ${PORT}`));
+    server.listen(PORT, () => console.log(`🚀 Kairo Engine Active on ${PORT}`));
   });

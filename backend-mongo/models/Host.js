@@ -40,4 +40,10 @@ const hostSchema = new Schema(
 );
 
 const Host = model("Host", hostSchema);
+
+// God-Mode Performance Indexes
+hostSchema.index({ status: 1, gender: 1, isDeleted: 1 });
+hostSchema.index({ isBoosted: -1, rankingScore: -1 });
+hostSchema.index({ userId: 1 });
+
 export default Host;

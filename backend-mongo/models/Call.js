@@ -17,6 +17,9 @@ const callSchema = new Schema(
   { timestamps: true },
 );
 
-callSchema.index({ createdAt: -1 });
+callSchema.index({ status: 1, createdAt: -1 });
+callSchema.index({ userId: 1, createdAt: -1 });
+callSchema.index({ hostId: 1, createdAt: -1 });
+callSchema.index({ callId: 1 }, { unique: true });
 
 export default model("Call", callSchema);
