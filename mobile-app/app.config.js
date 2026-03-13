@@ -1,6 +1,6 @@
 export default {
   "expo": {
-    "name": "Zora",
+    "name": "Zora Live",
     "owner": "ajilomalloor11",
     "slug": "zora",
     "version": "1.0.0",
@@ -37,6 +37,7 @@ export default {
     },
     "android": {
       "package": "com.zora.live",
+      "versionCode": 1,
       "googleServicesFile": process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
       "enableGenerateArchitectureSpecificApks": true,
       "permissions": [
@@ -65,8 +66,8 @@ export default {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "enableProguardInReleaseBuilds": false,
-            "enableShrinkResourcesInReleaseBuilds": false,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
             "kotlinCompilerArgs": [
               "-Xskip-metadata-version-check"
             ]
