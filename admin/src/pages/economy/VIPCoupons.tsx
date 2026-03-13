@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Crown, Ticket, Plus, Trash2, ShieldCheck, Clock, Percent } from 'lucide-react';
+import { Crown, Ticket, Plus, Trash2, ShieldCheck, Clock } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface VIPPackage {
@@ -23,7 +23,6 @@ interface Coupon {
 export default function VIPCoupons() {
   const [vipPackages, setVipPackages] = useState<VIPPackage[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Modal states
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
@@ -43,8 +42,6 @@ export default function VIPCoupons() {
       setCoupons(couponRes.data);
     } catch (e) {
       console.error('Fetch failed');
-    } finally {
-      setLoading(false);
     }
   };
 
