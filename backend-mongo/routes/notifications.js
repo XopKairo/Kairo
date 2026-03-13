@@ -45,8 +45,14 @@ router.post("/", async (req, res) => {
         },
         data: {
           type: type || "Info",
-          click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "high_priority",
+            sound: "default",
+          }
+        }
       };
 
       try {
@@ -54,6 +60,7 @@ router.post("/", async (req, res) => {
           tokens: tokens,
           notification: payload.notification,
           data: payload.data,
+          android: payload.android,
         });
 
         successCount = response.successCount;
