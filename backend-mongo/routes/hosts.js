@@ -9,20 +9,32 @@ router.get("/", async (req, res) => {
   try {
     const { targetGender, tabFilter, userId } = req.query;
     
-    // Default query: exclude deleted records
-    let query = { isDeleted: false };
+    // Default query: exclude deleted and unverified for public
+    let query = { isDeleted: false, isVerified: true };
 
     if (targetGender) query.gender = targetGender;
 
-    // 1. Real Nearby Logic: Filter by User District
+    // 1. Follow Logic: Only show hosts user follows
+    if (tabFilter === "Follow" && userId) {
+      const user = await User.findById(userId);
+      if (user && user.favoriteHosts && user.favoriteHosts.length > 0) {
+        query.userId = { $in: user.favoriteHosts };
+      } else {
+        return res.json([]); // Return empty if following no one
+      }
+    }
+
+    // 2. Real Nearby Logic: Filter by User District
     if (tabFilter === "Nearby" && userId) {
       const user = await User.findById(userId);
       if (user && user.district) {
         query.district = user.district; 
+      } else {
+        // Fallback: Show all if user has no district set
       }
     }
 
-    // 2. Tab Specific Sorting
+    // 3. Tab Specific Sorting
     let sort = { isBoosted: -1, rankingScore: -1, createdAt: -1 };
     if (tabFilter === "New") sort = { createdAt: -1 };
 
