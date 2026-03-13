@@ -37,7 +37,12 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      const userId = req.user._id;
+      // Logic Sync: Handle both _id (DB) and id (Cache)
+      const userId = req.user?._id || req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User session expired. Please re-login." });
+      }
 
       // Check if user already has a pending request
       const existingRequest = await VerificationRequest.findOne({

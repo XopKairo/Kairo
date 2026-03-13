@@ -73,7 +73,7 @@ export const protectUser = async (req, res, next) => {
             .json({ success: false, message: "Account is banned by admin" });
         }
 
-        req.user = { id: decoded.id, ...userStatus };
+        req.user = { id: decoded.id, _id: decoded.id, ...userStatus };
         return next();
       }
 
