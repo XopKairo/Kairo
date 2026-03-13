@@ -6,6 +6,7 @@ import VerificationRequest from "../models/VerificationRequest.js";
 import User from "../models/User.js";
 import Host from "../models/Host.js";
 import { protectAdmin, protectUser } from "../middleware/authMiddleware.js";
+import pushService from "../services/pushService.js";
 
 // Configure Multer for Cloudinary
 const upload = multer({ storage: getStorage("verification") });
@@ -88,13 +89,13 @@ router.post("/:id/status", protectAdmin, async (req, res) => {
     request.status = status;
     await request.save();
 
+    const user = await User.findById(request.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User associated with this request no longer exists" });
+    }
+
     // If approved, update user model and host model
     if (status === "approved") {
-      const user = await User.findById(request.userId);
-      if (!user) {
-        return res.status(404).json({ message: "User associated with this request no longer exists" });
-      }
-
       await User.findByIdAndUpdate(request.userId, {
         isVerified: true,
         isGenderVerified: true,
@@ -128,9 +129,32 @@ router.post("/:id/status", protectAdmin, async (req, res) => {
         host.isVerified = true;
         await host.save();
       }
+
+      // Send Push Notification
+      try {
+        await pushService.sendNotification(user._id, {
+          title: "✅ Verification Approved",
+          body: "Congratulations! Your Host Verification is approved. You can now start earning.",
+          data: { type: "VERIFICATION_SUCCESS" }
+        });
+      } catch (pushErr) {
+        console.error("Failed to send approval notification:", pushErr.message);
+      }
+
     } else {
       // If rejected, just set isGenderVerified to false (optional policy)
       await User.findByIdAndUpdate(request.userId, { isGenderVerified: false });
+
+      // Send Rejection Notification
+      try {
+        await pushService.sendNotification(user._id, {
+          title: "❌ Verification Rejected",
+          body: "Your verification request was rejected. Please ensure your photos are clear and try again.",
+          data: { type: "VERIFICATION_REJECTED" }
+        });
+      } catch (pushErr) {
+        console.error("Failed to send rejection notification:", pushErr.message);
+      }
     }
 
     res.json({ message: `Request ${status} successfully`, request });
