@@ -176,8 +176,8 @@ class AuthService {
   }
 
   async deleteAccount(userId) {
-    // Logic Sync: Instead of purging, mark as isDeleted for admin review
-    const user = await userRepository.findById(userId);
+    // Logic Sync: Use Raw fetch to bypass default isDeleted filter
+    const user = await userRepository.findRawById(userId);
     if (!user) throw new Error("User not found");
 
     user.isDeleted = true;

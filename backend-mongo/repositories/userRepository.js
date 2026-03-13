@@ -2,18 +2,23 @@ import User from "../models/User.js";
 
 class UserRepository {
   async findById(userId, session) {
-    const query = User.findOne({ _id: userId, isDeleted: false });
+    const query = User.findOne({ _id: userId, isDeleted: { $ne: true } });
     if (session) query.session(session);
     return await query;
   }
 
+  // Raw fetch including deleted users (for Admin review or restoration)
+  async findRawById(userId) {
+    return await User.findById(userId);
+  }
+
   async findByContact(contact) {
-    return await User.findOne({ phone: contact, isDeleted: false });
+    return await User.findOne({ phone: contact, isDeleted: { $ne: true } });
   }
 
   async findByPhone(phone) {
     const cleanPhone = phone ? phone.toString().trim().replace(/\s+/g, "") : "";
-    return await User.findOne({ phone: cleanPhone, isDeleted: false });
+    return await User.findOne({ phone: cleanPhone, isDeleted: { $ne: true } });
   }
 
   async createUser(userData) {
