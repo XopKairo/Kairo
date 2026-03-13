@@ -40,6 +40,12 @@ const HostCard = React.memo(({ item, currentUser, navigation }) => {
                 <ShieldCheck color="#10B981" size={16} fill="#10B981" style={styles.verifiedBadge} />
               )}
             </View>
+
+            {item.hostId ? (
+              <View style={styles.hostIdBadge}>
+                <Text style={styles.hostIdText}>#{item.hostId}</Text>
+              </View>
+            ) : null}
             
             <View style={styles.detailRow}>
               <Globe2 color={COLORS.textGray} size={12} />
@@ -116,6 +122,22 @@ const styles = StyleSheet.create({
   },
   verifiedBadge: {
     marginLeft: 6,
+  },
+  hostIdBadge: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  hostIdText: {
+    color: COLORS.textWhite,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   detailRow: {
     flexDirection: 'row',
