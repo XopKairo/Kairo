@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MoreHorizontal, ShieldBan, Trash2, Edit, X, Save, UserCheck, UserPlus, Search, Receipt } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { MoreHorizontal, ShieldBan, Trash2, Edit, X, Save, UserCheck, UserPlus, Search, Receipt, Filter } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 
 interface User {
@@ -20,9 +20,15 @@ interface User {
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Advanced Filters
+  const [search, setSearch] = useState('');
+  const [gender, setGender] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [isHost, setIsHost] = useState('');
+
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -36,6 +42,31 @@ export default function Users() {
 
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletForm, setWalletForm] = useState({ amount: '', type: 'ADD', reason: '' });
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (gender) params.append('gender', gender);
+      if (sortBy) params.append('sortBy', sortBy);
+      if (isHost) params.append('isHost', isHost);
+
+      const res = await apiClient.get(`/admin/users?${params.toString()}`);
+      setUsers(Array.isArray(res.data) ? res.data : []);
+    } catch (e: any) {
+      console.error('Fetch users failed:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, gender, sortBy, isHost]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 500); 
+    return () => clearTimeout(timer);
+  }, [fetchUsers]);
 
   const handleWalletSubmit = async () => {
     if (!editingUser) return;
@@ -51,23 +82,9 @@ export default function Users() {
       setIsWalletModalOpen(false);
       setWalletForm({ amount: '', type: 'ADD', reason: '' });
     } catch (error: any) {
-      const e = error as { response?: { data?: { message?: string } } };
-      alert('Adjustment failed: ' + (e.response?.data?.message || 'Unknown error'));
+      alert('Adjustment failed: ' + (error.response?.data?.message || 'Unknown error'));
     }
   };
-
-  const fetchUsers = async () => {
-    try {
-      const res = await apiClient.get('/admin/users');
-      setUsers(res.data);
-    } catch (e: any) {
-      console.error('Fetch users failed:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchUsers(); }, []);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,9 +95,7 @@ export default function Users() {
       setAddForm({ name: '', phone: '', password: '', gender: 'Male' });
       fetchUsers();
     } catch (error: any) { 
-      const e = error as { response?: { data?: { message?: string } } };
-      const msg = e.response?.data?.message || 'Creation failed. User might already exist.';
-      alert(msg); 
+      alert(error.response?.data?.message || 'Creation failed'); 
     }
   };
 
@@ -112,13 +127,12 @@ export default function Users() {
       await apiClient.post('/admin/users/' + id + '/ban', { isBanned: false });
       fetchUsers();
     } catch (e: any) {
-      console.error('Failed to unban user', e);
       alert('Failed to unban user');
     }
   };
 
   const deleteUser = async (id: string) => {
-    if (!window.confirm('Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) return;
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this user?')) return;
     try {
       await apiClient.delete('/admin/delete-permanent/' + id);
       fetchUsers();
@@ -128,42 +142,72 @@ export default function Users() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.phone && u.phone.includes(searchQuery))
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-sm text-gray-500">View and manage all {users.length} registered users.</p>
+          <p className="text-sm text-gray-500">Manage all registered accounts and their finances.</p>
         </div>
-        <div className="flex gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Search by name, phone..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-surface-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all"
-            />
-          </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-500/20 transition-all whitespace-nowrap"
-          >
-            <UserPlus size={18}/> Add User
-          </button>
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-500/20 transition-all whitespace-nowrap"
+        >
+          <UserPlus size={18}/> Add User
+        </button>
+      </div>
+
+      {/* Supreme Filter Bar */}
+      <div className="bg-white dark:bg-surface-900 p-4 rounded-[24px] border border-gray-100 dark:border-gray-800 shadow-sm flex flex-wrap gap-4 items-center">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input 
+            type="text" 
+            placeholder="Search name or phone..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+          />
         </div>
+
+        <select 
+          value={gender} 
+          onChange={(e) => setGender(e.target.value)}
+          className="px-4 py-2.5 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 outline-none"
+        >
+          <option value="">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+
+        <select 
+          value={isHost} 
+          onChange={(e) => setIsHost(e.target.value)}
+          className="px-4 py-2.5 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 outline-none"
+        >
+          <option value="">All Types</option>
+          <option value="true">Hosts</option>
+          <option value="false">Users</option>
+        </select>
+
+        <select 
+          value={sortBy} 
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-2.5 bg-gray-50 dark:bg-surface-800 border-none rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 outline-none"
+        >
+          <option value="newest">Newest</option>
+          <option value="coins">Top Coins</option>
+        </select>
+
+        <button onClick={fetchUsers} className="p-2.5 bg-brand-50 text-brand-600 rounded-xl hover:bg-brand-100 transition-colors">
+          <Filter size={20} />
+        </button>
       </div>
       
       <div className="bg-white dark:bg-surface-900 rounded-[32px] overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 text-xs font-bold uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
+            <thead className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 text-[10px] font-black uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
               <tr>
                 <th className="p-6">User Details</th>
                 <th className="p-6">Wallet / Cash</th>
@@ -173,17 +217,17 @@ export default function Users() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {loading ? (
-                <tr><td colSpan={4} className="p-10 text-center text-gray-500">Loading users...</td></tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr><td colSpan={4} className="p-10 text-center text-gray-500">No users found matching your search.</td></tr>
-              ) : filteredUsers.map(u => (
+                <tr><td colSpan={4} className="p-10 text-center text-gray-400 font-bold animate-pulse">FETCHING...</td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={4} className="p-16 text-center text-gray-400 font-black uppercase tracking-widest italic">No Data</td></tr>
+              ) : users.map(u => (
                 <tr key={u._id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/30 transition-colors">
                   <td className="p-6 text-sm">
                     <div className="flex items-center gap-3">
-                      <img src={u.profilePicture || 'https://ui-avatars.com/api/?name='+u.name} className="w-10 h-10 rounded-xl border border-gray-100 dark:border-gray-700" />
+                      <img src={u.profilePicture || `https://ui-avatars.com/api/?name=${u.name}&background=random`} className="w-10 h-10 rounded-xl border border-gray-100 dark:border-gray-700 object-cover" />
                       <div>
-                        <p className="font-bold text-gray-900 dark:text-white">{u.name}</p>
-                        <p className="text-xs text-gray-400">{u.phone} • {u.gender}</p>
+                        <p className="font-bold text-gray-900 dark:text-white leading-tight">{u.name}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{u.phone} • {u.gender}</p>
                       </div>
                     </div>
                   </td>
@@ -206,7 +250,7 @@ export default function Users() {
                       <MoreHorizontal size={20} className="text-gray-400" />
                     </button>
                     {activeMenu === u._id && (
-                      <div className="absolute right-6 top-12 w-52 bg-white dark:bg-surface-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 p-2 text-left animate-in fade-in zoom-in-95 duration-100">
+                      <div className="absolute right-6 top-12 w-52 bg-white dark:bg-surface-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 p-2 text-left">
                         <button onClick={() => { setEditingUser(u); setEditForm({...u}); setIsEditModalOpen(true); setActiveMenu(null); }} className="w-full p-3 hover:bg-gray-50 dark:hover:bg-surface-700/50 rounded-xl flex gap-3 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors"><Edit size={18} className="text-blue-500"/> Edit Profile</button>
                         <button onClick={() => { setEditingUser(u); setIsWalletModalOpen(true); setActiveMenu(null); }} className="w-full p-3 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-xl flex gap-3 text-sm font-medium text-brand-600 transition-colors"><Receipt size={18} className="text-brand-500"/> Adjust Wallet</button>
                         {u.isBanned ? 
@@ -225,7 +269,7 @@ export default function Users() {
         </div>
       </div>
 
-      {/* Add User Modal */}
+      {/* Modals omitted for brevity, keeping existing logic */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-surface-900 w-full max-w-lg rounded-[32px] p-8 shadow-2xl relative border border-white/10">
@@ -260,7 +304,6 @@ export default function Users() {
         </div>
       )}
 
-      {/* Edit User Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-surface-900 w-full max-w-2xl rounded-[32px] p-8 shadow-2xl relative border border-white/10">
@@ -287,11 +330,11 @@ export default function Users() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Coin Balance</label>
-                <input type="number" value={editForm.coins} onChange={e => setEditForm({...editForm, coins: parseInt(e.target.value) || 0})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm font-bold" />
+                <input type="number" value={editForm.coins} onChange={e => setEditForm({...editForm, coins: parseInt(e.target.value?.toString() || '0')})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm font-bold" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Cash Balance (INR)</label>
-                <input type="number" value={editForm.cashBalance} onChange={e => setEditForm({...editForm, cashBalance: parseInt(e.target.value) || 0})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm font-bold text-brand-600" />
+                <input type="number" value={editForm.cashBalance} onChange={e => setEditForm({...editForm, cashBalance: parseInt(e.target.value?.toString() || '0')})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm font-bold text-brand-600" />
               </div>
             </div>
             <button onClick={handleUpdateUser} className="w-full mt-8 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all"><Save size={20}/> Save Changes</button>

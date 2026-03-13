@@ -30,7 +30,31 @@ const upload = multer({ storage });
 
 router.get("/", async (req, res) => {
   try {
-    const users = await User.find({}).sort({ createdAt: -1 });
+    const { search, gender, minCoins, maxCoins, isHost, isVerified, sortBy } = req.query;
+    let query = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    if (gender) query.gender = gender;
+    if (isHost) query.isHost = isHost === "true";
+    if (isVerified) query.isVerified = isVerified === "true";
+
+    if (minCoins || maxCoins) {
+      query.coins = {};
+      if (minCoins) query.coins.$gte = parseInt(minCoins);
+      if (maxCoins) query.coins.$lte = parseInt(maxCoins);
+    }
+
+    let sort = { createdAt: -1 };
+    if (sortBy === "coins") sort = { coins: -1 };
+    if (sortBy === "newest") sort = { createdAt: -1 };
+
+    const users = await User.find(query).sort(sort).limit(100);
     res.json(users);
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

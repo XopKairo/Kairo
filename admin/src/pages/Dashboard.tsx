@@ -10,6 +10,11 @@ interface LiveCall {
   host: { name: string; hostId: string; profilePicture?: string };
   duration: number;
   startTime: string;
+  screenshot?: {
+    url: string;
+    flagged: boolean;
+    score: number;
+  } | null;
 }
 
 export default function Dashboard() {
@@ -95,7 +100,7 @@ export default function Dashboard() {
     revenue: analytics.revenueData[index] || 0
   }));
 
-  if (loading) return <div className="p-8 text-gray-500 font-bold animate-pulse">SUPREME CONTROL LOADING...</div>;
+  if (loading) return <div className="p-8 text-gray-500 font-bold animate-pulse uppercase tracking-widest">Kairo System Loading...</div>;
   if (error) return <div className="p-8 text-red-600 font-black">{error}</div>;
 
   return (
@@ -135,7 +140,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Live Monitoring Section */}
+      {/* Live Monitoring Section with Screenshots */}
       <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
@@ -143,7 +148,7 @@ export default function Dashboard() {
               <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Live Monitor</h3>
             </div>
             <span className="px-4 py-1.5 bg-red-50 text-red-600 text-[10px] font-black rounded-full border border-red-100 uppercase tracking-widest">
-              {liveCalls.length} ACTIVE CALLS
+              {liveCalls.length} ACTIVE SESSIONS
             </span>
           </div>
 
@@ -153,13 +158,14 @@ export default function Dashboard() {
                    <tr>
                       <th className="p-4">Host</th>
                       <th className="p-4">User</th>
+                      <th className="p-4 text-center">Live Preview</th>
                       <th className="p-4 text-center">Duration</th>
                       <th className="p-4 text-right">Supreme Control</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                    {liveCalls.length === 0 ? (
-                     <tr><td colSpan={4} className="p-16 text-center text-gray-300 font-black uppercase tracking-widest italic">Zero Active Sessions</td></tr>
+                     <tr><td colSpan={5} className="p-16 text-center text-gray-300 font-black uppercase tracking-widest italic">Zero Active Sessions</td></tr>
                    ) : (
                      liveCalls.map(call => (
                        <tr key={call._id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
@@ -182,6 +188,23 @@ export default function Dashboard() {
                              </div>
                           </td>
                           <td className="p-4 text-center">
+                             {call.screenshot ? (
+                               <div className="relative inline-block group cursor-zoom-in" onClick={() => window.open(call.screenshot?.url, '_blank')}>
+                                 <img 
+                                   src={call.screenshot.url} 
+                                   className={`w-16 h-12 rounded-lg object-cover shadow-sm transition-transform group-hover:scale-110 ${call.screenshot.flagged ? 'ring-2 ring-red-500' : 'ring-1 ring-gray-200'}`}
+                                 />
+                                 {call.screenshot.flagged && (
+                                   <div className="absolute -top-1 -right-1 bg-red-500 text-white p-0.5 rounded-full">
+                                     <ShieldAlert size={10} />
+                                   </div>
+                                 )}
+                               </div>
+                             ) : (
+                               <span className="text-[10px] text-gray-400 font-bold italic">Waiting...</span>
+                             )}
+                          </td>
+                          <td className="p-4 text-center">
                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-500/10 rounded-lg">
                                 <PhoneCall size={12} className="text-green-600 animate-pulse" />
                                 <span className="font-mono text-sm font-black text-green-700 dark:text-green-400">
@@ -194,7 +217,7 @@ export default function Dashboard() {
                                onClick={() => handleForceEnd(call.callId)}
                                className="px-5 py-2.5 bg-red-600 text-white text-[10px] font-black rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 uppercase tracking-widest"
                              >
-                               TERMINATE SESSION
+                               TERMINATE
                              </button>
                           </td>
                        </tr>

@@ -7,6 +7,7 @@ import Payout from "../models/Payout.js";
 import Call from "../models/Call.js";
 import Transaction from "../models/Transaction.js";
 import Report from "../models/Report.js";
+import CallScreenshot from "../models/CallScreenshot.js";
 import redisClient from "../config/redis.js";
 
 const router = express.Router();
@@ -94,7 +95,7 @@ router.get("/stats", async (req, res) => {
   }
 });
 
-// GET Current Live Calls (Supreme Monitor)
+// GET Current Live Calls (Supreme Monitor with Screenshots)
 router.get("/live-calls", async (req, res) => {
   try {
     const liveCalls = await Call.find({ status: "Active" })
@@ -103,21 +104,33 @@ router.get("/live-calls", async (req, res) => {
       .sort({ startTime: -1 })
       .limit(20);
 
-    const formattedCalls = liveCalls.map(call => ({
-      _id: call._id,
-      callId: call.callId,
-      user: {
-        name: call.userId?.name || "User",
-        phone: call.userId?.phone || "N/A",
-        profilePicture: call.userId?.profilePicture
-      },
-      host: {
-        name: call.hostId?.name || "Host",
-        hostId: call.hostId?.hostId || "N/A",
-        profilePicture: call.hostId?.profilePicture
-      },
-      duration: Math.floor((new Date() - new Date(call.startTime)) / 1000), // in seconds
-      startTime: call.startTime
+    const formattedCalls = await Promise.all(liveCalls.map(async (call) => {
+      // Fetch latest screenshot for this call
+      const latestScreenshot = await CallScreenshot.findOne({ callId: call._id })
+        .sort({ createdAt: -1 })
+        .select("imageUrl isFlagged confidenceScore");
+
+      return {
+        _id: call._id,
+        callId: call.callId,
+        user: {
+          name: call.userId?.name || "User",
+          phone: call.userId?.phone || "N/A",
+          profilePicture: call.userId?.profilePicture
+        },
+        host: {
+          name: call.hostId?.name || "Host",
+          hostId: call.hostId?.hostId || "N/A",
+          profilePicture: call.hostId?.profilePicture
+        },
+        duration: Math.floor((new Date() - new Date(call.startTime)) / 1000), // in seconds
+        startTime: call.startTime,
+        screenshot: latestScreenshot ? {
+          url: latestScreenshot.imageUrl,
+          flagged: latestScreenshot.isFlagged,
+          score: latestScreenshot.confidenceScore
+        } : null
+      };
     }));
 
     res.json(formattedCalls);
