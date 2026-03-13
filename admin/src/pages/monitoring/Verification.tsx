@@ -8,6 +8,8 @@ interface VerificationRequest {
     _id: string;
     name: string;
     phone: string;
+    gender?: string;
+    profilePicture?: string;
   } | null;
   photoUrl: string;
   idUrl: string;
@@ -24,7 +26,6 @@ export default function Verification() {
     try {
       setError(null);
       const res = await apiClient.get("/admin/verification");
-      console.log("Verification Data:", res.data);
       setRequests(Array.isArray(res.data) ? res.data : []);
     } catch (e: any) {
       console.error("Failed to fetch verification requests:", e);
@@ -48,7 +49,15 @@ export default function Verification() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Host Verification Requests</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Host Verification Requests</h1>
+        <button 
+          onClick={fetchRequests}
+          className="px-4 py-2 bg-brand-50 text-brand-600 text-sm font-bold rounded-xl hover:bg-brand-100 transition-colors"
+        >
+          Refresh
+        </button>
+      </div>
       
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 font-bold">
@@ -60,33 +69,81 @@ export default function Verification() {
         <table className="w-full text-left">
           <thead className="bg-gray-50 dark:bg-surface-800/50 text-gray-500 text-xs font-bold uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
             <tr>
-              <th className="p-6">User</th>
-              <th className="p-6">Photos</th>
+              <th className="p-6">User Details</th>
+              <th className="p-6">Gender</th>
+              <th className="p-6">Verification Files</th>
               <th className="p-6">Status</th>
               <th className="p-6 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading ? (<tr><td colSpan={4} className="p-10 text-center text-gray-400">Loading requests...</td></tr>) : 
-             requests.length === 0 ? (<tr><td colSpan={4} className="p-10 text-center text-gray-500">No requests found in database.</td></tr>) :
+            {loading ? (<tr><td colSpan={5} className="p-10 text-center text-gray-400 font-medium">Loading requests...</td></tr>) : 
+             requests.length === 0 ? (<tr><td colSpan={5} className="p-10 text-center text-gray-500 font-medium">No pending requests found.</td></tr>) :
              requests.map(r => (
               <tr key={r._id} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/30 transition-colors">
                 <td className="p-6">
-                  <p className="font-bold text-gray-900 dark:text-white">{r.userId?.name || "Deleted User"}</p>
-                  <p className="text-xs text-gray-400">{r.userId?.phone || "N/A"}</p>
-                </td>
-                <td className="p-6 flex gap-3">
-                  <button onClick={() => window.open(r.photoUrl, "_blank")} className="flex items-center gap-1 text-brand-600 text-xs font-bold bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100"><Eye size={14}/> Selfie</button>
-                  <button onClick={() => window.open(r.idUrl, "_blank")} className="flex items-center gap-1 text-blue-600 text-xs font-bold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100"><Eye size={14}/> ID Proof</button>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={r.userId?.profilePicture || `https://ui-avatars.com/api/?name=${r.userId?.name || "Deleted"}&background=random`} 
+                      className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-gray-700"
+                    />
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white leading-none">{r.userId?.name || "Deleted User"}</p>
+                      <p className="text-xs text-gray-400 mt-1">{r.userId?.phone || "N/A"}</p>
+                    </div>
+                  </div>
                 </td>
                 <td className="p-6">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${r.status === "pending" ? "bg-orange-100 text-orange-600" : r.status === "approved" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>{r.status}</span>
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                    r.userId?.gender === "Female" ? "bg-pink-50 text-pink-600" : 
+                    r.userId?.gender === "Male" ? "bg-blue-50 text-blue-600" : 
+                    "bg-gray-100 text-gray-600"
+                  }`}>
+                    {r.userId?.gender || "Not Set"}
+                  </span>
                 </td>
-                <td className="p-6 text-right space-x-2">
-                  {r.status === "pending" && (<>
-                    <button onClick={() => handleStatus(r._id, "approved")} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"><CheckCircle size={20}/></button>
-                    <button onClick={() => handleStatus(r._id, "rejected")} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><XCircle size={20}/></button>
-                  </>)}
+                <td className="p-6">
+                  <div className="flex gap-2">
+                    <button onClick={() => window.open(r.photoUrl, "_blank")} className="flex items-center gap-1.5 text-brand-600 text-[11px] font-black bg-brand-50 px-3 py-2 rounded-xl hover:bg-brand-100 transition-all border border-brand-100/50">
+                      <Eye size={14}/> SELFIE
+                    </button>
+                    <button onClick={() => window.open(r.idUrl, "_blank")} className="flex items-center gap-1.5 text-blue-600 text-[11px] font-black bg-blue-50 px-3 py-2 rounded-xl hover:bg-blue-100 transition-all border border-blue-100/50">
+                      <Eye size={14}/> ID PROOF
+                    </button>
+                  </div>
+                </td>
+                <td className="p-6">
+                  <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${
+                    r.status === "pending" ? "bg-orange-100 text-orange-600" : 
+                    r.status === "approved" ? "bg-green-100 text-green-600 border border-green-200" : 
+                    "bg-red-100 text-red-600 border border-red-200"
+                  }`}>
+                    {r.status}
+                  </span>
+                </td>
+                <td className="p-6 text-right">
+                  <div className="flex justify-end gap-1">
+                    {r.status === "pending" ? (
+                      <>
+                        <button 
+                          onClick={() => handleStatus(r._id, "approved")} 
+                          className="p-2.5 text-green-600 hover:bg-green-100 rounded-xl transition-all hover:scale-110"
+                          title="Approve Host"
+                        >
+                          <CheckCircle size={22}/>
+                        </button>
+                        <button 
+                          onClick={() => handleStatus(r._id, "rejected")} 
+                          className="p-2.5 text-red-600 hover:bg-red-100 rounded-xl transition-all hover:scale-110"
+                          title="Reject Request"
+                        >
+                          <XCircle size={22}/>
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400 font-medium italic">Processed</span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
