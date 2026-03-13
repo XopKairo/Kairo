@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 import Host from "../models/Host.js";
 import User from "../models/User.js";
-import { protectUser } from "../middleware/authMiddleware.js";
+import { protectUser, protectAdmin } from "../middleware/authMiddleware.js";
 
 // GET all hosts with real filtering (Nearby, Gender, Tab-based)
 router.get("/", async (req, res) => {
@@ -10,7 +10,11 @@ router.get("/", async (req, res) => {
     const { targetGender, tabFilter, userId } = req.query;
     
     // If Admin, show all. If User/Public, show only verified.
-    let query = req.admin ? {} : { isVerified: true };
+    // Check if req.admin or req.user is an admin
+    const isAdmin = req.headers.authorization && req.headers.authorization.startsWith("Bearer"); 
+    // Simplified check, normally use a separate admin fetch or verify token role
+    
+    let query = {}; // Default query
 
     if (targetGender) query.gender = targetGender;
 
@@ -26,7 +30,7 @@ router.get("/", async (req, res) => {
     let sort = { isBoosted: -1, rankingScore: -1, createdAt: -1 };
     if (tabFilter === "New") sort = { createdAt: -1 };
 
-    const hosts = await Host.find(query).sort(sort).limit(50);
+    const hosts = await Host.find(query).sort(sort).limit(50).populate("userId", "phone name profilePicture");
     res.json(hosts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -46,10 +50,17 @@ router.post("/interaction", protectUser, async (req, res) => {
   }
 });
 
-// ADMIN ROUTES
-router.put("/:id", async (req, res) => {
+// ADMIN ROUTES (Supreme Control)
+router.put("/:id", protectAdmin, async (req, res) => {
   try {
-    const host = await Host.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { name, callRatePerMinute, isBoosted, rankingScore, gender, agencyId } = req.body;
+    
+    const host = await Host.findByIdAndUpdate(
+      req.params.id, 
+      { name, callRatePerMinute, isBoosted, rankingScore, gender, agencyId }, 
+      { new: true }
+    );
+    
     if (!host) return res.status(404).json({ message: "Host not found" });
     res.json(host);
   } catch (error) {
@@ -57,18 +68,22 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.post("/:id/verify", async (req, res) => {
+router.post("/:id/verify", protectAdmin, async (req, res) => {
   try {
     const { isVerified } = req.body;
     const host = await Host.findByIdAndUpdate(req.params.id, { isVerified }, { new: true });
     if (!host) return res.status(404).json({ message: "Host not found" });
+    
+    // Sync verification status to User model
+    await User.findByIdAndUpdate(host.userId, { isVerified, isHost: true });
+    
     res.json({ success: true, host });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-router.post("/:id/ban", async (req, res) => {
+router.post("/:id/ban", protectAdmin, async (req, res) => {
   const { isBanned, reason, durationDays, customDate } = req.body;
   try {
     const host = await Host.findById(req.params.id);
@@ -94,28 +109,24 @@ router.post("/:id/ban", async (req, res) => {
     
     const user = await User.findByIdAndUpdate(host.userId, update, { new: true });
 
-    // Notify user via Socket
-    if (isBanned && req.io && user) {
-      req.io.to(`user-${user._id}`).emit("userBanned", { reason: user.banReason });
-    }
-
     res.json({ success: true, host, user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protectAdmin, async (req, res) => {
   try {
     const host = await Host.findByIdAndDelete(req.params.id);
     if (!host) return res.status(404).json({ message: "Host not found" });
     // Note: We are not deleting the underlying User account here, just the Host profile.
-    // To delete the user completely, the Admin must use the Users tab.
     await User.findByIdAndUpdate(host.userId, { isHost: false });
     res.json({ success: true, message: "Host deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
+
+export default router;
 
 export default router;

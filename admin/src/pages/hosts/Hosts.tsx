@@ -3,20 +3,26 @@ import { MoreHorizontal, CheckCircle, Edit, Eye, XCircle, Trash2 } from 'lucide-
 import apiClient from '../../api/apiClient';
 
 interface Host {
-  id?: string;
-  _id?: string;
-  name?: string;
+  _id: string;
+  name: string;
+  phone: string;
+  hostId?: string;
   agency?: string;
-  status?: string;
-  earnings?: number;
-  totalCalls?: number;
-  totalMinutes?: number;
-  isVerified?: boolean;
-  isBoosted?: boolean;
-  isBanned?: boolean;
-  rankingScore?: number;
+  status: string;
+  earnings: number;
+  totalCalls: number;
+  totalMinutes: number;
+  isVerified: boolean;
+  isBoosted: boolean;
+  isBanned: boolean;
+  rankingScore: number;
+  callRatePerMinute?: number;
   profilePicture?: string;
   verificationSelfie?: string;
+  userId?: {
+    _id: string;
+    phone: string;
+  };
 }
 
 export default function Hosts() {
@@ -33,7 +39,7 @@ export default function Hosts() {
   const fetchHosts = async () => {
     try {
       const response = await apiClient.get('/admin/hosts');
-      setHosts(response.data);
+      setHosts(Array.isArray(response.data) ? response.data : []);
     } catch (error: any) {
       console.error('Failed to fetch hosts', error);
     }
@@ -117,31 +123,43 @@ export default function Hosts() {
 
   return (
     <div className="space-y-6 pb-40">
-      <h1 className="text-2xl font-bold">Hosts & Verification</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hosts Management</h1>
+        <button onClick={fetchHosts} className="px-4 py-2 bg-brand-50 text-brand-600 text-sm font-bold rounded-xl hover:bg-brand-100 transition-colors">Refresh</button>
+      </div>
 
       <div className="bg-white dark:bg-surface-900 rounded-[32px] shadow-sm overflow-x-auto border border-gray-100 dark:border-surface-800">
-        <table className="w-full text-left min-w-[900px]">
-          <thead className="bg-gray-50 dark:bg-surface-800 text-gray-500 text-sm">
+        <table className="w-full text-left min-w-[1000px]">
+          <thead className="bg-gray-50 dark:bg-surface-800 text-gray-500 text-[10px] font-black uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
             <tr>
-              <th className="p-6">Host</th>
+              <th className="p-6">Host Details</th>
+              <th className="p-6">Host ID</th>
               <th className="p-6 text-center">Calls / Mins</th>
               <th className="p-6 text-center">Earnings</th>
+              <th className="p-6">Rate</th>
               <th className="p-6">Status</th>
               <th className="p-6 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm relative">
             {hosts.map((host, index) => {
-              const rowId = (host._id || host.id || "").toString();
+              const rowId = (host._id || "").toString();
               const isLastRows = index > hosts.length - 4;
               return (
                 <tr key={rowId} className="hover:bg-gray-50/50 dark:hover:bg-surface-800/50 transition-colors">
-                  <td className="p-6 flex items-center gap-3">
-                    <img src={host.profilePicture || "https://ui-avatars.com/api/?name="+host.name} className="w-10 h-10 rounded-full border-2 border-brand-50" />
-                    <div className="min-w-0 flex-1">
-                       <span className="font-bold text-gray-900 dark:text-white block truncate">{host.name}</span>
-                       <span className="text-[10px] text-gray-400 font-medium">{host.agency || 'Independent'}</span>
+                  <td className="p-6">
+                    <div className="flex items-center gap-3">
+                      <img src={host.profilePicture || "https://ui-avatars.com/api/?name="+host.name} className="w-10 h-10 rounded-full border border-gray-100 object-cover" />
+                      <div className="min-w-0">
+                         <span className="font-bold text-gray-900 dark:text-white block truncate">{host.name}</span>
+                         <span className="text-[10px] text-gray-400 font-bold">{host.userId?.phone || host.phone || 'N/A'}</span>
+                      </div>
                     </div>
+                  </td>
+                  <td className="p-6">
+                    <span className="px-2 py-1 bg-gray-50 dark:bg-surface-800 rounded-lg font-mono text-xs font-bold text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-surface-700">
+                      #{host.hostId || 'PENDING'}
+                    </span>
                   </td>
                   <td className="p-6 text-center">
                     <p className="font-bold text-gray-900 dark:text-white">{host.totalCalls || 0}</p>
@@ -152,7 +170,17 @@ export default function Hosts() {
                     <p className="text-[10px] text-gray-400 font-medium">({host.earnings || 0} coins)</p>
                   </td>
                   <td className="p-6">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${host.status === 'Online' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-900 dark:text-white">{host.callRatePerMinute || 30}</span>
+                      <span className="text-[10px] text-gray-400 font-medium">coins/min</span>
+                    </div>
+                  </td>
+                  <td className="p-6">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      host.status === 'Online' ? 'bg-green-100 text-green-600' : 
+                      host.status === 'Busy' ? 'bg-orange-100 text-orange-600' : 
+                      'bg-gray-100 text-gray-400'
+                    }`}>
                       {host.status}
                     </span>
                   </td>
@@ -205,25 +233,36 @@ export default function Hosts() {
       </div>
 
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8">
-            <h2 className="text-xl font-bold mb-6">Edit Host</h2>
-            <div className="space-y-4">
-              <label className="block text-xs font-bold text-gray-400 uppercase">Host Name</label>
-              <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full p-3 border rounded-xl" />
-              
-              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl">
-                 <input type="checkbox" checked={editForm.isBoosted} onChange={e => setEditForm({...editForm, isBoosted: e.target.checked})} className="w-5 h-5 accent-brand-600" />
-                 <span className="text-sm font-bold text-gray-700 dark:text-gray-200">🚀 BOOST HOST</span>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-surface-900 w-full max-w-md rounded-[32px] p-8 shadow-2xl border border-white/5">
+            <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Edit Host Control</h2>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Host Display Name</label>
+                <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Ranking Score</label>
-                <input type="number" value={editForm.rankingScore} onChange={e => setEditForm({...editForm, rankingScore: parseInt(e.target.value) || 0})} className="w-full p-3 border rounded-xl" />
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Call Rate (Coins/Minute)</label>
+                <input type="number" value={editForm.callRatePerMinute} onChange={e => setEditForm({...editForm, callRatePerMinute: parseInt(e.target.value) || 0})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold text-brand-600" />
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-brand-50/50 dark:bg-brand-500/5 rounded-2xl border border-brand-100/50">
+                 <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={editForm.isBoosted} onChange={e => setEditForm({...editForm, isBoosted: e.target.checked})} className="w-5 h-5 accent-brand-600" id="boost-check" />
+                    <label htmlFor="boost-check" className="text-sm font-black text-brand-600">🚀 FEATURE ON TOP</label>
+                 </div>
               </div>
 
-              <button onClick={handleUpdateHost} className="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold">Save Changes</button>
-              <button onClick={() => setIsEditModalOpen(false)} className="w-full py-2 text-gray-500">Cancel</button>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ranking Score</label>
+                <input type="number" value={editForm.rankingScore} onChange={e => setEditForm({...editForm, rankingScore: parseInt(e.target.value) || 0})} className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+              </div>
+
+              <div className="pt-2">
+                <button onClick={handleUpdateHost} className="w-full py-4 bg-brand-600 text-white rounded-2xl font-black shadow-lg shadow-brand-500/30 hover:bg-brand-700 transition-all">SAVE CHANGES</button>
+                <button onClick={() => setIsEditModalOpen(false)} className="w-full py-4 mt-2 text-gray-500 font-bold">CANCEL</button>
+              </div>
             </div>
           </div>
         </div>
