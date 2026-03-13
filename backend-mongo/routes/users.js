@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import Host from "../models/Host.js";
+import VerificationRequest from "../models/VerificationRequest.js";
 import { protectUser } from "../middleware/authMiddleware.js";
 import redisClient from "../config/redis.js";
 import multer from "multer";
@@ -198,9 +199,17 @@ router.post("/:id/ban", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
-    await redisClient.del(`user_status:${req.params.id}`);
-    res.json({ success: true });
+    const userId = req.params.id;
+    await User.findByIdAndDelete(userId);
+    
+    // Cleanup related data
+    await Promise.all([
+      VerificationRequest.deleteMany({ userId }),
+      Host.deleteMany({ userId }),
+      redisClient.del(`user_status:${userId}`)
+    ]);
+
+    res.json({ success: true, message: "User and related verification data deleted" });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }

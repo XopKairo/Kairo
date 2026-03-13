@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import userRepository from "../repositories/userRepository.js";
 import Post from "../models/Post.js";
+import VerificationRequest from "../models/VerificationRequest.js";
+import Host from "../models/Host.js";
 import { getUserBadge } from "../utils/badgeSystem.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "343792605839-1siolslgaeo03t4a3he0tq3nbi7cfns0.apps.googleusercontent.com");
@@ -174,8 +176,17 @@ class AuthService {
   }
 
   async deleteAccount(userId) {
+    // 1. Delete user record
     await userRepository.deleteById(userId);
-    return { success: true, message: "Account deleted successfully" };
+    
+    // 2. Parallel cleanup of associated records
+    await Promise.all([
+      VerificationRequest.deleteMany({ userId }),
+      Host.deleteMany({ userId }),
+      Post.deleteMany({ userId })
+    ]);
+
+    return { success: true, message: "Account and associated data deleted successfully" };
   }
 }
 

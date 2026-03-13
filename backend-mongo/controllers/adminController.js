@@ -1,13 +1,23 @@
-import User from "../models/User.js";
 import Host from "../models/Host.js";
+import User from "../models/User.js";
 import Call from "../models/Call.js";
 import Report from "../models/Report.js";
 import Blacklist from "../models/Blacklist.js";
 import AdminActionLog from "../models/AdminActionLog.js";
+import VerificationRequest from "../models/VerificationRequest.js";
+import Transaction from "../models/Transaction.js";
+import Message from "../models/Message.js";
+import Conversation from "../models/Conversation.js";
+import Notification from "../models/Notification.js";
+import Post from "../models/Post.js";
+import Review from "../models/Review.js";
+import WalletLedger from "../models/WalletLedger.js";
 import callService from "../services/callService.js";
 import walletRepository from "../repositories/walletRepository.js";
+import redisClient from "../config/redis.js";
 
 class AdminController {
+
   // 1. Adjust User Wallet (Add/Remove Coins)
   async adjustWallet(req, res) {
     const { userId, amount, type, reason } = req.body; // type: 'ADD' or 'REMOVE'
@@ -213,38 +223,55 @@ class AdminController {
     }
   }
 
-  // 7. Permanent Delete Host/User
+  // 7. Permanent Delete Host/User (Deep Cleanup)
   async deleteHostPermanently(req, res) {
     try {
       const { id } = req.params;
       
-      const host = await Host.findById(id);
+      // 1. Identify User ID
       let userId = id;
-
+      const host = await Host.findById(id);
       if (host) {
         userId = host.userId;
-        await Host.findByIdAndDelete(id);
+      } else {
+        const userCheck = await User.findById(id);
+        if (!userCheck) return res.status(404).json({ success: false, message: "User/Host not found" });
       }
 
-      const user = await User.findByIdAndDelete(userId);
-      
-      if (!user && !host) {
-        return res.status(404).json({ success: false, message: "User/Host not found" });
-      }
+      console.log(`🚀 Purging all data for User: ${userId}`);
 
+      // 2. Parallel Deep Delete (Surgical Purge)
+      await Promise.all([
+        User.findByIdAndDelete(userId),
+        Host.deleteMany({ userId }),
+        VerificationRequest.deleteMany({ userId }),
+        Transaction.deleteMany({ userId }),
+        Call.deleteMany({ $or: [{ userId }, { hostId: userId }] }),
+        Report.deleteMany({ $or: [{ reporterId: userId }, { reportedId: userId }] }),
+        Review.deleteMany({ $or: [{ userId }, { hostId: userId }] }),
+        Post.deleteMany({ userId }),
+        Message.deleteMany({ $or: [{ senderId: userId }, { receiverId: userId }] }),
+        Conversation.deleteMany({ participants: userId }),
+        Notification.deleteMany({ userId }),
+        WalletLedger.deleteMany({ userId }),
+        redisClient.del(`user_status:${userId}`) // Purge active session cache
+      ]);
+
+      // Log Admin Action
       try {
         await AdminActionLog.create({
           adminId: req.admin?._id,
-          action: "BAN_USER", // Using an existing enum-like action if available, or just a string
+          action: "BAN_USER",
           targetId: userId,
-          details: `Permanently deleted ${host ? 'Host' : 'User'}.`,
+          details: `GOD-MODE: Permanently deleted user ${userId} and all associated records from system.`,
         });
       } catch (logErr) {
-        console.error("Delete logging failed:", logErr.message);
+        console.error("Purge logging failed:", logErr.message);
       }
 
-      res.json({ success: true, message: "User permanently deleted from system" });
+      res.json({ success: true, message: "User and all associated data completely purged from system." });
     } catch (error) {
+      console.error("Deep Delete Error:", error.message);
       res.status(500).json({ success: false, message: error.message });
     }
   }
