@@ -58,6 +58,29 @@ router.post("/interaction", protectUser, async (req, res) => {
   }
 });
 
+// GET single host by ID
+router.get("/:id", async (req, res) => {
+  try {
+    // Attempt to find by Host ID first
+    let host = await Host.findById(req.params.id).populate("userId", "phone name profilePicture");
+    
+    // If not found, attempt to find by User ID (in case frontend passed userId by mistake)
+    if (!host) {
+      host = await Host.findOne({ userId: req.params.id }).populate("userId", "phone name profilePicture");
+    }
+
+    if (!host) return res.status(404).json({ message: "Host not found" });
+    res.json(host);
+  } catch (error) {
+    // If the ID is completely invalid format, catch it here and try fallback or return 404
+    try {
+      const hostByUser = await Host.findOne({ userId: req.params.id }).populate("userId", "phone name profilePicture");
+      if (hostByUser) return res.json(hostByUser);
+    } catch(e) {}
+    res.status(404).json({ message: "Host not found" });
+  }
+});
+
 // ADMIN ROUTES (Supreme Control)
 router.put("/:id", protectAdmin, async (req, res) => {
   try {
