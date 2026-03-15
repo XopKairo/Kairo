@@ -105,7 +105,7 @@ router.put("/:id", protectAdmin, async (req, res) => {
         targetId: payout._id,
         details: `Payout ID ${payout._id} marked as ${status}. coinsDeducted: ${payout.coinsDeducted}`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
     res.json({ success: true, payout });
   } catch (error) {

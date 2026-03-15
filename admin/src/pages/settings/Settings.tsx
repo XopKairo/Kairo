@@ -43,7 +43,7 @@ export default function Settings() {
         setIsAiModerationEnabled(response.data.isAiModerationEnabled !== undefined ? response.data.isAiModerationEnabled : true);
         setAiSensitivity(response.data.aiSensitivity || 'High');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to fetch settings:', error);
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export default function Settings() {
     try {
       await apiClient.put('/admin/settings', { maintenance: newStatus });
       setMaintenance(newStatus);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to update maintenance mode:', error);
       alert('Failed to update maintenance mode. Please try again.');
     } finally {
@@ -72,7 +72,7 @@ export default function Settings() {
       const res = await apiClient.post('/admin/auth/request-update-otp');
       setStep('OTP_SENT');
       setProfileMsg({ type: 'success', text: res.data.message });
-    } catch (err) {
+    } catch {
       setProfileMsg({ type: 'error', text: 'Failed to send OTP' });
     } finally {
       setSaving(false);
@@ -95,7 +95,7 @@ export default function Settings() {
       setPassword('');
       setOtp('');
       setTimeout(() => { authContext?.logout(); }, 3000);
-    } catch (err) {
+    } catch {
       setProfileMsg({ type: 'error', text: 'Failed to update profile' });
     } finally {
       setSaving(false);

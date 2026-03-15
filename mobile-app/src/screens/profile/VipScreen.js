@@ -18,7 +18,7 @@ const VipScreen = ({ navigation }) => {
 
   const fetchPackages = async () => {
     try {
-      const res = await api.get('/vip/packages');
+      const res = await api.get('user/vip/packages');
       setPackages(res.data);
     } catch (error) {
       console.error(error);
@@ -38,7 +38,7 @@ const VipScreen = ({ navigation }) => {
           onPress: async () => {
             setBuying(true);
             try {
-              const res = await api.post('/vip/buy-vip', { packageId: pkg._id });
+              const res = await api.post('user/vip/buy-vip', { packageId: pkg._id });
               if (res.data.success) {
                 showAlert('Success!', res.data.message, 'success');
                 navigation.goBack();

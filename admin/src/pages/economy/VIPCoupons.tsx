@@ -40,7 +40,7 @@ export default function VIPCoupons() {
       ]);
       setVipPackages(vipRes.data);
       setCoupons(couponRes.data);
-    } catch (e) {
+    } catch {
       console.error('Fetch failed');
     }
   };

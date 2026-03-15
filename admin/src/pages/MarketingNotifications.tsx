@@ -27,7 +27,7 @@ export default function MarketingNotifications() {
     try {
       const response = await apiClient.get('/admin/notifications');
       setLogs(response.data);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to fetch logs:', e);
     } finally {
       setLoading(false);

@@ -24,7 +24,7 @@ const OTPScreen = ({ route, navigation }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']); 
   const [loading, setLoading] = useState(false);
   const [fastLoading, setFastLoading] = useState(false);
-  const [showFastLogin, setShowFastLogin] = useState(false);
+  const [showFastLogin, setShowFastLogin] = useState(!confirmation);
   const [timer, setTimer] = useState(30);
   const endTimeRef = useRef(Date.now() + 30000);
   const inputRefs = useRef([]);

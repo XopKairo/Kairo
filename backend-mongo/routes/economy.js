@@ -30,7 +30,7 @@ router.post("/vip", protectAdmin, async (req, res) => {
       targetId: pkg._id,
       details: `Created VIP Package: ${pkg.name}`,
     });
-  } catch (logErr) {}
+  } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
   res.status(201).json(pkg);
 });
@@ -45,7 +45,7 @@ router.delete("/vip/:id", protectAdmin, async (req, res) => {
         targetId: pkg._id,
         details: `Deleted VIP Package: ${pkg.name}`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
     await VipPackage.findByIdAndDelete(req.params.id);
   }
   res.json({ message: "VIP Package deleted" });
@@ -66,7 +66,7 @@ router.post("/coupons", protectAdmin, async (req, res) => {
       targetId: coupon._id,
       details: `Created Coupon: ${coupon.code}. Discount: ${coupon.discountPercentage}%`,
     });
-  } catch (logErr) {}
+  } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
   res.json(coupon);
 });
@@ -81,7 +81,7 @@ router.delete("/coupons/:id", protectAdmin, async (req, res) => {
         targetId: coupon._id,
         details: `Deleted Coupon: ${coupon.code}`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
     await Coupon.findByIdAndDelete(req.params.id);
   }
   res.json({ message: "Coupon deleted" });
@@ -102,7 +102,7 @@ router.post("/coins", protectAdmin, async (req, res) => {
       targetId: pkg._id,
       details: `Created Coin Package: ${pkg.coins} Coins for ₹${pkg.priceINR}`,
     });
-  } catch (logErr) {}
+  } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
   res.status(201).json(pkg);
 });
@@ -117,7 +117,7 @@ router.delete("/coins/:id", protectAdmin, async (req, res) => {
         targetId: pkg._id,
         details: `Deleted Coin Package: ${pkg.coins} Coins`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
     await CoinPackage.findByIdAndDelete(req.params.id);
   }
   res.json({ message: "Package deleted" });

@@ -40,7 +40,7 @@ export default function Hosts() {
     try {
       const response = await apiClient.get('/admin/hosts');
       setHosts(Array.isArray(response.data) ? response.data : []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to fetch hosts', error);
     }
   };
@@ -65,7 +65,7 @@ export default function Hosts() {
       await apiClient.post('/admin/hosts/' + id + '/verify', { isVerified });
       fetchHosts();
       setActiveMenu(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to verify host', error);
       alert('Failed to verify host');
     }
@@ -91,7 +91,7 @@ export default function Hosts() {
       await apiClient.post('/admin/hosts/' + id + '/ban', { isBanned: false });
       fetchHosts();
       setActiveMenu(null);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to unban host', e);
       alert('Failed to unban host');
     }

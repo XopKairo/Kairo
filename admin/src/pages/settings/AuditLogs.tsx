@@ -20,7 +20,7 @@ export default function AuditLogs() {
       try {
         const res = await apiClient.get('/admin/audit-logs');
         setLogs(res.data);
-      } catch (e: any) {
+      } catch (e) {
         console.error('Failed to fetch audit logs:', e);
       } finally {
         setLoading(false);

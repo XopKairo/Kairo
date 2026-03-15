@@ -54,7 +54,7 @@ export default function Users() {
 
       const res = await apiClient.get(`/admin/users?${params.toString()}`);
       setUsers(Array.isArray(res.data) ? res.data : []);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Fetch users failed:', e);
     } finally {
       setLoading(false);
@@ -81,8 +81,8 @@ export default function Users() {
       fetchUsers();
       setIsWalletModalOpen(false);
       setWalletForm({ amount: '', type: 'ADD', reason: '' });
-    } catch (error: any) {
-      alert('Adjustment failed: ' + (error.response?.data?.message || 'Unknown error'));
+    } catch (error) {
+      alert('Adjustment failed: ' + ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Unknown error'));
     }
   };
 
@@ -94,8 +94,8 @@ export default function Users() {
       setIsAddModalOpen(false);
       setAddForm({ name: '', phone: '', password: '', gender: 'Male' });
       fetchUsers();
-    } catch (error: any) { 
-      alert(error.response?.data?.message || 'Creation failed'); 
+    } catch (error) { 
+      alert((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Creation failed'); 
     }
   };
 
@@ -126,7 +126,7 @@ export default function Users() {
     try {
       await apiClient.post('/admin/users/' + id + '/ban', { isBanned: false });
       fetchUsers();
-    } catch (e: any) {
+    } catch {
       alert('Failed to unban user');
     }
   };

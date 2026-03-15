@@ -43,7 +43,7 @@ const HostProfileScreen = ({ route, navigation }) => {
     if (!currentUser) return navigation.navigate('Login');
     try {
       const targetId = host.userId?._id || host.userId;
-      const res = await api.post(`users/follow/${targetId}`);
+      const res = await api.post(`user/users/follow/${targetId}`);
       setIsFollowing(res.data.following);
     } catch (e) {}
   };
@@ -88,7 +88,7 @@ const HostProfileScreen = ({ route, navigation }) => {
           onPress: async () => {
             try {
               const targetId = host.userId?._id || host.userId;
-              await api.post(`users/block/${targetId}`);
+              await api.post(`user/users/block/${targetId}`);
               showAlert('Success', 'User has been blocked.', 'success');
               navigation.goBack();
             } catch (e) {

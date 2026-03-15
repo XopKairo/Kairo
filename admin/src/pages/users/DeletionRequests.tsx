@@ -20,7 +20,7 @@ export default function DeletionRequests() {
     try {
       const res = await apiClient.get('/admin/deletion-requests');
       setUsers(Array.isArray(res.data) ? res.data : []);
-    } catch (e) {
+    } catch {
       console.error('Fetch failed');
     } finally {
       setLoading(false);

@@ -12,7 +12,7 @@ export const seedAdmin = async () => {
       const User = mongoose.model("User");
       await User.collection.dropIndex("email_1");
       logger.info("✅ Legacy user email index dropped");
-    } catch (e) {}
+    } catch (e) { logger.debug("Index drop ignored: " + e.message); }
 
     // Drop legacy transaction indexes
     try {
@@ -20,7 +20,7 @@ export const seedAdmin = async () => {
       await Transaction.collection.dropIndex("razorpayOrderId_1");
       await Transaction.collection.dropIndex("cashfreeOrderId_1");
       logger.info("✅ Legacy transaction indexes dropped");
-    } catch (e) {}
+    } catch (e) { logger.debug("Index drop ignored: " + e.message); }
 
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;

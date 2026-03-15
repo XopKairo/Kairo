@@ -19,7 +19,7 @@ const ScratchCardScreen = ({ navigation }) => {
 
   const fetchCards = async () => {
     try {
-      const res = await api.get('/vip/scratch-cards');
+      const res = await api.get('user/vip/scratch-cards');
       setCards(res.data);
     } catch (error) {
       console.error(error);
@@ -29,7 +29,7 @@ const ScratchCardScreen = ({ navigation }) => {
   const handleScratch = async (card) => {
     setScratching(card._id);
     try {
-      const res = await api.post('/vip/scratch', { cardId: card._id });
+      const res = await api.post('user/vip/scratch', { cardId: card._id });
       if (res.data.success) {
         showAlert('Congratulations!', `You won ${res.data.reward} coins!`, 'success', 'AWESOME', [
           { text: 'Awesome', onPress: fetchCards }

@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+import { URL } from "url";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 const isTls = redisUrl.startsWith("rediss://");

@@ -24,7 +24,7 @@ export default function Agencies() {
     try {
       const res = await apiClient.get('/admin/agencies');
       setAgencies(Array.isArray(res.data) ? res.data : []);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Fetch agencies failed:', e);
     }
   };

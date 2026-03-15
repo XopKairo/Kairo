@@ -30,7 +30,7 @@ const VideoCallScreen = ({ route, navigation }) => {
 
     const checkBalance = async () => {
       try {
-        const res = await api.get(`users/${userId}`);
+        const res = await api.get(`user/users/${userId}`);
         const coins = res.data.coins;
         setUserCoins(coins);
         
@@ -42,7 +42,7 @@ const VideoCallScreen = ({ route, navigation }) => {
       }
     };
 
-    api.post(`calls/start`, { hostId, callId })
+    api.post(`user/calls/start`, { hostId, callId })
       .then(res => {
         if (res.data.success) {
           setIsAllowed(true);
@@ -90,7 +90,7 @@ const VideoCallScreen = ({ route, navigation }) => {
 
   const submitReport = async (reason) => {
     try {
-      await api.post('reports', { reportedId: hostId, reason });
+      await api.post('user/reports', { reportedId: hostId, reason });
       showAlert('Success', 'Report submitted. Admin will review.', 'success');
     } catch (e) {
       showAlert('Error', 'Failed to submit report', 'error');

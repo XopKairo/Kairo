@@ -27,7 +27,7 @@ export default function Verification() {
       setError(null);
       const res = await apiClient.get("/admin/verification");
       setRequests(Array.isArray(res.data) ? res.data : []);
-    } catch (e: any) {
+    } catch (e) {
       console.error("Failed to fetch verification requests:", e);
       setError(e.response?.data?.message || "Failed to load requests. Check console for details.");
     } finally {
@@ -42,8 +42,8 @@ export default function Verification() {
     try {
       await apiClient.post(`/admin/verification/${id}/status`, { status });
       fetchRequests();
-    } catch (e: any) {
-      alert(e.response?.data?.message || "Failed to update status");
+    } catch (e) {
+      alert((e as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to update status");
     }
   };
 

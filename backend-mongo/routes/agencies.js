@@ -29,7 +29,7 @@ router.post("/", protectAdmin, async (req, res) => {
         targetId: agency._id,
         details: `Created new agency: ${name}. Owner: ${ownerName}`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
     res.status(201).json(agency);
   } catch (error) {
@@ -68,7 +68,7 @@ router.put("/:id", protectAdmin, async (req, res) => {
         targetId: agency._id,
         details: `Updated agency ${name}. New commission: ${commissionPercentage}%`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
     res.json(agency);
   } catch (error) {
@@ -90,7 +90,7 @@ router.delete("/:id", protectAdmin, async (req, res) => {
         targetId: agency._id,
         details: `Deleted agency: ${agency.name}. All hosts unassigned.`,
       });
-    } catch (logErr) {}
+    } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
     // Remove agency reference from hosts
     await Host.updateMany({ agencyId: req.params.id }, { agencyId: null });

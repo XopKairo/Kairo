@@ -52,7 +52,7 @@ export default function Dashboard() {
     try {
       const res = await apiClient.get('/admin/dashboard/live-calls');
       setLiveCalls(Array.isArray(res.data) ? res.data : []);
-    } catch (e) {
+    } catch {
       console.error('Live calls fetch failed');
     }
   };
@@ -85,7 +85,7 @@ export default function Dashboard() {
     try {
       await apiClient.post('/admin/calls/force-end', { callId });
       fetchLiveCalls();
-    } catch (e) {
+    } catch {
       alert('Failed to end call');
     }
   };

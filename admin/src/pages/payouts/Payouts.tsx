@@ -23,7 +23,7 @@ export default function Payouts() {
     try {
       const res = await apiClient.get('/admin/payouts');
       setPayouts(res.data);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Failed to fetch payouts:', e);
     } finally {
       setLoading(false);

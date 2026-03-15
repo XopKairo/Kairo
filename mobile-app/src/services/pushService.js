@@ -20,7 +20,7 @@ export const registerForPushNotificationsAsync = async (userId) => {
     // Send token to backend
     if (userId) {
       try {
-        await api.post(`/users/${userId}/push-token`, { pushToken: token });
+        await api.post(`user/users/${userId}/push-token`, { pushToken: token });
       } catch (_e) {
         // Silently ignore
       }
