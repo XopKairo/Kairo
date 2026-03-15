@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from './api';
 
 const SOCKET_URL = BASE_URL;
@@ -10,17 +11,33 @@ class SocketService {
   onCallTerminatedHandler = () => {};
   onBalanceUpdateHandler = () => {};
   onGiftReceivedHandler = () => {};
+  onStatusUpdateHandler = () => {};
 
-  connect(userId = null) {
+  async connect(userId = null) {
+    if (this.socket?.connected) return;
+
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return;
+
     if (!this.socket) {
       this.socket = io(SOCKET_URL, {
-        transports: ['websocket'], // Crucial for horizontal scaling without sticky sessions
+        transports: ['websocket'],
+        auth: { token },
       });
+
       this.socket.on('connect', () => {
+        console.log('✅ Socket Connected Successfully');
         if (userId) {
-          // Both joinUserRoom and registerUser are used in backend
           this.socket.emit('registerUser', userId);
         }
+      });
+
+      this.socket.on('connect_error', (err) => {
+        console.error('❌ Socket Connection Error:', err.message);
+      });
+
+      this.socket.on('statusUpdate', (data) => {
+        if (this.onStatusUpdateHandler) this.onStatusUpdateHandler(data);
       });
 
       this.socket.on('userBanned', (data) => {
@@ -55,6 +72,10 @@ class SocketService {
 
   setGiftReceivedHandler(handler) {
     this.onGiftReceivedHandler = handler;
+  }
+
+  setStatusUpdateHandler(handler) {
+    this.onStatusUpdateHandler = handler;
   }
 
   disconnect() {

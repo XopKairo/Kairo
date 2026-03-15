@@ -74,14 +74,18 @@ const VideoCallScreen = ({ route }) => {
   const handleCallEnd = async () => {
     try {
       socketService.notifyCallEnded(callId);
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      }
+      
+      // Force navigation after a short delay to ensure Zego cleanup doesn't block UI
+      setTimeout(() => {
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
+        }
+      }, 500);
     } catch (e) {
       navigation.navigate('Main');
     }

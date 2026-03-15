@@ -66,6 +66,15 @@ const HomeScreen = ({ navigation }) => {
       setBanners(bannerRes.data || []);
       setHosts(hostRes.data || []);
       if (settingsRes.data) setAppSettings(settingsRes.data);
+
+      // Supreme Sync: Socket real-time status update
+      socketService.setStatusUpdateHandler((data) => {
+        setHosts((prevHosts) => 
+          prevHosts.map((h) => 
+            h._id === data.hostId ? { ...h, status: data.status } : h
+          )
+        );
+      });
     } catch (error) {
     } finally {
       setLoading(false);
