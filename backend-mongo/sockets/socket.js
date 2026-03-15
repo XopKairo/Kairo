@@ -77,31 +77,41 @@ const setupSockets = (io) => {
 
     socket.on("callStarted", async (data) => {
       const { callId, userId, hostId, receiverId } = data;
-      const targetId = receiverId || hostId;
+      let targetRoomId = receiverId || hostId;
 
-      if (targetId) {
-        io.to(targetId).emit("incomingCall", data);
+      try {
+        // If targetRoomId is a Host ID, we need the actual User ID for the socket room
+        const hostDoc = await Host.findById(targetRoomId);
+        if (hostDoc) {
+          targetRoomId = hostDoc.userId.toString();
+        }
 
-        // Initial LiveCall entry
-        await LiveCall.create({
-          callId,
-          userId,
-          hostId: targetId,
-          status: "RINGING",
-        });
+        if (targetRoomId) {
+          io.to(targetRoomId).emit("incomingCall", { ...data, hostUserId: targetRoomId });
 
-        const timeout = setTimeout(async () => {
-          const call = await LiveCall.findOne({ callId, status: "RINGING" });
-          if (call) {
-            call.status = "MISSED";
-            await call.save();
-            io.to(userId).emit("callTimeout", { callId });
-            io.to(targetId).emit("callTimeout", { callId });
-          }
-          ringingTimeouts.delete(callId);
-        }, 45000);
+          // Initial LiveCall entry
+          await LiveCall.create({
+            callId,
+            userId,
+            hostId: targetRoomId,
+            status: "RINGING",
+          });
 
-        ringingTimeouts.set(callId, timeout);
+          const timeout = setTimeout(async () => {
+            const call = await LiveCall.findOne({ callId, status: "RINGING" });
+            if (call) {
+              call.status = "MISSED";
+              await call.save();
+              io.to(userId).emit("callTimeout", { callId });
+              io.to(targetRoomId).emit("callTimeout", { callId });
+            }
+            ringingTimeouts.delete(callId);
+          }, 45000);
+
+          ringingTimeouts.set(callId, timeout);
+        }
+      } catch (err) {
+        console.error("Call Started Error:", err);
       }
     });
 

@@ -21,8 +21,10 @@ class SocketService {
 
     if (!this.socket) {
       this.socket = io(SOCKET_URL, {
-        transports: ['websocket'],
+        transports: ['polling', 'websocket'], // Start with polling, upgrade to websocket
         auth: { token },
+        timeout: 20000, // Increase timeout to 20 seconds
+        reconnectionAttempts: 5,
       });
 
       this.socket.on('connect', () => {

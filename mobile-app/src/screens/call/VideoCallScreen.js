@@ -158,6 +158,10 @@ const VideoCallScreen = ({ route }) => {
         <ShieldAlert color="white" size={20} />
         <Text style={styles.reportText}>Report</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.closeButton} onPress={handleCallEnd}>
+        <Text style={styles.closeText}>EXIT</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -165,6 +169,12 @@ const VideoCallScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   reportButton: { position: 'absolute', top: 50, right: 20, backgroundColor: 'rgba(255, 0, 0, 0.4)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 5, zIndex: 100 },
+  reportText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  closeButton: { position: 'absolute', top: 50, left: 20, backgroundColor: 'rgba(0, 0, 0, 0.5)', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, zIndex: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  closeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  lottieOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+  fullLottie: { width: '100%', height: '100%' }
+});
   reportText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
   lottieOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
   fullLottie: { width: '100%', height: '100%' }
