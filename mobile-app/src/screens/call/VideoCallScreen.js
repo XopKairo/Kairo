@@ -110,7 +110,21 @@ const VideoCallScreen = ({ route, navigation }) => {
         callID={callId}
         config={{
           ...ONE_ON_ONE_VIDEO_CALL_CONFIG,
-          onHangUp: handleCallEnd,
+          onHangUp: () => {
+             handleCallEnd();
+          },
+          onOnlySelfInRoom: () => {
+             handleCallEnd();
+          },
+          notifyInviteeWhenInvitationTimeout: true,
+          audioVideoViewConfig: {
+             showCameraStateOnView: false,
+             showMicrophoneStateOnView: false,
+             showUserNameOnView: false,
+          },
+          layout: {
+             mode: 1, // 0 for picture-in-picture, 1 for gallery
+          }
         }}
       />
 
