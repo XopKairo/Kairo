@@ -50,11 +50,12 @@ const HomeScreen = ({ navigation }) => {
         setCurrentUser(user);
       }
 
+      // Temporarily show all hosts regardless of gender for testing
       let targetGender = '';
-      if (user && user.gender) {
-         if (user.gender === 'Male') targetGender = 'Female';
-         else if (user.gender === 'Female') targetGender = 'Male';
-      }
+      // if (user && user.gender) {
+      //    if (user.gender === 'Male') targetGender = 'Female';
+      //    else if (user.gender === 'Female') targetGender = 'Male';
+      // }
 
       const [bannerRes, hostRes, settingsRes] = await Promise.all([
         api.get('public/banners/active').catch(() => ({ data: [] })), 
