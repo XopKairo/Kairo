@@ -147,14 +147,15 @@ const HomeScreen = ({ navigation }) => {
         {activeTab === 'For You' && hosts.length > 0 ? (
           <View style={styles.swiperContainer}>
             <Swiper
+              key={`swiper-${hosts.length}-${activeTab}`}
               cards={hosts}
               renderCard={(card) => <SwipeCard item={card} onCall={() => handleCall(card)} onChat={() => handleChat(card)} />}
               onSwipedLeft={(idx) => handleInteraction(hosts[idx]._id, 'pass')}
               onSwipedRight={(idx) => handleInteraction(hosts[idx]._id, 'like')}
               cardIndex={0}
-              keyExtractor={(card) => card._id || card.id}
+              keyExtractor={(card) => card._id || card.id || Math.random().toString()}
               backgroundColor={'transparent'}
-              stackSize={3}
+              stackSize={Math.min(hosts.length, 3)}
               infinite
               verticalSwipe={false}
             />
