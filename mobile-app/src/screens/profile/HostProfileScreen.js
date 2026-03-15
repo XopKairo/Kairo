@@ -16,6 +16,7 @@ const HostProfileScreen = ({ route, navigation }) => {
   const [host, setHost] = useState(initialData || null);
   const [loading, setLoading] = useState(!initialData);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetchHostDetails();
@@ -23,7 +24,14 @@ const HostProfileScreen = ({ route, navigation }) => {
 
   const fetchHostDetails = async () => {
     const targetId = routeHostId || initialData?._id;
-    if (!targetId) return;
+    if (!targetId) {
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(true);
+    setFetchError(false);
+    
     try {
       const res = await api.get(`public/hosts/${targetId}`);
       if (res.data) {
@@ -31,9 +39,12 @@ const HostProfileScreen = ({ route, navigation }) => {
         if (currentUser && res.data.userId) {
            setIsFollowing(currentUser.following?.includes(res.data.userId?._id || res.data.userId));
         }
+      } else {
+        setFetchError(true);
       }
     } catch (error) {
       console.error('Fetch Host Error:', error);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -101,7 +112,8 @@ const HostProfileScreen = ({ route, navigation }) => {
   };
 
   if (loading) return <View style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
-  if (!host) return <View style={styles.container}><Text style={{ color: '#FFF' }}>Host not found</Text></View>;
+  if (!host && fetchError) return <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}><Text style={{ color: '#FFF' }}>Host not found</Text><TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.primary, borderRadius: 8 }}><Text style={{ color: '#FFF' }}>Go Back</Text></TouchableOpacity></View>;
+  if (!host) return null; // Safe fallback while data is still coming
 
   return (
     <View style={styles.container}>

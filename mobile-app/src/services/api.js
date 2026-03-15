@@ -2,8 +2,9 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-export const API_URL = 'https://kairo-b1i9.onrender.com/api/';
-export const BASE_URL = 'https://kairo-b1i9.onrender.com';
+const env_api_url = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com';
+export const BASE_URL = env_api_url.endsWith('/') ? env_api_url.slice(0, -1) : env_api_url;
+export const API_URL = `${BASE_URL}/api/`;
 
 const API = axios.create({
   baseURL: API_URL,
