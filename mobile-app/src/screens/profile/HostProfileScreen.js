@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, FlatList, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, FlatList, ActivityIndicator, Modal, StatusBar } from 'react-native';
 import { Avatar, Card, IconButton } from 'react-native-paper';
 import { ShieldCheck, MapPin, Globe2, MessageCircle, Phone, Heart, Share2, MoreVertical, ChevronLeft, ShieldAlert, Star, Play, Ban } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
