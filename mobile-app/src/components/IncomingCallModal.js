@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Phone, PhoneOff } from 'lucide-react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
@@ -12,7 +11,7 @@ const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
-        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.85)' }]} />
         <LinearGradient colors={['rgba(159, 103, 255, 0.2)', 'rgba(15,10,25,0.95)']} style={styles.content}>
           <View style={styles.callerInfo}>
             <View style={styles.avatarContainer}>

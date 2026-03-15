@@ -30,9 +30,9 @@ const HomeScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [appSettings, setAppSettings] = useState({ callRate: 30 });
-  const [activeTab, setActiveTab] = useState('For You');
+  const [activeTab, setActiveTab] = useState('New');
 
-  const tabs = ['Follow', 'Nearby', 'New', 'For You'];
+  const tabs = ['New', 'For You', 'Nearby', 'Follow'];
 
   useFocusEffect(
     useCallback(() => {
@@ -152,6 +152,7 @@ const HomeScreen = ({ navigation }) => {
               onSwipedLeft={(idx) => handleInteraction(hosts[idx]._id, 'pass')}
               onSwipedRight={(idx) => handleInteraction(hosts[idx]._id, 'like')}
               cardIndex={0}
+              keyExtractor={(card) => card._id || card.id}
               backgroundColor={'transparent'}
               stackSize={3}
               infinite
@@ -165,7 +166,12 @@ const HomeScreen = ({ navigation }) => {
             ) : hosts.length > 0 ? (
               <FlashList data={hosts} renderItem={({ item }) => <HostCard item={item} currentUser={currentUser} navigation={navigation} />} keyExtractor={item => item._id} numColumns={2} estimatedItemSize={200} scrollEnabled={false} />
             ) : (
-              <View style={styles.emptyContainer}><Text style={styles.emptyText}>No users found in your area.</Text></View>
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No users found in your area.</Text>
+                <TouchableOpacity onPress={() => fetchData()} style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.primary, borderRadius: 8 }}>
+                   <Text style={{ color: '#FFF' }}>Refresh</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         )}
