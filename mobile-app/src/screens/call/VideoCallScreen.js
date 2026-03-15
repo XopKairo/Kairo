@@ -25,8 +25,15 @@ const VideoCallScreen = ({ route }) => {
       setTimeout(() => setShowGiftAnim(false), 4000);
     });
 
-    socketService.setCallTerminatedHandler((data) => {
-      showAlert('Call Terminated', data.reason || 'Call ended due to system policy or low balance.', 'notice');
+    socketService.setCallEndedHandler((data) => {
+      if (data.totalCost) {
+        showAlert('Call Ended', `Duration: ${data.durationMinutes} min\nCost: ${data.totalCost} coins`, 'notice');
+      }
+      handleCallEnd();
+    });
+
+    socketService.setForceDisconnectHandler((data) => {
+      showAlert('Call Terminated', 'Call ended due to low balance.', 'notice');
       handleCallEnd();
     });
 
@@ -67,7 +74,9 @@ const VideoCallScreen = ({ route }) => {
 
     return () => {
       socketService.notifyCallEnded(callId);
-      socketService.setCallTerminatedHandler(null);
+      socketService.setCallEndedHandler(null);
+      socketService.setForceDisconnectHandler(null);
+      socketService.setGiftReceivedHandler(null);
     };
   }, []);
 
@@ -172,10 +181,6 @@ const styles = StyleSheet.create({
   reportText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
   closeButton: { position: 'absolute', top: 50, left: 20, backgroundColor: 'rgba(0, 0, 0, 0.5)', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, zIndex: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   closeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-  lottieOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
-  fullLottie: { width: '100%', height: '100%' }
-});
-  reportText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
   lottieOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
   fullLottie: { width: '100%', height: '100%' }
 });

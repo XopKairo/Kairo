@@ -5,6 +5,7 @@ import Host from "../models/Host.js";
 import WalletLedger from "../models/WalletLedger.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import callService from "../services/callService.js";
 
 const setupSockets = (io) => {
   const ringingTimeouts = new Map();
@@ -127,7 +128,7 @@ const setupSockets = (io) => {
 
         // Fetch caller to check balance
         const caller = await User.findById(call.userId);
-        const ratePerMinute = 10; // This should ideally come from a config or host profile
+        const ratePerMinute = 30; // Consistent with CallService default
 
         if (!caller || caller.coins < ratePerMinute) {
           io.to(call.userId).emit("callError", {
@@ -153,6 +154,10 @@ const setupSockets = (io) => {
         call.status = "ACTIVE";
         call.startedAt = new Date(startTime);
         await call.save();
+
+        // Mark Host as Busy
+        const h = await Host.findOneAndUpdate({ userId: call.hostId }, { status: "Busy" }, { new: true });
+        if (h) io.emit("statusUpdate", { hostId: h._id, status: "Busy" });
 
         io.to(call.userId)
           .to(call.hostId)
@@ -230,7 +235,7 @@ const setupSockets = (io) => {
           callerId: liveCall.userId.toString(),
           hostId: liveCall.hostId.toString(),
           startTime: (new Date(liveCall.startedAt || Date.now()).getTime()).toString(),
-          ratePerMinute: "10" // Default fallback rate
+          ratePerMinute: "30" 
         };
       }
 
@@ -245,65 +250,40 @@ const setupSockets = (io) => {
 
       const endTime = Date.now();
       const durationMs = endTime - parseInt(callData.startTime);
-      const durationMinutes = Math.max(1, Math.ceil(durationMs / 60000)); // Minimum 1 min charge
-      const totalCost = durationMinutes * parseInt(callData.ratePerMinute);
+      const durationMinutes = Math.max(1, Math.ceil(durationMs / 60000)); 
 
-      // 3. Database Transaction for Atomic Deduction and Ledger
-      const session = await mongoose.startSession();
-      session.startTransaction();
+      // 3. Mark Host as Online again
+      const h = await Host.findOneAndUpdate({ userId: callData.hostId }, { status: "Online" }, { new: true });
+      if (h) io.emit("statusUpdate", { hostId: h._id, status: "Online" });
 
-      try {
-        const caller = await User.findOneAndUpdate(
-          { _id: callData.callerId, coins: { $gte: totalCost } },
-          { $inc: { coins: -totalCost, totalSpent: totalCost } },
-          { new: true, session },
-        );
-
-        if (caller) {
-          // Create Wallet Ledger Entry
-          await WalletLedger.create(
-            [
-              {
-                userId: callData.callerId,
-                type: "DEBIT",
-                amount: totalCost,
-                balanceBefore: caller.coins + totalCost,
-                balanceAfter: caller.coins,
-                transactionType: "CALL_CHARGE",
-                referenceId: callId,
-                description: `Video call charges for ${durationMinutes} minutes`,
-                metadata: { durationMs, callId },
-              },
-            ],
-            { session },
-          );
-
-          // Update LiveCall status
-          await LiveCall.findOneAndUpdate(
-            { callId },
-            {
-              status: "ENDED",
-              endedAt: new Date(endTime),
-              duration: durationMinutes,
-              cost: totalCost,
-            },
-            { session },
-          );
+      // 4. Update LiveCall status
+      await LiveCall.findOneAndUpdate(
+        { callId },
+        {
+          status: "ENDED",
+          endedAt: new Date(endTime),
         }
+      );
 
-        await session.commitTransaction();
-        console.log(
-          `✅ Call ${callId} ended. Duration: ${durationMinutes}min, Cost: ${totalCost} coins`,
-        );
+      // 5. Use CallService for robust billing (Host/Agency commissions)
+      try {
+        const billingResult = await callService.endCall(callId, durationMinutes);
+        console.log(`✅ Call ${callId} ended via CallService.`, billingResult);
 
         io.to(callData.callerId)
           .to(callData.hostId)
-          .emit("callEnded", { callId, durationMinutes, totalCost });
-      } catch (dbErr) {
-        await session.abortTransaction();
-        console.error("❌ Billing Transaction Failed:", dbErr);
-      } finally {
-        session.endSession();
+          .emit("callEnded", { 
+            callId, 
+            durationMinutes, 
+            totalCost: billingResult.totalCoinsDeducted,
+            hostShare: billingResult.hostShare 
+          });
+      } catch (billingErr) {
+        console.error("❌ CallService endCall failed:", billingErr.message);
+        // Fallback or emit error
+        io.to(callData.callerId)
+          .to(callData.hostId)
+          .emit("callEnded", { callId, error: billingErr.message });
       }
     } catch (err) {
       console.error("End Call Error:", err);

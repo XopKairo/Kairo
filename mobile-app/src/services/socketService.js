@@ -12,6 +12,12 @@ class SocketService {
   onBalanceUpdateHandler = () => {};
   onGiftReceivedHandler = () => {};
   onStatusUpdateHandler = () => {};
+  onIncomingCallHandler = () => {};
+  onCallTimeoutHandler = () => {};
+  onCallActiveHandler = () => {};
+  onCallEndedHandler = () => {};
+  onCallErrorHandler = () => {};
+  onForceDisconnectHandler = () => {};
 
   async connect(userId = null) {
     if (this.socket?.connected) return;
@@ -57,6 +63,30 @@ class SocketService {
       this.socket.on('giftReceived', (data) => {
         if (this.onGiftReceivedHandler) this.onGiftReceivedHandler(data);
       });
+
+      this.socket.on('incomingCall', (data) => {
+        if (this.onIncomingCallHandler) this.onIncomingCallHandler(data);
+      });
+
+      this.socket.on('callTimeout', (data) => {
+        if (this.onCallTimeoutHandler) this.onCallTimeoutHandler(data);
+      });
+
+      this.socket.on('callActive', (data) => {
+        if (this.onCallActiveHandler) this.onCallActiveHandler(data);
+      });
+
+      this.socket.on('callEnded', (data) => {
+        if (this.onCallEndedHandler) this.onCallEndedHandler(data);
+      });
+
+      this.socket.on('callError', (data) => {
+        if (this.onCallErrorHandler) this.onCallErrorHandler(data);
+      });
+
+      this.socket.on('forceDisconnect', (data) => {
+        if (this.onForceDisconnectHandler) this.onForceDisconnectHandler(data);
+      });
     }
   }
 
@@ -78,6 +108,30 @@ class SocketService {
 
   setStatusUpdateHandler(handler) {
     this.onStatusUpdateHandler = handler;
+  }
+
+  setIncomingCallHandler(handler) {
+    this.onIncomingCallHandler = handler;
+  }
+
+  setCallTimeoutHandler(handler) {
+    this.onCallTimeoutHandler = handler;
+  }
+
+  setCallActiveHandler(handler) {
+    this.onCallActiveHandler = handler;
+  }
+
+  setCallEndedHandler(handler) {
+    this.onCallEndedHandler = handler;
+  }
+
+  setCallErrorHandler(handler) {
+    this.onCallErrorHandler = handler;
+  }
+
+  setForceDisconnectHandler(handler) {
+    this.onForceDisconnectHandler = handler;
   }
 
   disconnect() {

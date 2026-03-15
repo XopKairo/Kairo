@@ -105,20 +105,17 @@ function NavigationStack() {
     if (user) {
       socketService.connect(user._id || user.id);
       
-      const onIncoming = (data) => {
+      socketService.setIncomingCallHandler((data) => {
         setIncomingCall(data);
-      };
+      });
 
-      const onTimeout = () => {
+      socketService.setCallTimeoutHandler(() => {
         setIncomingCall(null);
-      };
-
-      socketService.socket?.on('incomingCall', onIncoming);
-      socketService.socket?.on('callTimeout', onTimeout);
+      });
 
       return () => {
-        socketService.socket?.off('incomingCall', onIncoming);
-        socketService.socket?.off('callTimeout', onTimeout);
+        socketService.setIncomingCallHandler(null);
+        socketService.setCallTimeoutHandler(null);
       };
     }
   }, [user]);
@@ -127,7 +124,9 @@ function NavigationStack() {
     if (incomingCall) {
       const data = incomingCall;
       setIncomingCall(null);
-      socketService.socket?.emit('callAccepted', data.callId);
+      if (socketService.socket) {
+        socketService.socket.emit('callAccepted', data.callId);
+      }
       navigationRef.current?.navigate('VideoCall', {
         userId: user._id || user.id,
         userName: user.name,
