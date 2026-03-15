@@ -94,6 +94,7 @@ app.use("/api/user/calls", protectUser, callRoutes);
 app.use("/api/user/growth", protectUser, growthRoutes);
 app.use("/api/user/vip", protectUser, vipRoutes);
 app.use("/api/user/reviews", protectUser, reviewRoutes);
+app.use("/api/user/users", protectUser, adminUsersRoutes);
 
 // ADMIN ROUTES
 app.use("/api/admin/auth", authLimiter, authRoutes);

@@ -1,6 +1,7 @@
 import redisClient from "../config/redis.js";
 import LiveCall from "../models/LiveCall.js";
 import User from "../models/User.js";
+import Host from "../models/Host.js";
 import WalletLedger from "../models/WalletLedger.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
@@ -36,6 +37,8 @@ const setupSockets = (io) => {
     // Auto-join user room based on verified token
     if (socket.userId) {
       socket.join(socket.userId);
+      // God-Mode Sync: Mark Host as Online
+      Host.findOneAndUpdate({ userId: socket.userId }, { status: "Online" }).exec().catch(() => {});
     }
 
     socket.on("registerUser", () => {
@@ -165,6 +168,9 @@ const setupSockets = (io) => {
     socket.on("disconnect", async () => {
       socketRateLimit.delete(socket.id);
       if (socket.userId) {
+        // God-Mode Sync: Mark Host as Offline
+        Host.findOneAndUpdate({ userId: socket.userId }, { status: "Offline" }).exec().catch(() => {});
+
         // Find if user was in an active call
         const activeCalls = await LiveCall.find({
           $or: [{ userId: socket.userId }, { hostId: socket.userId }],

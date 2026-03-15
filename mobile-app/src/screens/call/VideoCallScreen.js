@@ -70,8 +70,16 @@ const VideoCallScreen = ({ route, navigation }) => {
   }, []);
 
   const handleCallEnd = async () => {
-    socketService.notifyCallEnded(callId);
-    navigation.goBack();
+    try {
+      socketService.notifyCallEnded(callId);
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('Main');
+      }
+    } catch (e) {
+      navigation.navigate('Main');
+    }
   };
 
   const handleReport = () => {

@@ -232,7 +232,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-router.post("/follow/:id", async (req, res) => {
+router.post("/follow/:id", protectUser, async (req, res) => {
   try {
     const targetId = req.params.id;
     const currentUserId = req.user._id;
