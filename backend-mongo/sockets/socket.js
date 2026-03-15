@@ -37,8 +37,12 @@ const setupSockets = (io) => {
     // Auto-join user room based on verified token
     if (socket.userId) {
       socket.join(socket.userId);
-      // God-Mode Sync: Mark Host as Online
-      Host.findOneAndUpdate({ userId: socket.userId }, { status: "Online" }).exec().catch(() => {});
+      // God-Mode Sync: Mark Host as Online and notify all
+      Host.findOneAndUpdate({ userId: socket.userId }, { status: "Online" }, { new: true })
+        .then(h => {
+          if (h) io.emit("statusUpdate", { hostId: h._id, status: "Online" });
+        })
+        .catch(() => {});
     }
 
     socket.on("registerUser", () => {
@@ -168,8 +172,12 @@ const setupSockets = (io) => {
     socket.on("disconnect", async () => {
       socketRateLimit.delete(socket.id);
       if (socket.userId) {
-        // God-Mode Sync: Mark Host as Offline
-        Host.findOneAndUpdate({ userId: socket.userId }, { status: "Offline" }).exec().catch(() => {});
+        // God-Mode Sync: Mark Host as Offline and notify all
+        Host.findOneAndUpdate({ userId: socket.userId }, { status: "Offline" }, { new: true })
+          .then(h => {
+            if (h) io.emit("statusUpdate", { hostId: h._id, status: "Offline" });
+          })
+          .catch(() => {});
 
         // Find if user was in an active call
         const activeCalls = await LiveCall.find({

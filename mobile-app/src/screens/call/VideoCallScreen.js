@@ -6,8 +6,10 @@ import LottieView from 'lottie-react-native';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
-const VideoCallScreen = ({ route, navigation }) => {
+const VideoCallScreen = ({ route }) => {
+  const navigation = useNavigation();
   const { userId, userName, hostId, callId, callRatePerMinute } = route.params;
   const { showAlert } = useAuth();
   const [isAllowed, setIsAllowed] = useState(false);
@@ -75,7 +77,10 @@ const VideoCallScreen = ({ route, navigation }) => {
       if (navigation.canGoBack()) {
         navigation.goBack();
       } else {
-        navigation.replace('Main');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       }
     } catch (e) {
       navigation.navigate('Main');
@@ -119,6 +124,9 @@ const VideoCallScreen = ({ route, navigation }) => {
         config={{
           ...ONE_ON_ONE_VIDEO_CALL_CONFIG,
           onHangUp: () => {
+             handleCallEnd();
+          },
+          onCallEnd: (callID, reason, duration) => {
              handleCallEnd();
           },
           onOnlySelfInRoom: () => {
