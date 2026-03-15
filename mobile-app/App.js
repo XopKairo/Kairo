@@ -16,6 +16,8 @@ import mobileAds from 'react-native-google-mobile-ads';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import ZoraAlert from './src/components/ZoraAlert';
 import NetworkBanner from './src/components/NetworkBanner';
+import IncomingCallModal from './src/components/IncomingCallModal';
+import socketService from './src/services/socketService';
 
 // Screens
 import SplashScreen from './src/screens/SplashScreen';
@@ -95,7 +97,50 @@ function MainTabs() {
 }
 
 function NavigationStack() {
-  const { isMaintenance, checkMaintenance, alertConfig, hideAlert } = useAuth();
+  const { isMaintenance, checkMaintenance, alertConfig, hideAlert, user } = useAuth();
+  const [incomingCall, setIncomingCall] = React.useState(null);
+  const navigationRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (user) {
+      socketService.connect(user._id || user.id);
+      
+      const onIncoming = (data) => {
+        setIncomingCall(data);
+      };
+
+      const onTimeout = () => {
+        setIncomingCall(null);
+      };
+
+      socketService.socket?.on('incomingCall', onIncoming);
+      socketService.socket?.on('callTimeout', onTimeout);
+
+      return () => {
+        socketService.socket?.off('incomingCall', onIncoming);
+        socketService.socket?.off('callTimeout', onTimeout);
+      };
+    }
+  }, [user]);
+
+  const handleAccept = () => {
+    if (incomingCall) {
+      const data = incomingCall;
+      setIncomingCall(null);
+      socketService.socket?.emit('callAccepted', data.callId);
+      navigationRef.current?.navigate('VideoCall', {
+        userId: user._id || user.id,
+        userName: user.name,
+        hostId: user._id || user.id, // Current user is the host
+        callId: data.callId,
+        callRatePerMinute: data.callRatePerMinute || 30
+      });
+    }
+  };
+
+  const handleReject = () => {
+    setIncomingCall(null);
+  };
 
   if (isMaintenance) {
     return <MaintenanceScreen onRefresh={checkMaintenance} />;
@@ -103,7 +148,7 @@ function NavigationStack() {
 
   return (
     <View style={{ flex: 1 }}>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator 
           initialRouteName="Splash"
           screenOptions={{
@@ -141,6 +186,14 @@ function NavigationStack() {
           <Stack.Screen name="HostOTP" component={HostOTPScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
+
+      {/* Global Incoming Call UI */}
+      <IncomingCallModal 
+        visible={!!incomingCall}
+        callerName={incomingCall?.userName}
+        onAccept={handleAccept}
+        onReject={handleReject}
+      />
 
       {/* Global Supreme Alert */}
       <ZoraAlert 
