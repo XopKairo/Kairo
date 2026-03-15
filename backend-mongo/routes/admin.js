@@ -9,6 +9,7 @@ router.use(protectAdmin);
 
 // 1. Wallet Adjustment (Add/Remove Coins)
 router.post("/wallet/adjust", adminController.adjustWallet);
+router.post("/users/toggle-shadow-ban", adminController.toggleShadowBan);
 
 // 2. Call Control (Force End)
 router.post("/calls/force-end", adminController.forceEndCall);

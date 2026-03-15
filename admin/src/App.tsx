@@ -22,6 +22,7 @@ import Banners from './pages/banners/Banners';
 import Posts from "./pages/posts/Posts";
 import MarketingNotifications from './pages/MarketingNotifications';
 import Payouts from './pages/payouts/Payouts';
+import FinanceLogs from './pages/FinanceLogs';
 import Verification from "./pages/monitoring/Verification";
 import DeletionRequests from "./pages/users/DeletionRequests";
 
@@ -53,6 +54,7 @@ function App() {
             <Route path="/calls" element={<ProtectedRoute><Layout><Calls /></Layout></ProtectedRoute>} />
             <Route path="/monitoring" element={<ProtectedRoute><Layout><CallMonitoring /></Layout></ProtectedRoute>} />
             <Route path="/payouts" element={<ProtectedRoute><Layout><Payouts /></Layout></ProtectedRoute>} />
+            <Route path="/finance-logs" element={<ProtectedRoute><Layout><FinanceLogs /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
             <Route path="/banners" element={<ProtectedRoute><Layout><Banners /></Layout></ProtectedRoute>} />
             <Route path="/posts" element={<ProtectedRoute><Layout><Posts /></Layout></ProtectedRoute>} />

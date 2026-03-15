@@ -2,32 +2,42 @@ import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell, CreditCard, Video, History, ShieldAlert, Crown, Trash2 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Users, label: "Users", path: "/users" },
-  { icon: UserCheck, label: "Approved Hosts", path: "/hosts" },
-  { icon: ShieldAlert, label: "Verification Requests", path: "/verification" },
-  { icon: Building2, label: "Agencies", path: "/agencies" },
-  { icon: Wallet, label: "Economy", path: "/economy" },
-  { icon: Crown, label: "VIP & Coupons", path: "/vip-coupons" },
-  { icon: Video, label: "Active Calls", path: "/calls" },
-  { icon: ShieldAlert, label: "Call Monitoring", path: "/monitoring" },
-  { icon: CreditCard, label: "Payout Requests", path: "/payouts" },
-  { icon: Bell, label: "Marketing Push", path: "/notifications" },
-  { icon: Flag, label: "Reports", path: "/reports" },
-  { icon: Image, label: "Banners", path: "/banners" },
-  { icon: History, label: "Audit Logs", path: "/audit-logs" },
-  { icon: Trash2, label: "Deletion Requests", path: "/deletion-requests" },
-  { icon: ShieldAlert, label: "Security Blacklist", path: "/blacklist" },
-  { icon: Settings, label: "App Settings", path: "/settings" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["Super Admin", "Moderator", "Finance Manager", "admin", "ADMIN"] },
+  { icon: Users, label: "Users", path: "/users", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: UserCheck, label: "Approved Hosts", path: "/hosts", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: ShieldAlert, label: "Verification Requests", path: "/verification", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: Building2, label: "Agencies", path: "/agencies", roles: ["Super Admin", "admin", "ADMIN"] },
+  { icon: Wallet, label: "Economy", path: "/economy", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
+  { icon: Crown, label: "VIP & Coupons", path: "/vip-coupons", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
+  { icon: Video, label: "Active Calls", path: "/calls", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: ShieldAlert, label: "Call Monitoring", path: "/monitoring", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: CreditCard, label: "Payout Requests", path: "/payouts", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
+  { icon: History, label: "Finance Logs", path: "/finance-logs", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
+  { icon: Bell, label: "Marketing Push", path: "/notifications", roles: ["Super Admin", "admin", "ADMIN"] },
+  { icon: Flag, label: "Reports", path: "/reports", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: Image, label: "Banners", path: "/banners", roles: ["Super Admin", "admin", "ADMIN"] },
+  { icon: History, label: "Audit Logs", path: "/audit-logs", roles: ["Super Admin", "admin", "ADMIN"] },
+  { icon: Trash2, label: "Deletion Requests", path: "/deletion-requests", roles: ["Super Admin", "admin", "ADMIN"] },
+  { icon: ShieldAlert, label: "Security Blacklist", path: "/blacklist", roles: ["Super Admin", "admin", "ADMIN"] },
+  { icon: Settings, label: "App Settings", path: "/settings", roles: ["Super Admin", "admin", "ADMIN"] },
 ];
 
 export const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (val: boolean) => void }) => {
+  const authContext = useContext(AuthContext);
+  const userRole = authContext?.user?.role || "admin";
+
+  const filteredNavItems = navItems.filter(item => 
+    item.roles.includes(userRole)
+  );
+
   return (
     <>
       {isOpen && (
@@ -46,7 +56,7 @@ export const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
       </div>
       <div className="px-6 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Main Menu</div>
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <NavLink key={item.path} to={item.path} onClick={() => setIsOpen(false)} className={({ isActive }) => cn(
               "flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group",
               isActive ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-500 font-medium" : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-800/50 hover:text-gray-900 dark:hover:text-white"

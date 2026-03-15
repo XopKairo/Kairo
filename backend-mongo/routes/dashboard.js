@@ -65,6 +65,28 @@ router.get("/stats", async (req, res) => {
     const activeLast7Days = await User.countDocuments({ lastLoginDate: { $gte: sevenDaysAgo } });
     const retentionRate = totalUsers > 0 ? (activeLast7Days / totalUsers) * 100 : 0;
 
+    // --- Trends (Last 30 Days) ---
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const registrationTrend = await User.aggregate([
+      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    const revenueTrend = await Transaction.aggregate([
+      { $match: { status: "completed", createdAt: { $gte: thirtyDaysAgo } } },
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, total: { $sum: "$amount" } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // --- Top Performing Hosts ---
+    const topHosts = await Host.find({ isVerified: true, isDeleted: false })
+      .sort({ earnings: -1 })
+      .limit(5)
+      .select("name hostId earnings profilePicture totalCalls");
+
     const statsResult = {
       totalUsers,
       activeUsersToday,
@@ -77,6 +99,9 @@ router.get("/stats", async (req, res) => {
       totalRevenue: `₹${totalRevenue.toLocaleString("en-IN")}`,
       retentionRate: retentionRate.toFixed(2) + "%",
       peakHours: peakHoursData,
+      registrationTrend,
+      revenueTrend,
+      topHosts,
       rawTotalRevenue: totalRevenue,
       system: {
         cpuUsage: (os.loadavg()[0] * 10).toFixed(1) + "%",

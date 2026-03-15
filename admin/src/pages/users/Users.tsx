@@ -13,6 +13,7 @@ interface User {
   coins: number;
   cashBalance: number;
   isBanned: boolean;
+  isShadowBanned?: boolean;
   banReason?: string;
   banUntil?: string;
   profilePicture?: string;
@@ -128,6 +129,18 @@ export default function Users() {
       fetchUsers();
     } catch {
       alert('Failed to unban user');
+    }
+  };
+
+  const toggleShadowBan = async (id: string, current: boolean) => {
+    try {
+      await apiClient.post('/admin/users/toggle-shadow-ban', {
+        userId: id,
+        isShadowBanned: !current
+      });
+      fetchUsers();
+    } catch {
+      alert('Failed to toggle shadow ban');
     }
   };
 
@@ -257,6 +270,9 @@ export default function Users() {
                           <button onClick={() => handleUnban(u._id)} className="w-full p-3 hover:bg-green-50 dark:hover:bg-green-500/10 rounded-xl flex gap-3 text-sm font-medium text-green-600 transition-colors"><UserCheck size={18}/> Unban User</button> :
                           <button onClick={() => { setEditingUser(u); setIsBanModalOpen(true); setActiveMenu(null); }} className="w-full p-3 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl flex gap-3 text-sm font-medium text-red-600 transition-colors"><ShieldBan size={18}/> Ban User</button>
                         }
+                        <button onClick={() => { toggleShadowBan(u._id, u.isShadowBanned || false); setActiveMenu(null); }} className="w-full p-3 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-xl flex gap-3 text-sm font-medium text-orange-600 transition-colors">
+                          <ShieldBan size={18} className="text-orange-500"/> {u.isShadowBanned ? 'Un-Shadow Ban' : 'Shadow Ban'}
+                        </button>
                         <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
                         <button onClick={() => deleteUser(u._id)} className="w-full p-3 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl flex gap-3 text-sm font-medium text-red-600 transition-colors"><Trash2 size={18}/> Permanent Delete</button>
                       </div>

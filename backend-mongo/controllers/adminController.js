@@ -78,6 +78,40 @@ class AdminController {
     }
   }
 
+  // 1b. Toggle Shadow Ban
+  async toggleShadowBan(req, res) {
+    const { userId, isShadowBanned } = req.body;
+    try {
+      let targetUserId = userId;
+      const host = await Host.findById(userId);
+      if (host) {
+        targetUserId = host.userId;
+      }
+
+      const user = await User.findById(targetUserId);
+      if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+      user.isShadowBanned = isShadowBanned;
+      await user.save();
+
+      // Log action
+      try {
+        await AdminActionLog.create({
+          adminId: req.admin?._id,
+          action: "UPDATE_USER",
+          targetId: targetUserId,
+          details: `${isShadowBanned ? "Enabled" : "Disabled"} Shadow Ban for user`,
+        });
+      } catch (logErr) {
+        console.error("Logging failed:", logErr.message);
+      }
+
+      res.json({ success: true, message: `Shadow ban ${isShadowBanned ? "enabled" : "disabled"} successfully` });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   // 2. Force End Active Call
   async forceEndCall(req, res) {
     const { callId } = req.body;

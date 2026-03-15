@@ -18,6 +18,11 @@ export default function Settings() {
   const [isAiModerationEnabled, setIsAiModerationEnabled] = useState(true);
   const [aiSensitivity, setAiSensitivity] = useState('High');
 
+  // Security & Compliance
+  const [isScreenRecordDisabled, setIsScreenRecordDisabled] = useState(false);
+  const [geoBlocking, setGeoBlocking] = useState<string[]>([]);
+  const [minVersion, setMinVersion] = useState('1.0.0');
+
   // Admin Profile
   const [username, setUsername] = useState(authContext?.user?.username || '');
   const [email, setEmail] = useState(authContext?.user?.email || '');
@@ -42,6 +47,9 @@ export default function Settings() {
         setCoinToInrRate(response.data.coinToInrRate || 0.1);
         setIsAiModerationEnabled(response.data.isAiModerationEnabled !== undefined ? response.data.isAiModerationEnabled : true);
         setAiSensitivity(response.data.aiSensitivity || 'High');
+        setIsScreenRecordDisabled(response.data.isScreenRecordDisabled || false);
+        setGeoBlocking(response.data.geoBlocking || []);
+        setMinVersion(response.data.minVersion || '1.0.0');
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
@@ -124,7 +132,10 @@ export default function Settings() {
         commission, 
         coinToInrRate,
         isAiModerationEnabled, 
-        aiSensitivity 
+        aiSensitivity,
+        isScreenRecordDisabled,
+        geoBlocking,
+        minVersion
       });
       alert('Global configuration updated!');
     } catch {
@@ -185,6 +196,47 @@ export default function Settings() {
           </div>
           <button type="submit" disabled={saving} className="md:col-span-2 py-4 bg-brand-600 text-white rounded-2xl font-bold shadow-lg shadow-brand-500/20">Update Configuration</button>
         </form>
+      </div>
+
+      {/* Security & Compliance */}
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-2xl">
+            <Shield className="text-red-600 w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold">Security & Compliance</h2>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl">
+            <div>
+              <p className="text-sm font-bold">Disable Screen Recording</p>
+              <p className="text-xs text-gray-500">Prevent users from recording/screenshotting calls (Android/iOS).</p>
+            </div>
+            <button type="button" onClick={() => setIsScreenRecordDisabled(!isScreenRecordDisabled)} className={`w-12 h-6 rounded-full transition-colors ${isScreenRecordDisabled ? 'bg-red-600' : 'bg-gray-300'}`}>
+              <div className={`w-4 h-4 bg-white rounded-full mx-1 transition-transform ${isScreenRecordDisabled ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Minimum App Version</label>
+              <input type="text" value={minVersion} onChange={e => setMinVersion(e.target.value)} placeholder="e.g. 1.2.0" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Geo-Blocking (Country Codes)</label>
+              <input 
+                type="text" 
+                value={geoBlocking.join(', ')} 
+                onChange={e => setGeoBlocking(e.target.value.split(',').map(s => s.trim()).filter(s => s))} 
+                placeholder="e.g. US, CN, KP" 
+                className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none font-bold" 
+              />
+              <p className="text-[10px] text-gray-400 mt-1 font-bold italic">Comma separated ISO codes</p>
+            </div>
+          </div>
+          <button onClick={handleUpdateConfig} disabled={saving} className="w-full py-4 bg-gray-900 text-white dark:bg-white dark:text-gray-900 rounded-2xl font-bold shadow-lg">Save Security Settings</button>
+        </div>
       </div>
 
       {/* Ad Rewards */}

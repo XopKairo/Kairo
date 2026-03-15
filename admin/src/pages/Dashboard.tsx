@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Receipt, Users, PhoneCall, ShieldAlert } from 'lucide-react';
+import { Receipt, Users, PhoneCall, ShieldAlert, TrendingUp, Activity, Award } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import apiClient from '../api/apiClient';
 
@@ -15,6 +15,15 @@ interface LiveCall {
     flagged: boolean;
     score: number;
   } | null;
+}
+
+interface TopHost {
+  _id: string;
+  name: string;
+  hostId: string;
+  earnings: number;
+  profilePicture?: string;
+  totalCalls: number;
 }
 
 export default function Dashboard() {
@@ -33,19 +42,16 @@ export default function Dashboard() {
     dailyRevenue: '₹0',
     totalRevenue: '₹0',
     retentionRate: '0%',
-    peakHours: [],
+    peakHours: [] as { _id: number; count: number }[],
+    registrationTrend: [] as { _id: string; count: number }[],
+    revenueTrend: [] as { _id: string; total: number }[],
+    topHosts: [] as TopHost[],
     system: {
       cpuUsage: '0%',
       memoryUsage: '0%',
       uptime: '0h',
       dbStatus: 'Healthy'
     }
-  });
-  
-  const [analytics, setAnalytics] = useState({
-    labels: [],
-    userGrowth: [],
-    revenueData: []
   });
 
   const fetchLiveCalls = async () => {
@@ -57,24 +63,20 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [statsRes, analyticsRes] = await Promise.all([
-          apiClient.get('/admin/dashboard/stats'),
-          apiClient.get('/admin/dashboard/analytics')
-        ]);
-        setStats(statsRes.data);
-        setAnalytics(analyticsRes.data);
-        fetchLiveCalls();
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard data. Check backend connection.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDashboardData = async () => {
+    try {
+      const statsRes = await apiClient.get('/admin/dashboard/stats');
+      setStats(statsRes.data);
+      fetchLiveCalls();
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+      setError('Failed to load dashboard data. Check backend connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDashboardData();
     const interval = setInterval(fetchLiveCalls, 10000); 
     return () => clearInterval(interval);
@@ -90,14 +92,20 @@ export default function Dashboard() {
     }
   };
 
-  const areaData = analytics.labels.map((label, index) => ({
-    name: label,
-    value: analytics.userGrowth[index] || 0
+  // Process trend data for charts
+  const registrationChartData = stats.registrationTrend.map(item => ({
+    date: item._id.split('-').slice(1).join('/'), // MM/DD
+    users: item.count
   }));
 
-  const barData = analytics.labels.map((label, index) => ({
-    name: label,
-    revenue: analytics.revenueData[index] || 0
+  const revenueChartData = stats.revenueTrend.map(item => ({
+    date: item._id.split('-').slice(1).join('/'),
+    amount: item.total
+  }));
+
+  const peakHoursChartData = stats.peakHours.map(item => ({
+    hour: `${item._id}:00`,
+    count: item.count
   }));
 
   if (loading) return <div className="p-8 text-gray-500 font-bold animate-pulse uppercase tracking-widest">Kairo System Loading...</div>;
@@ -108,22 +116,26 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-1 uppercase tracking-tighter">Command Center</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">Kairo Supreme Architectural Control Dashboard</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">Real-time Platform Observability</p>
         </div>
         <div className="flex gap-3">
           <div className="px-4 py-2 bg-green-50 text-green-600 text-[10px] font-black rounded-xl border border-green-100 flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             SYSTEM LIVE
           </div>
+          <button onClick={fetchDashboardData} className="p-2 hover:bg-gray-100 dark:hover:bg-surface-800 rounded-xl transition-colors">
+             <Activity size={18} className="text-gray-400" />
+          </button>
         </div>
       </div>
 
+      {/* Main Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: 'Total Users', value: stats.totalUsers, icon: Users, trend: 'Active: ' + stats.activeUsersToday, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-          { title: 'Total Revenue', value: stats.totalRevenue, icon: Receipt, trend: 'Daily: ' + stats.dailyRevenue, color: 'text-brand-500', bg: 'bg-brand-50 dark:bg-brand-500/10' },
-          { title: 'Verified Hosts', value: stats.verifiedHosts, icon: Users, trend: 'Calls: ' + stats.totalCalls, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
-          { title: 'Reports', value: stats.totalReports, icon: ShieldAlert, trend: 'Action required', color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
+          { title: 'Total Users', value: stats.totalUsers, icon: Users, trend: 'Online: ' + stats.activeUsersToday, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+          { title: 'Gross Revenue', value: stats.totalRevenue, icon: Receipt, trend: 'Today: ' + stats.dailyRevenue, color: 'text-brand-500', bg: 'bg-brand-50 dark:bg-brand-500/10' },
+          { title: 'Verified Hosts', value: stats.verifiedHosts, icon: Award, trend: 'Active Hosts', color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
+          { title: 'Active Reports', value: stats.totalReports, icon: ShieldAlert, trend: 'Needs Review', color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
         ].map((stat, i) => (
           <div key={i} className="bg-white dark:bg-surface-900 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-800">
             <div className="flex justify-between items-start mb-4">
@@ -133,14 +145,98 @@ export default function Dashboard() {
             </div>
             <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-1 tracking-tight">{stat.value}</h3>
             <p className="text-xs text-gray-400 font-black uppercase tracking-widest">{stat.title}</p>
-            <div className="flex items-center mt-4 text-[10px] font-black uppercase tracking-wider text-gray-400">
+            <div className="flex items-center mt-4 text-[10px] font-black uppercase tracking-wider text-gray-400 bg-gray-50 dark:bg-surface-800 self-start px-2 py-1 rounded-lg">
               {stat.trend}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Live Monitoring Section with Screenshots */}
+      {/* Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="text-brand-500" size={20} />
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">Revenue Growth</h3>
+            </div>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Last 30 Days (Daily)</span>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="amount" stroke="#7C3AED" strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest mb-8">Top Performing Hosts</h3>
+          <div className="space-y-6">
+            {stats.topHosts.map((host, idx) => (
+              <div key={host._id} className="flex items-center justify-between group">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img src={host.profilePicture || `https://ui-avatars.com/api/?name=${host.name}`} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-gray-50 dark:ring-surface-800" />
+                    <div className="absolute -top-2 -left-2 w-6 h-6 bg-brand-500 text-white text-[10px] font-black rounded-lg flex items-center justify-center shadow-lg border-2 border-white dark:border-surface-900">
+                      {idx + 1}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white text-sm">{host.name}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{host.totalCalls} Calls</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black text-brand-500">₹{host.earnings.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase">Total Earned</p>
+                </div>
+              </div>
+            ))}
+            {stats.topHosts.length === 0 && <p className="text-center py-10 text-gray-400 text-xs font-bold uppercase italic">No host data yet</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* New Peak Hours Row */}
+      <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <Activity className="text-orange-500" size={20} />
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">Peak Usage Hours</h3>
+            </div>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">User Logins by Hour</span>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={peakHoursChartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
+                <Tooltip 
+                  cursor={{fill: '#F3F4F6'}}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="count" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+      </div>
+
+      {/* Live Monitoring Section */}
       <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
@@ -228,6 +324,7 @@ export default function Dashboard() {
           </div>
       </div>
 
+      {/* System Health Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
           { title: 'Server CPU', value: stats.system?.cpuUsage, color: 'text-blue-500' },
@@ -235,55 +332,11 @@ export default function Dashboard() {
           { title: 'Uptime', value: stats.system?.uptime, color: 'text-orange-500' },
           { title: 'DB Engine', value: stats.system?.dbStatus, color: stats.system?.dbStatus === 'Healthy' ? 'text-green-500' : 'text-red-500' },
         ].map((sys, i) => (
-          <div key={i} className="bg-white dark:bg-surface-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
+          <div key={i} className="bg-white dark:bg-surface-900 rounded-[24px] p-5 border border-gray-100 dark:border-gray-800">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{sys.title}</p>
             <p className={`text-xl font-black ${sys.color}`}>{sys.value}</p>
           </div>
         ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">User Growth</h3>
-              <p className="text-xs text-gray-400 font-bold">Monthly Registration Analytics</p>
-            </div>
-          </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={areaData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorBrand" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#7C3AED" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
-                />
-                <Area type="monotone" dataKey="value" stroke="#7C3AED" strokeWidth={4} fillOpacity={1} fill="url(#colorBrand)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest mb-8">Revenue Logic</h3>
-          <div className="h-[250px] w-full">
-             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
-                <Bar dataKey="revenue" fill="#7C3AED" radius={[6, 6, 0, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
     </div>
   );

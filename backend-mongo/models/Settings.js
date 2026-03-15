@@ -20,6 +20,11 @@ const settingsSchema = new Schema(
       default: "High",
     },
 
+    // Security & Compliance
+    isScreenRecordDisabled: { type: Boolean, default: false },
+    geoBlocking: { type: [String], default: [] },
+    minVersion: { type: String, default: "1.0.0" },
+
     // Ad Settings
     enableAds: { type: Boolean, default: true },
     rewardPerAd: { type: Number, default: 5 },

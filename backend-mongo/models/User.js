@@ -21,6 +21,7 @@ const userSchema = new Schema(
     zoraPoints: { type: Number, default: 0 },
     lastLoginDate: { type: Date },
     isBanned: { type: Boolean, default: false, index: true },
+    isShadowBanned: { type: Boolean, default: false, index: true },
     isVerified: { type: Boolean, default: false },
     isHost: { type: Boolean, default: false },
     profilePicture: { type: String, default: "" },
