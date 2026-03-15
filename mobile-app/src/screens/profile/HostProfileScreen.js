@@ -17,6 +17,7 @@ const HostProfileScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(!initialData);
   const [isFollowing, setIsFollowing] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     fetchHostDetails();
@@ -34,17 +35,19 @@ const HostProfileScreen = ({ route, navigation }) => {
     
     try {
       const res = await api.get(`public/hosts/${targetId}`);
-      if (res.data) {
+      if (res.data && res.data._id) {
         setHost(res.data);
         if (currentUser && res.data.userId) {
            setIsFollowing(currentUser.following?.includes(res.data.userId?._id || res.data.userId));
         }
       } else {
         setFetchError(true);
+        setErrorMessage('Host data is empty or invalid.');
       }
     } catch (error) {
       console.error('Fetch Host Error:', error);
       setFetchError(true);
+      setErrorMessage(error.message || 'Failed to connect to server.');
     } finally {
       setLoading(false);
     }
@@ -112,8 +115,27 @@ const HostProfileScreen = ({ route, navigation }) => {
   };
 
   if (loading) return <View style={[styles.container, { justifyContent: 'center' }]}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
-  if (!host && fetchError) return <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}><Text style={{ color: '#FFF' }}>Host not found</Text><TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.primary, borderRadius: 8 }}><Text style={{ color: '#FFF' }}>Go Back</Text></TouchableOpacity></View>;
-  if (!host) return null; // Safe fallback while data is still coming
+  if (!host && fetchError) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold' }}>Host Not Found</Text>
+        <Text style={{ color: COLORS.textGray, textAlign: 'center', marginTop: 10 }}>{errorMessage}</Text>
+        <TouchableOpacity 
+          onPress={() => fetchHostDetails()} 
+          style={{ marginTop: 20, padding: 12, backgroundColor: COLORS.primary, borderRadius: 12, width: '60%', alignItems: 'center' }}
+        >
+          <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Retry</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()} 
+          style={{ marginTop: 12, padding: 12, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, width: '60%', alignItems: 'center' }}
+        >
+          <Text style={{ color: '#FFF' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  if (!host) return null;
 
   return (
     <View style={styles.container}>
