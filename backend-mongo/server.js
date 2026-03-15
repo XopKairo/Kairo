@@ -11,6 +11,8 @@ import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 import xss from "xss-clean";
 import rateLimit from "express-rate-limit";
+import { Server } from "socket.io";
+import setupSockets from "./sockets/socket.js";
 
 // Admin Route Imports
 import authRoutes from "./routes/auth.js";
@@ -48,6 +50,16 @@ import { seedAdmin, seedInterests, seedPackages } from "./utils/initDb.js";
 
 const app = express();
 const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+setupSockets(io);
 
 // God-Mode Security: Rate Limiting
 const globalLimiter = rateLimit({
