@@ -22,10 +22,14 @@ const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
   }
 
   async function stopRingtone() {
-    if (sound) {
-      await sound.stopAsync();
-      await sound.unloadAsync();
-      setSound(null);
+    try {
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        setSound(null);
+      }
+    } catch (e) {
+      console.log('Error stopping ringtone:', e);
     }
   }
 

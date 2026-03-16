@@ -20,9 +20,9 @@ export const registerForPushNotificationsAsync = async (userId) => {
     // Send token to backend
     if (userId) {
       try {
-        await api.post(`user/users/${userId}/push-token`, { pushToken: token });
-      } catch (_e) {
-        // Silently ignore
+        await api.put(`user/users/${userId}`, { pushToken: token });
+      } catch (error) {
+        console.error('Failed to sync push token:', error.message || error);
       }
     }
   } else {

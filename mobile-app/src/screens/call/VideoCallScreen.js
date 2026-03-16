@@ -3,6 +3,7 @@ import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import { ZegoUIKitPrebuiltCall, ONE_ON_ONE_VIDEO_CALL_CONFIG } from '@zegocloud/zego-uikit-prebuilt-call-rn';
 import { ShieldAlert, Gift } from 'lucide-react-native';
 import LottieView from 'lottie-react-native';
+import { Audio } from 'expo-av';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +17,31 @@ const VideoCallScreen = ({ route }) => {
   const [loading, setLoading] = useState(!isIncoming);
   const [userCoins, setUserCoins] = useState(0);
   const [showGiftAnim, setShowGiftAnim] = useState(false);
+  const ringtoneSoundRef = useRef(null);
+
+  const playRingtone = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: 'https://www.soundjay.com/phone/telephone-ring-04.mp3' }, 
+        { shouldPlay: true, isLooping: true }
+      );
+      ringtoneSoundRef.current = sound;
+    } catch (e) {
+      console.log('Error playing ringtone:', e);
+    }
+  };
+
+  const stopRingtone = async () => {
+    try {
+      if (ringtoneSoundRef.current) {
+        await ringtoneSoundRef.current.stopAsync();
+        await ringtoneSoundRef.current.unloadAsync();
+        ringtoneSoundRef.current = null;
+      }
+    } catch (e) {
+      console.log('Error stopping ringtone:', e);
+    }
+  };
 
   useEffect(() => {
     socketService.connect(userId);
@@ -26,13 +52,20 @@ const VideoCallScreen = ({ route }) => {
     });
 
     socketService.setCallEndedHandler((data) => {
+      stopRingtone();
       if (data.totalCost) {
         showAlert('Call Ended', `Duration: ${data.durationMinutes} min\nCost: ${data.totalCost} coins`, 'notice');
       }
       handleCallEnd();
     });
 
+    socketService.setCallActiveHandler((data) => {
+      // Host accepted the call, stop the outgoing ringtone
+      stopRingtone();
+    });
+
     socketService.setForceDisconnectHandler((data) => {
+      stopRingtone();
       showAlert('Call Terminated', 'Call ended due to low balance.', 'notice');
       handleCallEnd();
     });
@@ -59,6 +92,9 @@ const VideoCallScreen = ({ route }) => {
             setUserCoins(res.data.user.coins);
             socketService.notifyCallStarted({ callId, userId, hostId, userName });
             
+            // Start outgoing ringtone
+            playRingtone();
+            
             const balanceInterval = setInterval(checkBalance, 30000);
             return () => clearInterval(balanceInterval);
           } else {
@@ -78,14 +114,17 @@ const VideoCallScreen = ({ route }) => {
     }
 
     return () => {
+      stopRingtone();
       socketService.notifyCallEnded(callId);
       socketService.setCallEndedHandler(null);
       socketService.setForceDisconnectHandler(null);
       socketService.setGiftReceivedHandler(null);
+      socketService.setCallActiveHandler(null);
     };
   }, []);
 
   const handleCallEnd = async () => {
+    stopRingtone();
     try {
       socketService.notifyCallEnded(callId);
       
@@ -148,7 +187,8 @@ const VideoCallScreen = ({ route }) => {
              handleCallEnd();
           },
           onOnlySelfInRoom: () => {
-             handleCallEnd();
+             // Removed handleCallEnd() to prevent immediate kickout when Host joins or caller waits
+             console.log("Only self in room");
           },
           notifyInviteeWhenInvitationTimeout: true,
           audioVideoViewConfig: {

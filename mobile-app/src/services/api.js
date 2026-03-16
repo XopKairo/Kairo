@@ -150,7 +150,7 @@ export const registerUser = async (name, contact, _, otpToken, additionalData = 
 
 export const updateUserProfile = async (userId, data) => {
   try {
-    const response = await API.put(`user/profile/${userId}`, data);
+    const response = await API.put('user/auth/profile-update', data);
     if (response.data.user) {
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));
     }

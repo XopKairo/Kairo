@@ -159,6 +159,28 @@ router.put("/me/profile", protectUser, profileUpload, async (req, res) => {
   }
 });
 
+router.post("/upload-media", async (req, res) => {
+  try {
+    const { file, type } = req.body;
+    if (!file) {
+      return res.status(400).json({ success: false, message: "File data is required" });
+    }
+
+    const resourceType = type === "video" ? "video" : "image";
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(file, {
+      resource_type: resourceType,
+      folder: "kairo_media",
+    });
+
+    res.json({ success: true, url: result.secure_url });
+  } catch (error) {
+    console.error("Media upload error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 router.post("/block/:targetId", protectUser, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user._id, { $addToSet: { blockedUsers: req.params.targetId } });

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell, CreditCard, Video, History, ShieldAlert, Crown, Trash2 } from "lucide-react";
+import { LayoutDashboard, Users, UserCheck, Building2, Wallet, Flag, Settings, Image, ChevronRight, Bell, CreditCard, Video, History, ShieldAlert, Crown, Trash2, Tags } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useContext } from "react";
@@ -14,6 +14,7 @@ const navItems = [
   { icon: Users, label: "Users", path: "/users", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
   { icon: UserCheck, label: "Approved Hosts", path: "/hosts", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
   { icon: ShieldAlert, label: "Verification Requests", path: "/verification", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: Tags, label: "Interests", path: "/interests", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
   { icon: Building2, label: "Agencies", path: "/agencies", roles: ["Super Admin", "admin", "ADMIN"] },
   { icon: Wallet, label: "Economy", path: "/economy", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
   { icon: Crown, label: "VIP & Coupons", path: "/vip-coupons", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Eye } from "lucide-react";
-import apiClient from "../../api/apiClient";
+import apiClient from "../api/apiClient";
 
 interface VerificationRequest {
   _id: string;
