@@ -153,16 +153,16 @@ export default function Dashboard() {
       </div>
 
       {/* Analytics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-2">
               <TrendingUp className="text-brand-500" size={20} />
               <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">Revenue Growth</h3>
             </div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Last 30 Days (Daily)</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Last 30 Days</span>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
@@ -184,7 +184,62 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
-          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest mb-8">Top Performing Hosts</h3>
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <Users className="text-blue-500" size={20} />
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">User Growth</h3>
+            </div>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Last 30 Days</span>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={registrationChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="users" stroke="#3B82F6" strokeWidth={4} fillOpacity={1} fill="url(#colorUsers)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-2">
+              <Activity className="text-orange-500" size={20} />
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">Peak Usage Hours</h3>
+            </div>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hourly Activity</span>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={peakHoursChartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-800" />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 'bold'}} />
+                <Tooltip 
+                  cursor={{fill: '#F3F4F6'}}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="count" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-surface-900 rounded-[32px] p-8 shadow-sm border border-gray-100 dark:border-gray-800">
+          <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest mb-8">Top Performers</h3>
           <div className="space-y-6">
             {stats.topHosts.map((host, idx) => (
               <div key={host._id} className="flex items-center justify-between group">
