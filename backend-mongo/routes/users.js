@@ -2,7 +2,7 @@ import express from "express";
 import User from "../models/User.js";
 import Host from "../models/Host.js";
 import VerificationRequest from "../models/VerificationRequest.js";
-import { protectUser } from "../middleware/authMiddleware.js";
+import { protectUser, protectAdmin } from "../middleware/authMiddleware.js";
 import redisClient from "../config/redis.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
@@ -61,7 +61,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", protectAdmin, async (req, res) => {
   try {
     let { name, phone, password, gender } = req.body;
 
@@ -103,7 +103,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id/profile", upload.single("image"), async (req, res) => {
+router.put("/:id/profile", protectAdmin, upload.single("image"), async (req, res) => {
   try {
     const updateData = { ...req.body };
     if (req.file) {
@@ -190,7 +190,7 @@ router.post("/block/:targetId", protectUser, async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", protectAdmin, async (req, res) => {
   try {
     const updateData = { ...req.body };
     if (updateData.phone === "") delete updateData.phone;
@@ -205,7 +205,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.post("/:id/ban", async (req, res) => {
+router.post("/:id/ban", protectAdmin, async (req, res) => {
   const { isBanned, reason, durationDays, customDate } = req.body;
   try {
     const update = { isBanned, banReason: reason || "" };
@@ -237,7 +237,7 @@ router.post("/:id/ban", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protectAdmin, async (req, res) => {
   try {
     const userId = req.params.id;
     await User.findByIdAndDelete(userId);
