@@ -79,10 +79,14 @@ class CallService {
       } else {
          let settings = await Settings.findOne().session(session);
          if (!settings) settings = { callRate: 30, commission: 30 };
-         totalCoinsDeducted = durationInMinutes * settings.callRate;
+         const calculatedCost = durationInMinutes * settings.callRate;
          
-         if (user.coins < totalCoinsDeducted) throw new Error("Insufficient coins");
-         await userRepository.updateCoinsAtomics(user._id, totalCoinsDeducted, session);
+         // Supreme Sync: If user has less coins, deduct whatever is remaining instead of failing
+         totalCoinsDeducted = Math.min(user.coins, calculatedCost);
+         
+         if (totalCoinsDeducted > 0) {
+            await userRepository.updateCoinsAtomics(user._id, totalCoinsDeducted, session);
+         }
       }
 
       const host = await Host.findById(call.hostId).session(session);

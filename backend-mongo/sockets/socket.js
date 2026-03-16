@@ -256,14 +256,11 @@ const setupSockets = (io) => {
       const h = await Host.findOneAndUpdate({ userId: callData.hostId }, { status: "Online" }, { new: true });
       if (h) io.emit("statusUpdate", { hostId: h._id, status: "Online" });
 
-      // 4. Update LiveCall status
-      await LiveCall.findOneAndUpdate(
-        { callId },
-        {
-          status: "ENDED",
-          endedAt: new Date(endTime),
-        }
-      );
+      // 4. Update LiveCall and global Call models
+      await Promise.all([
+        LiveCall.findOneAndUpdate({ callId }, { status: "ENDED", endedAt: new Date(endTime) }),
+        redisClient.hDel("active_calls", callId) // Consistent with CallRepository
+      ]);
 
       // 5. Use CallService for robust billing (Host/Agency commissions)
       try {

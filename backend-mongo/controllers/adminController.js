@@ -117,25 +117,32 @@ class AdminController {
     const { callId } = req.body;
     try {
       const call = await Call.findOne({ callId, status: "Active" });
-      if (!call)
+      const liveCall = await LiveCall.findOne({ callId });
+
+      if (!call && !liveCall)
         return res
           .status(404)
-          .json({ success: false, message: "Active call not found" });
+          .json({ success: false, message: "No active record found for this call ID" });
 
-      const duration = Math.ceil((new Date() - call.startTime) / 60000);
-      await callService.endCall(callId, duration);
+      const startTime = call?.startTime || liveCall?.startedAt || new Date();
+      const duration = Math.max(1, Math.ceil((new Date() - startTime) / 60000));
+      
+      // Supreme Cleanup
+      await callService.endCall(callId, duration).catch(() => {});
+      await LiveCall.findOneAndUpdate({ callId }, { status: "ENDED", endedAt: new Date() });
+      await redisClient.hDel("active_calls", callId);
+      await redisClient.del(`activeCall:${callId}`);
 
       // Notify clients via Socket
       if (req.io) {
-        req.io
-          .to(`user-${call.userId}`)
-          .emit("callTerminated", { reason: "Force terminated by admin" });
-        req.io
-          .to(`host-${call.hostId}`)
-          .emit("callTerminated", { reason: "Force terminated by admin" });
+        const targetUser = call?.userId || liveCall?.userId;
+        const targetHost = call?.hostId || liveCall?.hostId;
+        
+        if (targetUser) req.io.to(targetUser.toString()).emit("callTerminated", { reason: "Force terminated by admin" });
+        if (targetHost) req.io.to(targetHost.toString()).emit("callTerminated", { reason: "Force terminated by admin" });
       }
 
-      res.json({ success: true, message: "Call force-terminated by Admin" });
+      res.json({ success: true, message: "Call completely purged and terminated by Admin" });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
