@@ -120,17 +120,25 @@ router.get("/stats", async (req, res) => {
   }
 });
 
-// GET Current Live Calls (Supreme Monitor with Screenshots)
+// GET Current Live Calls (Supreme Monitor with both Call and LiveCall models)
 router.get("/live-calls", async (req, res) => {
   try {
-    const liveCalls = await Call.find({ status: "Active" })
+    // 1. Fetch from Call model (Database Layer)
+    const activeDbCalls = await Call.find({ status: "Active" })
       .populate("userId", "name phone profilePicture")
       .populate("hostId", "name phone hostId profilePicture")
-      .sort({ startTime: -1 })
-      .limit(20);
+      .sort({ startTime: -1 });
 
-    const formattedCalls = await Promise.all(liveCalls.map(async (call) => {
-      // Fetch latest screenshot for this call
+    // 2. Fetch from LiveCall model (Socket Layer)
+    const activeSocketCalls = await LiveCall.find({ status: "ACTIVE" });
+
+    // 3. Merge and format (Supreme Sync)
+    const allCallIds = new Set(activeDbCalls.map(c => c.callId));
+    
+    // Add socket calls that are not in DB calls yet
+    const missingSocketCalls = activeSocketCalls.filter(sc => !allCallIds.has(sc.callId));
+
+    const formattedDbCalls = await Promise.all(activeDbCalls.map(async (call) => {
       const latestScreenshot = await CallScreenshot.findOne({ callId: call._id })
         .sort({ createdAt: -1 })
         .select("imageUrl isFlagged confidenceScore");
@@ -148,8 +156,9 @@ router.get("/live-calls", async (req, res) => {
           hostId: call.hostId?.hostId || "N/A",
           profilePicture: call.hostId?.profilePicture
         },
-        duration: Math.floor((new Date() - new Date(call.startTime)) / 1000), // in seconds
+        duration: Math.floor((new Date() - new Date(call.startTime)) / 1000),
         startTime: call.startTime,
+        source: "DB",
         screenshot: latestScreenshot ? {
           url: latestScreenshot.imageUrl,
           flagged: latestScreenshot.isFlagged,
@@ -158,7 +167,32 @@ router.get("/live-calls", async (req, res) => {
       };
     }));
 
-    res.json(formattedCalls);
+    const formattedSocketCalls = await Promise.all(missingSocketCalls.map(async (sc) => {
+       // Minimal info for socket-only calls (Fallback)
+       const user = await User.findById(sc.userId).select("name phone profilePicture");
+       const host = await Host.findOne({ userId: sc.hostId }).select("name phone hostId profilePicture");
+
+       return {
+         _id: sc._id,
+         callId: sc.callId,
+         user: {
+           name: user?.name || "User",
+           phone: user?.phone || "N/A",
+           profilePicture: user?.profilePicture
+         },
+         host: {
+           name: host?.name || "Host",
+           hostId: host?.hostId || "N/A",
+           profilePicture: host?.profilePicture
+         },
+         duration: Math.floor((new Date() - new Date(sc.startedAt)) / 1000),
+         startTime: sc.startedAt,
+         source: "SOCKET",
+         screenshot: null
+       };
+    }));
+
+    res.json([...formattedDbCalls, ...formattedSocketCalls]);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
