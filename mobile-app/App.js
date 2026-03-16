@@ -132,6 +132,7 @@ function NavigationStack() {
         userName: user.name,
         hostId: user._id || user.id, // Current user is the host
         callId: data.callId,
+        isIncoming: true,
         callRatePerMinute: data.callRatePerMinute || 30
       });
     }

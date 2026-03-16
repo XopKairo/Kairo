@@ -10,10 +10,10 @@ import { useNavigation } from '@react-navigation/native';
 
 const VideoCallScreen = ({ route }) => {
   const navigation = useNavigation();
-  const { userId, userName, hostId, callId, callRatePerMinute } = route.params;
+  const { userId, userName, hostId, callId, callRatePerMinute, isIncoming } = route.params;
   const { showAlert } = useAuth();
-  const [isAllowed, setIsAllowed] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAllowed, setIsAllowed] = useState(isIncoming);
+  const [loading, setLoading] = useState(!isIncoming);
   const [userCoins, setUserCoins] = useState(0);
   const [showGiftAnim, setShowGiftAnim] = useState(false);
 
@@ -51,26 +51,31 @@ const VideoCallScreen = ({ route }) => {
       }
     };
 
-    api.post(`user/calls/start`, { hostId, callId })
-      .then(res => {
-        if (res.data.success) {
-          setIsAllowed(true);
-          setUserCoins(res.data.user.coins);
-          socketService.notifyCallStarted({ callId, userId, hostId });
-          
-          const balanceInterval = setInterval(checkBalance, 30000);
-          return () => clearInterval(balanceInterval);
-        } else {
-          showAlert('Error', res.data.message || 'Call not allowed', 'error');
+    if (!isIncoming) {
+      api.post(`user/calls/start`, { hostId, callId })
+        .then(res => {
+          if (res.data.success) {
+            setIsAllowed(true);
+            setUserCoins(res.data.user.coins);
+            socketService.notifyCallStarted({ callId, userId, hostId, userName });
+            
+            const balanceInterval = setInterval(checkBalance, 30000);
+            return () => clearInterval(balanceInterval);
+          } else {
+            showAlert('Error', res.data.message || 'Call not allowed', 'error');
+            navigation.goBack();
+          }
+        })
+        .catch(err => {
+          const msg = err.response?.data?.message || 'Minimum coins required to start a call';
+          showAlert('Insufficient Balance', msg, 'error', 'GET COINS');
           navigation.goBack();
-        }
-      })
-      .catch(err => {
-        const msg = err.response?.data?.message || 'Minimum coins required to start a call';
-        showAlert('Insufficient Balance', msg, 'error', 'GET COINS');
-        navigation.goBack();
-      })
-      .finally(() => setLoading(false));
+        })
+        .finally(() => setLoading(false));
+    } else {
+      // Host side: just start the balance interval if needed (optional)
+      setLoading(false);
+    }
 
     return () => {
       socketService.notifyCallEnded(callId);

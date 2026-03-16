@@ -1,11 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Phone, PhoneOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Audio } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
 const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
+  const [sound, setSound] = useState(null);
+
+  async function playRingtone() {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: 'https://www.soundjay.com/phone/phone-calling-1.mp3' }, // Supreme Ringtone
+        { shouldPlay: true, isLooping: true }
+      );
+      setSound(sound);
+    } catch (e) {
+      console.log('Error playing ringtone:', e);
+    }
+  }
+
+  async function stopRingtone() {
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+      setSound(null);
+    }
+  }
+
+  useEffect(() => {
+    if (visible) {
+      playRingtone();
+    } else {
+      stopRingtone();
+    }
+    return () => {
+      stopRingtone();
+    };
+  }, [visible]);
+
   if (!visible) return null;
 
   return (
@@ -25,12 +59,12 @@ const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
           </View>
 
           <View style={styles.actions}>
-            <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={onReject}>
+            <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={() => { stopRingtone(); onReject(); }}>
               <PhoneOff color="white" size={32} />
               <Text style={styles.btnLabel}>Reject</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.btn, styles.acceptBtn]} onPress={onAccept}>
+            <TouchableOpacity style={[styles.btn, styles.acceptBtn]} onPress={() => { stopRingtone(); onAccept(); }}>
               <Phone color="white" size={32} />
               <Text style={styles.btnLabel}>Accept</Text>
             </TouchableOpacity>

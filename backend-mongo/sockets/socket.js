@@ -128,17 +128,22 @@ const setupSockets = (io) => {
 
         // Fetch caller to check balance
         const caller = await User.findById(call.userId);
-        const ratePerMinute = 30; // Consistent with CallService default
+        const ratePerMinute = 30; 
 
-        if (!caller || caller.coins < ratePerMinute) {
+        if (!caller || (caller.coins < ratePerMinute && caller.freeCallsRemaining <= 0)) {
+          console.log(`❌ Call Rejected: User ${call.userId} has ${caller?.coins || 0} coins.`);
           io.to(call.userId).emit("callError", {
-            message: "Insufficient coins",
+            message: "Insufficient coins to start the call",
           });
           io.to(call.hostId).emit("callEnded", { callId });
           return;
         }
 
-        const maxMinutes = Math.floor(caller.coins / ratePerMinute);
+        // Supreme Sync: Mark Host as Busy
+        await Host.findOneAndUpdate({ userId: call.hostId }, { status: "Busy" });
+        io.emit("statusUpdate", { hostId: call.hostId, status: "Busy" });
+
+        const maxMinutes = caller.freeCallsRemaining > 0 ? 10 : Math.floor(caller.coins / ratePerMinute);
         const maxDurationMs = maxMinutes * 60 * 1000;
         const startTime = Date.now();
 

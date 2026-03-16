@@ -96,6 +96,7 @@ const HomeScreen = ({ navigation }) => {
       hostId: host._id,
       hostName: host.name,
       callId: 'call_' + Date.now(),
+      isIncoming: false,
       callRatePerMinute: appSettings.callRate || 30
     });
   };
