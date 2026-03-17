@@ -181,10 +181,20 @@ class UserAuthController {
   async getProfile(req, res) {
     try {
       const userId = req.user._id || req.user.id;
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).lean();
       if (!user) {
         return res.status(404).json({ success: false, message: "User not found" });
       }
+
+      if (user.isHost) {
+        const host = await Host.findOne({ userId: user._id }).lean();
+        if (host) {
+          user.earnings = host.earnings || 0;
+          // For display in wallet, if they are host we show earnings as their primary balance
+          user.coins = host.earnings || 0; 
+        }
+      }
+
       res.json(user);
     } catch (error) {
       console.error("Get Profile Error:", error.message);
