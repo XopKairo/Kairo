@@ -211,12 +211,6 @@ function NavigationStack() {
 export default function App() {
   useEffect(() => {
     async function initApp() {
-      try {
-        await Camera.requestCameraPermissionsAsync();
-        await Audio.requestPermissionsAsync();
-        await Location.requestForegroundPermissionsAsync();
-      } catch (pe) {}
-
       if (Platform.OS === 'android') {
         try {
           await NavigationBar.setVisibilityAsync('hidden');

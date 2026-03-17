@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 const useUserStore = create((set) => ({
   currentUser: null,
@@ -18,7 +19,7 @@ const useUserStore = create((set) => ({
   },
   logout: async () => {
     await AsyncStorage.removeItem('userData');
-    await AsyncStorage.removeItem('userToken');
+    await SecureStore.deleteItemAsync('userToken');
     set({ currentUser: null });
   }
 }));

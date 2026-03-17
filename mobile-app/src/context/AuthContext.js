@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import api, { loginUser, googleLoginUser, fastLoginUser, registerUser, setMaintenanceHandler, setBlacklistHandler } from '../services/api';
 import socketService from '../services/socketService';
 
@@ -129,6 +130,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     await AsyncStorage.clear();
+    await SecureStore.deleteItemAsync('userToken');
     socketService.disconnect();
     setUser(null);
   };
