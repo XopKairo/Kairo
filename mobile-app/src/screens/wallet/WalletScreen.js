@@ -7,7 +7,7 @@ import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import ZoraInput from '../../components/ZoraInput';
 import ZoraAlert from '../../components/ZoraAlert';
-import { Wallet, Play, ArrowUpRight, Info, CheckCircle2 } from 'lucide-react-native';
+import { Wallet, Play, ArrowUpRight, Info, CheckCircle2, History } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import RazorpayCheckout from 'react-native-razorpay';
 
@@ -143,7 +143,12 @@ const WalletScreen = ({ navigation }) => {
         visible={alertConfig.visible} title={alertConfig.title} message={alertConfig.message} type={alertConfig.type}
         onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
       />
-      <View style={styles.header}><Text style={styles.headerTitle}>WALLET</Text></View>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>WALLET</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('History')}>
+          <History color={COLORS.textWhite} size={24} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <LinearGradient colors={[COLORS.primary, COLORS.accentGlow]} style={styles.balanceCard}>

@@ -2,6 +2,7 @@ import redisClient from "../config/redis.js";
 import LiveCall from "../models/LiveCall.js";
 import User from "../models/User.js";
 import Host from "../models/Host.js";
+import Settings from "../models/Settings.js";
 import WalletLedger from "../models/WalletLedger.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
@@ -128,7 +129,8 @@ const setupSockets = (io) => {
 
         // Fetch caller to check balance
         const caller = await User.findById(call.userId);
-        const ratePerMinute = 30; 
+        let settings = await Settings.findOne();
+        const ratePerMinute = settings ? settings.callRate : 30;
 
         if (!caller || (caller.coins < ratePerMinute && caller.freeCallsRemaining <= 0)) {
           console.log(`❌ Call Rejected: User ${call.userId} has ${caller?.coins || 0} coins.`);
@@ -187,6 +189,24 @@ const setupSockets = (io) => {
 
     socket.on("callEnded", async (callId) => {
       await endCallAndDeductBalance(callId);
+    });
+
+    socket.on("privateMessage", (data) => {
+      const { recipientId, text, image, type, conversationId, _id } = data;
+      // Emit the message to the recipient's personal room
+      io.to(recipientId).emit("newMessage", {
+        _id: _id || Date.now().toString(),
+        conversationId,
+        sender: socket.userId,
+        recipient: recipientId,
+        text,
+        image,
+        type,
+        status: "delivered",
+        createdAt: new Date(),
+      });
+      // Optionally notify sender that message is delivered
+      socket.emit("messageStatusUpdate", { messageId: _id, status: "delivered" });
     });
 
     socket.on("disconnect", async () => {

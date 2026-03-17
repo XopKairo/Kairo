@@ -1,6 +1,33 @@
 import walletService from "../services/walletService.js";
+import Call from "../models/Call.js";
+import WalletLedger from "../models/WalletLedger.js";
+import Host from "../models/Host.js";
 
 class WalletController {
+  async getHistory(req, res) {
+    try {
+      const userId = req.user._id;
+      
+      const calls = await Call.find({ userId }).populate("hostId", "name profilePicture").sort({ createdAt: -1 }).limit(20);
+      const ledger = await WalletLedger.find({ userId }).sort({ createdAt: -1 }).limit(20);
+      
+      let hostEarnings = [];
+      const host = await Host.findOne({ userId });
+      if (host) {
+        hostEarnings = await Call.find({ hostId: host._id, status: "Completed" }).populate("userId", "name profilePicture").sort({ createdAt: -1 }).limit(20);
+      }
+
+      res.json({
+        success: true,
+        calls,
+        ledger,
+        hostEarnings
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   async withdraw(req, res) {
     try {
       const result = await walletService.processWithdrawal(req.body);

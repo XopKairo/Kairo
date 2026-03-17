@@ -11,8 +11,15 @@ const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
 
   async function playRingtone() {
     try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
       const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://www.soundjay.com/phone/phone-calling-1.mp3' }, // Supreme Ringtone
+        require('../../assets/sounds/incoming.mp3'),
         { shouldPlay: true, isLooping: true }
       );
       setSound(sound);

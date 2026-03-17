@@ -3,9 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const env_api_url = process.env.EXPO_PUBLIC_API_URL;
-if (!env_api_url) console.warn("WARNING: EXPO_PUBLIC_API_URL is missing!");
-export const BASE_URL = env_api_url ? (env_api_url.endsWith('/') ? env_api_url.slice(0, -1) : env_api_url) : '';
+const env_api_url = process.env.EXPO_PUBLIC_API_URL || 'https://kairo-b1i9.onrender.com';
+if (!process.env.EXPO_PUBLIC_API_URL) console.warn("WARNING: EXPO_PUBLIC_API_URL is missing! Using fallback URL.");
+export const BASE_URL = env_api_url.endsWith('/') ? env_api_url.slice(0, -1) : env_api_url;
 export const API_URL = `${BASE_URL}/api/`;
 
 const API = axios.create({

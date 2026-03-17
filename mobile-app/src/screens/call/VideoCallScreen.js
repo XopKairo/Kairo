@@ -21,8 +21,15 @@ const VideoCallScreen = ({ route }) => {
 
   const playRingtone = async () => {
     try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
       const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://www.soundjay.com/phone/telephone-ring-04.mp3' }, 
+        require('../../../assets/sounds/outgoing.mp3'), 
         { shouldPlay: true, isLooping: true }
       );
       ringtoneSoundRef.current = sound;
@@ -187,7 +194,6 @@ const VideoCallScreen = ({ route }) => {
              handleCallEnd();
           },
           onOnlySelfInRoom: () => {
-             // Removed handleCallEnd() to prevent immediate kickout when Host joins or caller waits
              console.log("Only self in room");
           },
           notifyInviteeWhenInvitationTimeout: true,
@@ -196,8 +202,17 @@ const VideoCallScreen = ({ route }) => {
              showMicrophoneStateOnView: false,
              showUserNameOnView: false,
           },
+          bottomMenuBarConfig: {
+             buttons: [
+                0, // toggle microphone
+                1, // toggle camera
+                2, // switch camera
+                3, // hang up
+                4, // beauty effect
+             ]
+          },
           layout: {
-             mode: 1, // 0 for picture-in-picture, 1 for gallery
+             mode: 0, // 0 is Picture-in-Picture
           }
         }}
       />

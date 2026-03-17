@@ -37,11 +37,14 @@ import SelectInterestsScreen from './src/screens/profile/SelectInterestsScreen';
 import HostRegistrationScreen from './src/screens/profile/host/HostRegistrationScreen';
 import HostOTPScreen from './src/screens/profile/host/HostOTPScreen';
 import WalletScreen from './src/screens/wallet/WalletScreen';
+import HistoryScreen from './src/screens/wallet/HistoryScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
 import NotificationsScreen from './src/screens/notifications/NotificationsScreen';
 import SettingsScreen from './src/screens/settings/SettingsScreen';
 import GamesScreen from './src/screens/home/GamesScreen';
 import MaintenanceScreen from './src/screens/system/MaintenanceScreen';
+
+import ChatListScreen from './src/screens/chat/ChatListScreen';
 
 const VideoCallScreen = lazy(() => import('./src/screens/call/VideoCallScreen'));
 
@@ -88,7 +91,7 @@ function MainTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="ChatMain" component={ChatScreen} />
+      <Tab.Screen name="ChatMain" component={ChatListScreen} />
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={UserProfileScreen} />
@@ -178,6 +181,7 @@ function NavigationStack() {
           <Stack.Screen name="VIP" component={VipScreen} options={{ headerShown: false }} />
           <Stack.Screen name="ScratchCard" component={ScratchCardScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Wallet" component={WalletScreen} />
+          <Stack.Screen name="History" component={HistoryScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Games" component={GamesScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} />

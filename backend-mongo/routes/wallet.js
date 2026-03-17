@@ -40,4 +40,7 @@ router.post("/ad-reward", protectUser, async (req, res) => {
 // Withdrawal Request
 router.post("/withdraw", protectUser, walletController.withdraw);
 
+// History Endpoint
+router.get("/history", protectUser, walletController.getHistory);
+
 export default router;
