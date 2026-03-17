@@ -82,6 +82,7 @@ export default {
       "expo-image-picker",
       "expo-asset",
       "expo-font",
+      "expo-secure-store",
       [
         "react-native-google-mobile-ads",
         {
