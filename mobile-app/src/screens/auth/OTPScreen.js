@@ -75,13 +75,10 @@ const OTPScreen = ({ route, navigation }) => {
       if (confirmation) {
         const result = await confirmation.confirm(otpValue);
         const firebaseToken = await result.user.getIdToken();
-        const verifyRes = await verifyOtp(mobileNumber, firebaseToken);
         
-        if (verifyRes.success && verifyRes.otp_verified_token) {
-           const loginRes = await signIn(mobileNumber, verifyRes.otp_verified_token);
-           if(loginRes.success) {
-               navigation.replace('Welcome');
-           }
+        const loginRes = await signIn(firebaseToken);
+        if(loginRes.success) {
+            navigation.replace('Welcome');
         }
       } else {
         showAlert("Error", "Session expired. Go back and try again.");

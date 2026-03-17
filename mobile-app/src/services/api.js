@@ -72,9 +72,9 @@ export const googleLoginUser = async (idToken) => {
   }
 };
 
-export const loginUser = async (contact, otpToken) => {
+export const firebaseLoginUser = async (idToken) => {
   try {
-    const response = await API.post('user/auth/login', { contact, otp_verified_token: otpToken });
+    const response = await API.post('user/auth/firebase-login', { idToken });
     if (response.data.token) {
       await SecureStore.setItemAsync('userToken', response.data.token);
       await AsyncStorage.setItem('userData', JSON.stringify(response.data.user));

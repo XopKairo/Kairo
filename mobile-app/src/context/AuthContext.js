@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import api, { loginUser, googleLoginUser, fastLoginUser, registerUser, setMaintenanceHandler, setBlacklistHandler } from '../services/api';
+import api, { firebaseLoginUser, googleLoginUser, fastLoginUser, registerUser, setMaintenanceHandler, setBlacklistHandler } from '../services/api';
 import socketService from '../services/socketService';
 
 const AuthContext = createContext({});
@@ -92,8 +92,8 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const signIn = async (contact, otpToken) => {
-    const data = await loginUser(contact, otpToken);
+  const signIn = async (idToken) => {
+    const data = await firebaseLoginUser(idToken);
     if (data.success) {
       setUser(data.user);
       socketService.connect(data.user._id || data.user.id);

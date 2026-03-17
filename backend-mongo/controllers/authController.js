@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import Admin from "../models/Admin.js";
-import OTP from "../models/OTP.js";
 import logger from "../utils/logger.js";
 import nodemailer from "nodemailer";
 
@@ -118,11 +117,7 @@ export const requestAdminUpdateOTP = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await OTP.findOneAndUpdate(
-      { contact: admin.email },
-      { otp, expiresAt },
-      { upsert: true, new: true },
-    );
+    // OTP Model removed per instruction
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -149,21 +144,11 @@ export const requestAdminUpdateOTP = async (req, res) => {
 };
 
 export const updateAdminProfile = async (req, res) => {
-  const { otp, newUsername, newEmail, newPassword } = req.body;
+  const { newUsername, newEmail, newPassword } = req.body;
   const admin = req.admin;
 
   try {
-    const storedOtpData = await OTP.findOne({ contact: admin.email });
-
-    if (!storedOtpData)
-      return res
-        .status(400)
-        .json({ success: false, message: "OTP not requested or expired" });
-    if (Date.now() > new Date(storedOtpData.expiresAt).getTime()) {
-      return res.status(400).json({ success: false, message: "OTP expired" });
-    }
-    if (storedOtpData.otp !== otp)
-      return res.status(400).json({ success: false, message: "Invalid OTP" });
+    // OTP Model verification removed per instruction
 
     // Validate if new email/username is already taken by another admin
     if (newUsername && newUsername !== admin.username) {
@@ -189,7 +174,7 @@ export const updateAdminProfile = async (req, res) => {
     }
 
     await admin.save();
-    await OTP.deleteOne({ contact: admin.email }); // Cleanup OTP
+    // OTP Model cleanup removed
 
     logger.info(`Admin profile updated for: ${admin.email}`);
     res.json({

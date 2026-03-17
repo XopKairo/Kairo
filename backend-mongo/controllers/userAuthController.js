@@ -1,29 +1,46 @@
 import authService from "../services/authService.js";
 import User from "../models/User.js";
 import Host from "../models/Host.js";
+import admin from "../config/firebaseAdmin.js";
+import generateToken, { generateRefreshToken } from "../utils/generateToken.js";
 
 class UserAuthController {
-  async sendOtp(req, res) {
+  async firebaseLogin(req, res) {
     try {
-      const { contact } = req.body;
-      if (!contact)
-        return res
-          .status(400)
-          .json({ success: false, message: "Contact info required" });
-      const result = await authService.sendOtp(contact);
-      res.status(200).json(result);
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
+      const { idToken } = req.body;
+      if (!idToken) return res.status(400).json({ success: false, message: "ID token is required" });
 
-  async verifyOtp(req, res) {
-    try {
-      const { contact, otp } = req.body;
-      const result = await authService.verifyOtp(contact, otp);
-      res.status(200).json(result);
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const phone = decodedToken.phone_number;
+      
+      if (!phone) {
+         return res.status(400).json({ success: false, message: "Phone number not found in token" });
+      }
+
+      let user = await User.findOne({ phone });
+      let isNewUser = false;
+      
+      if (!user) {
+        user = await User.create({ 
+           phone, 
+           isNewUser: true,
+           firebaseUid: decodedToken.uid,
+           lastLoginDate: new Date(), 
+           zoraPoints: 5, 
+           coins: 0,
+           name: `User_${phone.slice(-4)}`,
+           gender: "Male" // Default
+        });
+        isNewUser = true;
+      }
+      
+      const token = generateToken(user._id);
+      const refreshToken = generateRefreshToken(user._id);
+      
+      res.json({ success: true, token, refreshToken, user, isNewUser });
     } catch (error) {
-      res.status(400).json({ success: false, message: error.message });
+      console.error("Firebase Login Error:", error);
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -62,22 +79,6 @@ class UserAuthController {
         return res
           .status(403)
           .json({ success: false, message: "OTP token invalid or expired" });
-      }
-      res.status(500).json({ success: false, message: error.message });
-    }
-  }
-
-  async login(req, res) {
-    try {
-      const { contact, otp_verified_token } = req.body;
-      const result = await authService.login(contact, otp_verified_token);
-      res.status(200).json(result);
-    } catch (error) {
-      if (error.message === "User not found. Please register." || error.message === "OTP verification mismatch" || error.message === "OTP token missing") {
-        return res.status(401).json({ success: false, message: error.message });
-      }
-      if (error.message.startsWith("Account is banned")) {
-        return res.status(403).json({ success: false, message: error.message });
       }
       res.status(500).json({ success: false, message: error.message });
     }

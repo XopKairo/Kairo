@@ -15,15 +15,8 @@ import { getStorage } from "../config/cloudinaryConfig.js";
 const router = express.Router();
 const upload = multer({ storage: getStorage("user_profiles") });
 
-// Send OTP
-router.post("/send-otp", userAuthController.sendOtp);
-
-// Verify OTP
-router.post(
-  "/verify-otp",
-  validateRequest(verifyOTPSchema),
-  userAuthController.verifyOtp,
-);
+// Firebase Login
+router.post("/firebase-login", userAuthController.firebaseLogin);
 
 // User Registration
 router.post(
@@ -31,9 +24,6 @@ router.post(
   upload.single("profilePicture"),
   userAuthController.register,
 );
-
-// User Login
-router.post("/login", validateRequest(loginSchema), userAuthController.login);
 
 // Google Login
 router.post("/google-login", userAuthController.googleLogin);
