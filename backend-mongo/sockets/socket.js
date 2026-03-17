@@ -82,6 +82,19 @@ const setupSockets = (io) => {
       let targetRoomId = receiverId || hostId;
 
       try {
+        // Fetch caller to check balance BEFORE ringing
+        const caller = await User.findById(userId);
+        let settings = await Settings.findOne();
+        const ratePerMinute = settings ? settings.callRate : 30;
+
+        if (!caller || caller.coins <= 0 || (caller.coins < ratePerMinute && caller.freeCallsRemaining <= 0)) {
+          console.log(`🚫 Ringing Blocked: User ${userId} has insufficient balance (${caller?.coins || 0} coins).`);
+          socket.emit("callError", { 
+            message: "Insufficient coins to start a call. Please recharge your wallet." 
+          });
+          return;
+        }
+
         // If targetRoomId is a Host ID, we need the actual User ID for the socket room
         const hostDoc = await Host.findById(targetRoomId);
         if (hostDoc) {
@@ -132,7 +145,7 @@ const setupSockets = (io) => {
         let settings = await Settings.findOne();
         const ratePerMinute = settings ? settings.callRate : 30;
 
-        if (!caller || (caller.coins < ratePerMinute && caller.freeCallsRemaining <= 0)) {
+        if (!caller || caller.coins <= 0 || (caller.coins < ratePerMinute && caller.freeCallsRemaining <= 0)) {
           console.log(`❌ Call Rejected: User ${call.userId} has ${caller?.coins || 0} coins.`);
           io.to(call.userId).emit("callError", {
             message: "Insufficient coins to start the call",

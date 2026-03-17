@@ -38,6 +38,10 @@ class CallService {
     const host = await Host.findById(hostId);
     if (!host) throw new Error("Host not found");
 
+    if (user.coins <= 0) {
+      throw new Error("Insufficient coins to start a call. Please recharge your wallet.");
+    }
+
     if (host.isVipOnly && !user.isVip) {
       throw new Error("This host accepts calls from VIP members only.");
     }
