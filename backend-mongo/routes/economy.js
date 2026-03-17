@@ -35,6 +35,24 @@ router.post("/vip", protectAdmin, async (req, res) => {
   res.status(201).json(pkg);
 });
 
+router.put("/vip/:id", protectAdmin, async (req, res) => {
+  try {
+    const pkg = await VipPackage.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!pkg) return res.status(404).json({ message: "VIP Package not found" });
+
+    await AdminActionLog.create({
+      adminId: req.admin?._id,
+      action: "UPDATE_CONFIG",
+      targetId: pkg._id,
+      details: `Updated VIP Package: ${pkg.name}`,
+    }).catch(() => {});
+
+    res.json(pkg);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.delete("/vip/:id", protectAdmin, async (req, res) => {
   const pkg = await VipPackage.findById(req.params.id);
   if (pkg) {
@@ -69,6 +87,24 @@ router.post("/coupons", protectAdmin, async (req, res) => {
   } catch (logErr) { console.error("Admin log error:", logErr?.message); }
 
   res.json(coupon);
+});
+
+router.put("/coupons/:id", protectAdmin, async (req, res) => {
+  try {
+    const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!coupon) return res.status(404).json({ message: "Coupon not found" });
+
+    await AdminActionLog.create({
+      adminId: req.admin?._id,
+      action: "UPDATE_CONFIG",
+      targetId: coupon._id,
+      details: `Updated Coupon: ${coupon.code}`,
+    }).catch(() => {});
+
+    res.json(coupon);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 router.delete("/coupons/:id", protectAdmin, async (req, res) => {
@@ -107,6 +143,24 @@ router.post("/coins", protectAdmin, async (req, res) => {
   res.status(201).json(pkg);
 });
 
+router.put("/coins/:id", protectAdmin, async (req, res) => {
+  try {
+    const pkg = await CoinPackage.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!pkg) return res.status(404).json({ message: "Coin Package not found" });
+
+    await AdminActionLog.create({
+      adminId: req.admin?._id,
+      action: "UPDATE_CONFIG",
+      targetId: pkg._id,
+      details: `Updated Coin Package: ${pkg.coins} Coins`,
+    }).catch(() => {});
+
+    res.json(pkg);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.delete("/coins/:id", protectAdmin, async (req, res) => {
   const pkg = await CoinPackage.findById(req.params.id);
   if (pkg) {
@@ -121,6 +175,50 @@ router.delete("/coins/:id", protectAdmin, async (req, res) => {
     await CoinPackage.findByIdAndDelete(req.params.id);
   }
   res.json({ message: "Package deleted" });
+});
+
+// --- Gifts ---
+router.get("/gifts", async (req, res) => {
+  res.json(await Gift.find({}));
+});
+
+router.post("/gifts", protectAdmin, upload.single("icon"), async (req, res) => {
+  try {
+    const { name, coinCost, isActive } = req.body;
+    if (!req.file) return res.status(400).json({ message: "Gift icon is required" });
+
+    const gift = await Gift.create({
+      name,
+      coinCost: parseInt(coinCost),
+      isActive: isActive === "true" || isActive === true,
+      iconUrl: `uploads/gifts/${req.file.filename}`
+    });
+
+    res.status(201).json(gift);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.put("/gifts/:id", protectAdmin, upload.single("icon"), async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.iconUrl = `uploads/gifts/${req.file.filename}`;
+    }
+    
+    const gift = await Gift.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!gift) return res.status(404).json({ message: "Gift not found" });
+
+    res.json(gift);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete("/gifts/:id", protectAdmin, async (req, res) => {
+  await Gift.findByIdAndDelete(req.params.id);
+  res.json({ message: "Gift deleted" });
 });
 
 export default router;
