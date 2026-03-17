@@ -12,13 +12,17 @@ router.get("/", async (req, res) => {
     // Default query: exclude deleted and unverified for public
     let query = { isDeleted: false, isVerified: true };
 
+    if (userId) {
+      query.userId = { $ne: userId };
+    }
+
     if (targetGender) query.gender = targetGender;
 
     // 1. Follow Logic: Only show hosts user follows
     if (tabFilter === "Follow" && userId) {
       const user = await User.findById(userId);
       if (user && user.favoriteHosts && user.favoriteHosts.length > 0) {
-        query.userId = { $in: user.favoriteHosts };
+        query._id = { $in: user.favoriteHosts };
       } else {
         return res.json([]); // Return empty if following no one
       }

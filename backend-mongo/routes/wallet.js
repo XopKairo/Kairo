@@ -9,10 +9,14 @@ import walletController from "../controllers/walletController.js";
 router.post("/ad-reward", protectUser, async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
-    const settings = await Settings.findOne() || { rewardPerAd: 5, dailyLimit: 10 };
-
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    if (user.isHost) {
+      return res.status(400).json({ success: false, message: "Hosts cannot earn coins by watching ads." });
+    }
+
+    const settings = await Settings.findOne() || { rewardPerAd: 5, dailyLimit: 10 };
 
     // Check daily limit
     const today = new Date().setHours(0, 0, 0, 0);

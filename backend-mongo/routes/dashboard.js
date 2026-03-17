@@ -51,6 +51,13 @@ router.get("/stats", async (req, res) => {
     const totalRevenue =
       totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
 
+    // Admin Call Commission Revenue
+    const adminCallEarningResult = await Call.aggregate([
+      { $match: { status: "Completed" } },
+      { $group: { _id: null, total: { $sum: "$adminEarning" } } },
+    ]);
+    const totalAdminEarning = adminCallEarningResult.length > 0 ? adminCallEarningResult[0].total : 0;
+
     // --- Peak Hours ---
     const peakHoursData = await User.aggregate([
       { $match: { lastLoginDate: { $ne: null } } },
@@ -97,6 +104,7 @@ router.get("/stats", async (req, res) => {
       totalReports,
       dailyRevenue: `₹${dailyRevenue.toLocaleString("en-IN")}`,
       totalRevenue: `₹${totalRevenue.toLocaleString("en-IN")}`,
+      adminTotalEarnings: `₹${totalAdminEarning.toLocaleString("en-IN")}`,
       retentionRate: retentionRate.toFixed(2) + "%",
       peakHours: peakHoursData,
       registrationTrend,

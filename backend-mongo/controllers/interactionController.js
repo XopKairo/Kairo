@@ -91,10 +91,31 @@ class InteractionController {
 
   // --- Following ---
   async followUser(req, res) {
-    const { followeeId } = req.body;
+    const { followeeId } = req.body; // Host's User ID
     const followerId = req.user._id;
     try {
+      if (followeeId === followerId.toString()) {
+        return res.status(400).json({ message: "Cannot follow yourself" });
+      }
+
       await Follow.create({ followerId, followeeId });
+      
+      const host = await Host.findOne({ userId: followeeId });
+      
+      // Update Current User (denormalized data for performance)
+      await User.findByIdAndUpdate(followerId, { 
+        $addToSet: { 
+          following: followeeId,
+          favoriteHosts: host ? host._id : null 
+        } 
+      });
+
+      // Update Followed User and Host
+      await User.findByIdAndUpdate(followeeId, { $addToSet: { followers: followerId } });
+      if (host) {
+        await Host.findByIdAndUpdate(host._id, { $addToSet: { followers: followerId } });
+      }
+
       res.json({ success: true, message: "Followed successfully" });
     } catch (error) {
       if (error.code === 11000)
@@ -108,6 +129,23 @@ class InteractionController {
     const followerId = req.user._id;
     try {
       await Follow.findOneAndDelete({ followerId, followeeId });
+      
+      const host = await Host.findOne({ userId: followeeId });
+
+      // Update Current User
+      await User.findByIdAndUpdate(followerId, { 
+        $pull: { 
+          following: followeeId,
+          favoriteHosts: host ? host._id : null 
+        } 
+      });
+
+      // Update Followed User and Host
+      await User.findByIdAndUpdate(followeeId, { $pull: { followers: followerId } });
+      if (host) {
+        await Host.findByIdAndUpdate(host._id, { $pull: { followers: followerId } });
+      }
+
       res.json({ success: true, message: "Unfollowed successfully" });
     } catch (error) {
       res.status(400).json({ message: error.message });

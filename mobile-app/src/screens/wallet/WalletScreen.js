@@ -158,21 +158,23 @@ const WalletScreen = ({ navigation }) => {
            <Text style={styles.inrValue}>≈ ₹{((user?.coins || 0) * coinRate).toFixed(2)}</Text>
         </LinearGradient>
 
-        <TouchableOpacity 
-          style={styles.adCard} 
-          onPress={() => { 
-            setAdLoading(true);
-            const shown = showRewardedAd(); 
-            if (!shown) { setAdLoading(false); showAlert('Ad not ready', 'Please wait a moment.', 'notice'); }
-          }}
-          disabled={adLoading}
-        >
-          <View style={styles.adLeft}>
-             <View style={styles.playBox}><Play color={COLORS.textWhite} size={20} fill={COLORS.textWhite} /></View>
-             <View><Text style={styles.adTitle}>Free Coins</Text><Text style={styles.adSubtitle}>Watch ad & earn 5 coins</Text></View>
-          </View>
-          {adLoading ? <ActivityIndicator color={COLORS.accentGlow} /> : <ArrowUpRight color={COLORS.accentGlow} size={24} />}
-        </TouchableOpacity>
+        {!user?.isHost && (
+          <TouchableOpacity 
+            style={styles.adCard} 
+            onPress={() => { 
+              setAdLoading(true);
+              const shown = showRewardedAd(); 
+              if (!shown) { setAdLoading(false); showAlert('Ad not ready', 'Please wait a moment.', 'notice'); }
+            }}
+            disabled={adLoading}
+          >
+            <View style={styles.adLeft}>
+              <View style={styles.playBox}><Play color={COLORS.textWhite} size={20} fill={COLORS.textWhite} /></View>
+              <View><Text style={styles.adTitle}>Free Coins</Text><Text style={styles.adSubtitle}>Watch ad & earn 5 coins</Text></View>
+            </View>
+            {adLoading ? <ActivityIndicator color={COLORS.accentGlow} /> : <ArrowUpRight color={COLORS.accentGlow} size={24} />}
+          </TouchableOpacity>
+        )}
 
         <View style={styles.storeSection}>
            <Text style={styles.sectionTitle}>Coin Store</Text>

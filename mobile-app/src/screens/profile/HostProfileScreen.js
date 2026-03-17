@@ -38,7 +38,8 @@ const HostProfileScreen = ({ route, navigation }) => {
       if (res.data && res.data._id) {
         setHost(res.data);
         if (currentUser && res.data.userId) {
-           setIsFollowing(currentUser.following?.includes(res.data.userId?._id || res.data.userId));
+           const followRes = await api.get(`user/interactions/follow/status/${res.data.userId?._id || res.data.userId}`);
+           setIsFollowing(followRes.data.isFollowing);
         }
       } else {
         setFetchError(true);
@@ -56,10 +57,25 @@ const HostProfileScreen = ({ route, navigation }) => {
   const handleFollow = async () => {
     if (!currentUser) return navigation.navigate('Login');
     try {
-      const targetId = host.userId?._id || host.userId;
-      const res = await api.post(`user/users/follow/${targetId}`);
-      setIsFollowing(res.data.following);
-    } catch (e) {}
+      const targetUserId = host.userId?._id || host.userId;
+      if (isFollowing) {
+        await api.delete(`user/interactions/follow/${targetUserId}`);
+        setIsFollowing(false);
+        setHost(prev => ({ 
+          ...prev, 
+          followers: (prev.followers || []).filter(id => id !== (currentUser._id || currentUser.id)) 
+        }));
+      } else {
+        await api.post(`user/interactions/follow`, { followeeId: targetUserId });
+        setIsFollowing(true);
+        setHost(prev => ({ 
+          ...prev, 
+          followers: [...(prev.followers || []), (currentUser._id || currentUser.id)] 
+        }));
+      }
+    } catch (e) {
+      console.error('Follow Error:', e);
+    }
   };
 
   const handleCall = () => {
@@ -168,11 +184,12 @@ const HostProfileScreen = ({ route, navigation }) => {
                  <Text style={styles.idText}>ID: #{host.hostId || 'PENDING'}</Text>
               </View>
               <TouchableOpacity style={[styles.followBtn, isFollowing && styles.followingBtn]} onPress={handleFollow}>
-                 <Text style={styles.followText}>{isFollowing ? 'Following' : 'Follow'}</Text>
+                 <Text style={styles.followText}>{isFollowing ? 'Fan ✅' : '+ Fan'}</Text>
               </TouchableOpacity>
            </View>
 
            <View style={styles.statsBar}>
+              <View style={styles.statItem}><Text style={styles.statValue}>{host.followers?.length || 0}</Text><Text style={styles.statLabel}>Fans</Text></View>
               <View style={styles.statItem}><Text style={styles.statValue}>{host.totalCalls || 0}</Text><Text style={styles.statLabel}>Calls</Text></View>
               <View style={styles.statItem}><Text style={styles.statValue}>{host.avgRating?.toFixed(1) || '0.0'}</Text><Text style={styles.statLabel}>Rating</Text></View>
               <View style={styles.statItem}><Text style={styles.statValue}>{host.callRatePerMinute || 30}</Text><Text style={styles.statLabel}>Coins/m</Text></View>

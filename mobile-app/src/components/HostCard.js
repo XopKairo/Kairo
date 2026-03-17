@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { Text } from 'react-native-paper';
-import { ShieldCheck, MapPin, Globe2 } from 'lucide-react-native';
+import { ShieldCheck, MapPin, Globe2, Heart } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../theme/theme';
 
@@ -26,6 +26,10 @@ const HostCard = React.memo(({ item, currentUser, navigation }) => {
           style={styles.hostImage}
           resizeMode="cover"
         />
+        <View style={styles.fansBadge}>
+           <Heart color="#FFF" size={10} fill="#FFF" />
+           <Text style={styles.fansText}>{item.followers?.length || 0}</Text>
+        </View>
         <View style={[styles.statusDot, { backgroundColor: item.status === 'Online' ? COLORS.success : COLORS.error }]} />
         <LinearGradient 
           colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']} 
@@ -96,6 +100,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#000',
     zIndex: 10,
+  },
+  fansBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 75, 75, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    gap: 4,
+    zIndex: 10,
+  },
+  fansText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '900',
   },
   hostOverlay: {
     position: 'absolute',
