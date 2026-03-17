@@ -190,6 +190,20 @@ router.post("/block/:targetId", protectUser, async (req, res) => {
   }
 });
 
+router.put("/push-token", async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id || req.admin?._id;
+    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    const { pushToken } = req.body;
+    await User.findByIdAndUpdate(userId, { pushToken });
+    await redisClient.del(`user_status:${userId}`);
+    res.json({ success: true, message: "Push token updated" });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 router.put("/:id", protectAdmin, async (req, res) => {
   try {
     const updateData = { ...req.body };
