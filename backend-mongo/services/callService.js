@@ -141,6 +141,9 @@ class CallService {
          host.totalCalls += 1;
          host.totalMinutes += durationInMinutes;
          await host.save({ session });
+
+         // SYNC with User's cashBalance for Admin Panel and Profile consistency
+         await User.findByIdAndUpdate(host.userId, { $inc: { cashBalance: hostShare } }).session(session);
       }
 
       // Update Admin Total Revenue

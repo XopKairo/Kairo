@@ -17,6 +17,7 @@ import { FlashList } from '@shopify/flash-list';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import api, { BASE_URL } from '../../services/api';
+import socketService from '../../services/socketService';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import HostCard from '../../components/HostCard';
 import Swiper from 'react-native-deck-swiper';
@@ -75,8 +76,7 @@ const HomeScreen = ({ navigation }) => {
           )
         );
       });
-    } catch (error) {
-    } finally {
+    } catch (error) { console.error(error); } finally {
       setLoading(false);
     }
   };
@@ -84,7 +84,7 @@ const HomeScreen = ({ navigation }) => {
   const handleInteraction = async (hostId, action) => {
     try {
       await api.post('public/hosts/interaction', { hostId, action });
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   };
 
   const handleCall = (host) => {

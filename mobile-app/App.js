@@ -110,6 +110,14 @@ function NavigationStack() {
       socketService.connect(user._id || user.id);
       
       socketService.setIncomingCallHandler((data) => {
+        const currentRoute = navigationRef.current?.getCurrentRoute();
+        if (currentRoute && currentRoute.name === 'VideoCall') {
+          // Reject automatically if already in a call
+          if (socketService.socket) {
+            socketService.socket.emit('callEnded', data.callId);
+          }
+          return;
+        }
         setIncomingCall(data);
       });
 

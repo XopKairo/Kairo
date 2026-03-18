@@ -139,7 +139,7 @@ const VideoCallScreen = ({ route }) => {
       setTimeout(() => {
         if (!isIncoming) {
           // Caller side: Go to Host Profile with "justFinishedCall" trigger for the Pro Popup
-          navigation.navigate('HostProfile', { hostId, justFinishedCall: true });
+          navigation.replace('HostProfile', { hostId, justFinishedCall: true });
         } else {
           if (navigation.canGoBack()) {
             navigation.goBack();

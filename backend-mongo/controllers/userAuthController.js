@@ -187,12 +187,7 @@ class UserAuthController {
       }
 
       if (user.isHost) {
-        const host = await Host.findOne({ userId: user._id }).lean();
-        if (host) {
-          user.earnings = host.earnings || 0;
-          // For display in wallet, if they are host we show earnings as their primary balance
-          user.coins = host.earnings || 0; 
-        }
+        user.earnings = user.cashBalance || 0;
       }
 
       res.json(user);

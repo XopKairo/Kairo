@@ -153,9 +153,14 @@ const WalletScreen = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <LinearGradient colors={[COLORS.primary, COLORS.accentGlow]} style={styles.balanceCard}>
            <Wallet color="rgba(255,255,255,0.6)" size={40} style={styles.walletIcon} />
-           <Text style={styles.balanceLabel}>Current Balance</Text>
-           <Text style={styles.coinCount}>{user?.coins || 0}</Text>
-           <Text style={styles.inrValue}>≈ ₹{((user?.coins || 0) * coinRate).toFixed(2)}</Text>
+           <Text style={styles.balanceLabel}>{user?.isHost ? 'Earnings Balance' : 'Current Balance'}</Text>
+           <Text style={styles.coinCount}>{user?.isHost ? (user?.earnings || 0) : (user?.coins || 0)}</Text>
+           <Text style={styles.inrValue}>≈ ₹{((user?.isHost ? (user?.earnings || 0) : (user?.coins || 0)) * coinRate).toFixed(2)}</Text>
+           {user?.isHost && (
+             <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
+                <Text style={[styles.balanceLabel, { fontSize: 10 }]}>Call Coins (Spent on calls): {user?.coins || 0}</Text>
+             </View>
+           )}
         </LinearGradient>
 
         {!user?.isHost && (

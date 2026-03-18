@@ -97,8 +97,14 @@ const setupSockets = (io) => {
 
         // If targetRoomId is a Host ID, we need the actual User ID for the socket room
         const hostDoc = await Host.findById(targetRoomId);
+        let actualHostId = hostId; // default to original
         if (hostDoc) {
           targetRoomId = hostDoc.userId.toString();
+          actualHostId = hostDoc._id.toString();
+        } else {
+          // If not found by ID, maybe it's already a userId, let's find the Host
+          const h = await Host.findOne({ userId: targetRoomId });
+          if(h) actualHostId = h._id.toString();
         }
 
         if (targetRoomId) {
@@ -108,7 +114,7 @@ const setupSockets = (io) => {
           await LiveCall.create({
             callId,
             userId,
-            hostId: targetRoomId,
+            hostId: actualHostId, // Save the actual Host document _id
             status: "RINGING",
           });
 
@@ -174,6 +180,13 @@ const setupSockets = (io) => {
         call.status = "ACTIVE";
         call.startedAt = new Date(startTime);
         await call.save();
+        
+        // Start the actual billing Call via CallService
+        try {
+           await callService.startCall(call.userId.toString(), call.hostId.toString(), callId);
+        } catch (e) {
+           console.error("Failed to start actual Call document:", e);
+        }
 
         // Mark Host as Busy
         const h = await Host.findOneAndUpdate({ userId: call.hostId }, { status: "Busy" }, { new: true });
@@ -291,8 +304,14 @@ const setupSockets = (io) => {
       const durationMinutes = Math.max(1, Math.ceil(durationMs / 60000)); 
 
       // 3. Mark Host as Online again
-      const h = await Host.findOneAndUpdate({ userId: callData.hostId }, { status: "Online" }, { new: true });
-      if (h) io.emit("statusUpdate", { hostId: h._id, status: "Online" });
+      // callData.hostId is the actual Host document _id here!
+      const h = await Host.findByIdAndUpdate(callData.hostId, { status: "Online" }, { new: true });
+      if (h) { io.emit("statusUpdate", { hostId: h._id, status: "Online" }); }
+      else {
+         // fallback
+         const h2 = await Host.findOneAndUpdate({ userId: callData.hostId }, { status: "Online" }, { new: true });
+         if(h2) io.emit("statusUpdate", { hostId: h2._id, status: "Online" });
+      }
 
       // 4. Update LiveCall and global Call models
       await Promise.all([

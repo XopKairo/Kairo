@@ -117,7 +117,6 @@ const ChatScreen = ({ route, navigation }) => {
 
   const sendMediaMessage = async (asset) => {
     const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
-    const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
     setIsUploading(true);
     try {
       const base64Str = `data:image/jpeg;base64,${asset.base64}`;

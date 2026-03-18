@@ -49,7 +49,7 @@ const HostProfileScreen = ({ route, navigation }) => {
              api.get(`user/interactions/like/status/${res.data._id}`)
            ]);
            setIsFollowing(followRes.data.isFollowing);
-           setCanLike(likeRes.data.canLike);
+           setCanLike(route.params?.justFinishedCall ? true : likeRes.data.canLike);
         }
       } else {
         setFetchError(true);

@@ -44,7 +44,7 @@ const EditProfileScreen = ({ navigation }) => {
         setCallRate(userData.callRatePerMinute ? userData.callRatePerMinute.toString() : '30');
         if (userData.photos) setMoments(userData.photos.map(url => ({ uri: url, isRemote: true })));
       }
-    } catch (error) {}
+    } catch (error) { console.error(error); }
   };
 
   const pickMedia = async (type = 'image', isMoment = false) => {

@@ -92,14 +92,22 @@ const UserProfileScreen = ({ navigation }) => {
               <Text style={styles.statValue}>{user?.coins || 0}</Text>
               <Text style={styles.statLabel}>COINS</Text>
            </View>
-           <View style={[styles.statBox, { borderLeftWidth: 1, borderRightWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }]}>
+           {user?.isHost && (
+             <View style={[styles.statBox, { borderLeftWidth: 1, borderRightWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }]}>
+                <Text style={styles.statValue}>{user?.earnings || 0}</Text>
+                <Text style={styles.statLabel}>EARNINGS</Text>
+             </View>
+           )}
+           <View style={styles.statBox}>
               <Text style={styles.statValue}>{user?.followers?.length || 0}</Text>
               <Text style={styles.statLabel}>FOLLOWERS</Text>
            </View>
-           <View style={styles.statBox}>
-              <Text style={styles.statValue}>{user?.following?.length || 0}</Text>
-              <Text style={styles.statLabel}>FOLLOWING</Text>
-           </View>
+           {!user?.isHost && (
+             <View style={[styles.statBox, { borderLeftWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }]}>
+                <Text style={styles.statValue}>{user?.following?.length || 0}</Text>
+                <Text style={styles.statLabel}>FOLLOWING</Text>
+             </View>
+           )}
         </View>
 
         <View style={styles.section}>

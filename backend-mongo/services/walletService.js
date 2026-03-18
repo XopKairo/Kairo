@@ -76,8 +76,11 @@ class WalletService {
         throw new Error("Withdrawal is only available for Hosts");
       }
 
-      if (user.coins < amountNum) {
-        throw new Error("Insufficient coins in wallet");
+      const host = await Host.findOne({ userId }).session(session);
+      if (!host) throw new Error("Host data not found");
+
+      if (host.earnings < amountNum) {
+        throw new Error("Insufficient earnings in wallet");
       }
 
       if (amountINR < 500) {
@@ -109,19 +112,12 @@ class WalletService {
         session,
       );
 
-      // ATOMIC DEDUCTION
-      const balanceBefore = user.coins;
-      const updatedUser = await userRepository.updateCoinsAtomics(
-        userId,
-        amountNum,
-        session,
-      );
-
-      if (!updatedUser) {
-        throw new Error(
-          "Insufficient coins or user not found during atomic update",
-        );
-      }
+      // ATOMIC DEDUCTION from Host Earnings and User cashBalance
+      const balanceBefore = host.earnings;
+      host.earnings -= amountNum;
+      await host.save({ session });
+      
+      await User.findByIdAndUpdate(userId, { $inc: { cashBalance: -amountNum } }).session(session);
 
       // LEDGER LOGGING
       await walletRepository.logLedgerEntry(
@@ -130,7 +126,7 @@ class WalletService {
           type: "DEBIT",
           amount: amountNum,
           balanceBefore,
-          balanceAfter: updatedUser.coins,
+          balanceAfter: host.earnings,
           transactionType: "WITHDRAWAL",
           description: `Withdrawal request for ₹${amountINR}`,
           clientRequestId,
@@ -143,7 +139,7 @@ class WalletService {
       return {
         success: true,
         message: "Withdrawal request submitted successfully.",
-        newBalance: updatedUser.coins,
+        newBalance: host.earnings,
         amountINR,
         user: user, // For IO notification
       };
