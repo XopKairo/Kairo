@@ -235,18 +235,21 @@ const setupSockets = (io) => {
       // Optionally notify sender that message is delivered
       socket.emit("messageStatusUpdate", { messageId: _id, status: "delivered" });
     });
+socket.on("disconnect", async () => {
+  socketRateLimit.delete(socket.id);
+  if (socket.userId) {
+    // GOD-MODE: Graceful Disconnect (Wait 60s before marking Offline)
+    const disconnectTimeout = setTimeout(async () => {
+      const stillOffline = !io.sockets.adapter.rooms.has(socket.userId);
+      if (stillOffline) {
+        const h = await Host.findOneAndUpdate({ userId: socket.userId }, { status: "Offline" }, { new: true });
+        if (h) io.emit("statusUpdate", { hostId: h._id, status: "Offline" });
+        console.log(`📡 Host ${socket.userId} is now truly Offline after grace period.`);
+      }
+    }, 60000); // 60 seconds grace period
 
-    socket.on("disconnect", async () => {
-      socketRateLimit.delete(socket.id);
-      if (socket.userId) {
-        // God-Mode Sync: Mark Host as Offline and notify all
-        Host.findOneAndUpdate({ userId: socket.userId }, { status: "Offline" }, { new: true })
-          .then(h => {
-            if (h) io.emit("statusUpdate", { hostId: h._id, status: "Offline" });
-          })
-          .catch(() => {});
-
-        // Find if user was in an active call
+    // Find if user was in an active call
+...
         const activeCalls = await LiveCall.find({
           $or: [{ userId: socket.userId }, { hostId: socket.userId }],
           status: "ACTIVE",

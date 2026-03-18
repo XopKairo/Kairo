@@ -1,5 +1,6 @@
 import authService from "../services/authService.js";
 import User from "../models/User.js";
+
 import Host from "../models/Host.js";
 import admin from "../config/firebaseAdmin.js";
 import generateToken, { generateRefreshToken } from "../utils/generateToken.js";
@@ -208,8 +209,16 @@ class UserAuthController {
         return res.status(404).json({ success: false, message: "User not found" });
       }
 
+import calculateBadge from "../utils/badgeSystem.js";
+...
       if (user.isHost) {
-        user.earnings = user.cashBalance || 0;
+        const host = await Host.findOne({ userId: user._id }).lean();
+        if (host) {
+          user.earnings = user.cashBalance || 0;
+          user.totalCalls = host.totalCalls || 0;
+          user.totalMinutes = host.totalMinutes || 0;
+          user.badge = calculateBadge(host.totalMinutes, host.totalCalls);
+        }
       }
 
       res.json(user);

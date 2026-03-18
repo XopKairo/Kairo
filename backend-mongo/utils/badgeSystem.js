@@ -1,8 +1,8 @@
-// Function to determine user badge based on points
-export const getUserBadge = (points) => {
-  if (points >= 1000) return { name: "Diamond", color: "#B9F2FF" };
-  if (points >= 500) return { name: "Gold", color: "#FFD700" };
-  if (points >= 200) return { name: "Silver", color: "#C0C0C0" };
-  if (points >= 50) return { name: "Bronze", color: "#CD7F32" };
-  return { name: "Newbie", color: "#808080" };
+const calculateBadge = (totalMinutes, totalCalls) => {
+  if (totalMinutes > 1000 || totalCalls > 500) return { name: 'Elite', color: '#FFD700', icon: 'crown' };
+  if (totalMinutes > 500 || totalCalls > 200) return { name: 'Star', color: '#C0C0C0', icon: 'star' };
+  if (totalMinutes > 100 || totalCalls > 50) return { name: 'Pro', color: '#CD7F32', icon: 'zap' };
+  return { name: 'Newbie', color: '#A099B0', icon: 'user' };
 };
+
+export default calculateBadge;

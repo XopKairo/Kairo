@@ -38,32 +38,55 @@ const ChatScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     if (!recipient) return;
+    let isMounted = true;
     fetchMessages();
     fetchGifts();
     fetchConversationDetails();
 
-    if (socketService.socket) {
-      socketService.socket.on('newMessage', (message) => {
+    const onNewMessage = (message) => {
+      // If message is for this conversation
+      const currentConvId = initialConvId || conversationId;
+      if (message.conversationId === currentConvId && isMounted) {
         setMessages(prev => {
-          // If message is for this conversation
+          // Prevent duplicates if already added by handleSend
+          if (prev.find(m => m._id === message._id)) return prev;
           return [...prev, message];
         });
-      });
+      }
+    };
 
-      socketService.socket.on('messageStatusUpdate', ({ messageId, status }) => {
+    const onStatusUpdate = ({ messageId, status }) => {
+      if (isMounted) {
         setMessages(prev => prev.map(m => m._id === messageId ? { ...m, status } : m));
-      });
+      }
+    };
 
-      socketService.socket.on('userTyping', () => setIsTyping(true));
-      socketService.socket.on('userStoppedTyping', () => setIsTyping(false));
+    const onTyping = (data) => {
+      if (data.conversationId === (initialConvId || conversationId) && isMounted) {
+        setIsTyping(true);
+      }
+    };
+
+    const onStopTyping = (data) => {
+      if (data.conversationId === (initialConvId || conversationId) && isMounted) {
+        setIsTyping(false);
+      }
+    };
+
+    if (socketService.socket) {
+      socketService.socket.on('newMessage', onNewMessage);
+      socketService.socket.on('messageStatusUpdate', onStatusUpdate);
+      socketService.socket.on('userTyping', onTyping);
+      socketService.socket.on('userStoppedTyping', onStopTyping);
     }
 
     return () => {
+      isMounted = false;
       if (socketService.socket) {
-        socketService.socket.off('newMessage');
-        socketService.socket.off('messageStatusUpdate');
-        socketService.socket.off('userTyping');
-        socketService.socket.off('userStoppedTyping');
+        socketService.socket.off('newMessage', onNewMessage);
+        socketService.socket.off('messageStatusUpdate', onStatusUpdate);
+        socketService.socket.off('userTyping', onTyping);
+        socketService.socket.off('userStoppedTyping', onStopTyping);
       }
 
       // SNAPCHAT STYLE: Clear if immediate
@@ -71,24 +94,28 @@ const ChatScreen = ({ route, navigation }) => {
         api.delete(`user/chat/history/${conversationId}`).catch(e => console.log("Auto-clear failed", e));
       }
     };
-  }, [recipient]);
+  }, [recipient, initialConvId]);
 
   const fetchConversationDetails = async () => {
     if (!initialConvId) return;
     try {
       const res = await api.get('user/chat/conversations');
       const conv = res.data.find(c => c._id === initialConvId);
-      if (conv && conv.deleteSetting) {
-        setDeleteSetting(conv.deleteSetting);
-        currentDeleteSetting.current = conv.deleteSetting;
+      if (conv) {
+        if (conv.deleteSetting) {
+          setDeleteSetting(conv.deleteSetting);
+          currentDeleteSetting.current = conv.deleteSetting;
+        }
+        if (!conversationId) setConversationId(conv._id);
       }
     } catch (e) {}
   };
 
   const updateDeleteSetting = async (setting) => {
-    if (!conversationId) return;
+    const activeConvId = conversationId || initialConvId;
+    if (!activeConvId) return;
     try {
-      await api.put(`user/chat/settings/${conversationId}`, { deleteSetting: setting });
+      await api.put(`user/chat/settings/${activeConvId}`, { deleteSetting: setting });
       setDeleteSetting(setting);
       currentDeleteSetting.current = setting;
       setShowSettings(false);
@@ -99,9 +126,10 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const clearChat = async () => {
-    if (!conversationId) return;
+    const activeConvId = conversationId || initialConvId;
+    if (!activeConvId) return;
     try {
-      await api.delete(`user/chat/history/${conversationId}`);
+      await api.delete(`user/chat/history/${activeConvId}`);
       setMessages([]);
       setShowSettings(false);
       showAlert('Cleared', 'Chat history cleared permanently', 'success');
@@ -120,21 +148,24 @@ const ChatScreen = ({ route, navigation }) => {
   const sendGift = async (gift) => {
     try {
       const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
-      await api.post('user/interactions/send-gift', { giftId: gift._id, receiverId: actualRecipientId });
+      const activeConvId = conversationId || initialConvId;
       
       const messageData = {
         recipientId: actualRecipientId,
         text: `🎁 Sent you a ${gift.name}`,
         type: 'gift',
-        conversationId: initialConvId,
+        conversationId: activeConvId,
       };
 
-      if (socketService.socket) {
-        socketService.socket.emit('privateMessage', messageData);
+      // API First to get real ID and check balance
+      const res = await api.post(`user/chat/send`, messageData);
+      await api.post('user/interactions/send-gift', { giftId: gift._id, receiverId: actualRecipientId });
+
+      if (socketService.socket?.connected) {
+        socketService.socket.emit('privateMessage', { ...messageData, _id: res.data?.message?._id });
       }
 
-      await api.post(`user/chat/send`, messageData);
-      setMessages(prev => [...prev, { ...messageData, _id: Date.now().toString(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
+      setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now().toString(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
       setShowGifts(false);
       if(showAlert) showAlert('Success', `Gift ${gift.name} sent!`, 'success');
     } catch (e) {
@@ -143,9 +174,10 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const fetchMessages = async () => {
-    if (!initialConvId) return;
+    const activeConvId = initialConvId || conversationId;
+    if (!activeConvId) return;
     try {
-      const response = await api.get(`user/chat/messages/${initialConvId}`);
+      const response = await api.get(`user/chat/messages/${activeConvId}`);
       setMessages(response.data);
     } catch (error) {
       console.log('Failed to fetch messages', error);
@@ -156,20 +188,22 @@ const ChatScreen = ({ route, navigation }) => {
     if (!inputText.trim() || !recipient) return;
 
     const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
+    const activeConvId = conversationId || initialConvId;
 
     const messageData = {
       recipientId: actualRecipientId,
       text: inputText,
-      conversationId: initialConvId,
+      conversationId: activeConvId,
       type: 'text'
     };
 
-    if (socketService.socket) {
-      socketService.socket.emit('privateMessage', messageData);
-    }
-
     try {
       const res = await api.post(`user/chat/send`, messageData);
+      
+      if (socketService.socket?.connected) {
+        socketService.socket.emit('privateMessage', { ...messageData, _id: res.data?.message?._id });
+      }
+
       setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
       setInputText('');
     } catch (error) {
@@ -200,31 +234,37 @@ const ChatScreen = ({ route, navigation }) => {
 
   const sendMediaMessage = async (asset) => {
     const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
+    const activeConvId = conversationId || initialConvId;
     setIsUploading(true);
     try {
-      const base64Str = `data:image/jpeg;base64,${asset.base64}`;
       const isVideo = asset.type === 'video';
-      // Note: base64 for video might be heavy or not supported easily. For now assume uploadMedia handles it or it's an image. If video, we might need a different upload logic, but we'll try to use uploadMedia with base64 or local uri.
       let mediaUrl = '';
-      if(isVideo) { mediaUrl = await uploadMedia(asset.uri, 'video'); }
-      else { mediaUrl = await uploadMedia(base64Str, 'image'); }
+      
+      if(isVideo) { 
+        mediaUrl = await uploadMedia(asset.uri, 'video'); 
+      } else { 
+        const base64Str = `data:image/jpeg;base64,${asset.base64}`;
+        mediaUrl = await uploadMedia(base64Str, 'image'); 
+      }
       
       const messageData = {
         recipientId: actualRecipientId,
         text: '',
         image: mediaUrl,
         type: isVideo ? 'video' : 'image',
-        conversationId: initialConvId,
+        conversationId: activeConvId,
       };
 
-      if (socketService.socket) {
-        socketService.socket.emit('privateMessage', messageData);
+      const res = await api.post(`user/chat/send`, messageData);
+
+      if (socketService.socket?.connected) {
+        socketService.socket.emit('privateMessage', { ...messageData, _id: res.data?.message?._id });
       }
 
-      const res = await api.post(`user/chat/send`, messageData);
       setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
     } catch (error) {
        console.log("Upload failed", error);
+       if(showAlert) showAlert('Upload Failed', 'Failed to send media', 'error');
     } finally {
       setIsUploading(false);
     }

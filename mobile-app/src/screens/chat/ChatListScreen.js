@@ -1,35 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView, StatusBar, ActivityIndicator, TextInput } from 'react-native';
 import { MessageCircle, Search, X } from 'lucide-react-native';
 import { COLORS, SPACING } from '../../theme/theme';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthContext';
 
 const ChatListScreen = () => {
   const navigation = useNavigation();
+  const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const currentUserId = user?._id || user?.id || socketService.userId;
 
-  useEffect(() => {
-    fetchConversations();
-    
-    if (socketService.socket) {
-      socketService.socket.on('newMessage', (message) => {
-        fetchConversations(); // Reload list to bump up the latest chat
-      });
-    }
-
-    return () => {
-      if (socketService.socket) {
-        socketService.socket.off('newMessage');
-      }
-    };
-  }, []);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
       const res = await api.get('user/chat/conversations');
       setConversations(res.data || []);
@@ -38,15 +25,39 @@ const ChatListScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchConversations();
+    
+    let throttleTimeout = null;
+    const onNewMessage = () => {
+      if (throttleTimeout) return;
+      throttleTimeout = setTimeout(() => {
+        fetchConversations();
+        throttleTimeout = null;
+      }, 2000); // Throttle to every 2 seconds
+    };
+
+    if (socketService.socket) {
+      socketService.socket.on('newMessage', onNewMessage);
+    }
+
+    return () => {
+      if (socketService.socket) {
+        socketService.socket.off('newMessage', onNewMessage);
+      }
+      if (throttleTimeout) clearTimeout(throttleTimeout);
+    };
+  }, [fetchConversations]);
 
   const filteredConversations = conversations.filter(c => {
-    const otherParticipant = c.participants.find(p => p._id !== socketService.socket?.userId) || c.participants[0];
+    const otherParticipant = c.participants.find(p => p._id !== currentUserId) || c.participants[0];
     return otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const renderItem = ({ item }) => {
-    const otherParticipant = item.participants.find(p => p._id !== socketService.socket?.userId) || item.participants[0];
+    const otherParticipant = item.participants.find(p => p._id !== currentUserId) || item.participants[0];
     const avatar = otherParticipant?.profilePicture || otherParticipant?.profileImage || 'https://ui-avatars.com/api/?name=' + (otherParticipant?.name || 'User') + '&background=random';
     const lastMsg = item.lastMessage?.text || (item.lastMessage?.image ? '📸 Image' : (item.lastMessage?.type === 'video' ? '🎥 Video' : (item.lastMessage?.type === 'gift' ? '🎁 Gift' : 'Start a conversation')));
 

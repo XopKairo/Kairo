@@ -52,10 +52,14 @@ const VideoCallScreen = ({ route }) => {
 
   useEffect(() => {
     socketService.connect(userId);
+    let balanceInterval = null;
+    let isMounted = true;
     
     socketService.setGiftReceivedHandler((data) => {
-      setShowGiftAnim(true);
-      setTimeout(() => setShowGiftAnim(false), 4000);
+      if (isMounted) {
+        setShowGiftAnim(true);
+        setTimeout(() => { if(isMounted) setShowGiftAnim(false); }, 4000);
+      }
     });
 
     socketService.setCallEndedHandler((data) => {
@@ -66,12 +70,11 @@ const VideoCallScreen = ({ route }) => {
       handleCallEnd();
     });
 
-    socketService.setCallActiveHandler((data) => {
-      // Host accepted the call, stop the outgoing ringtone
+    socketService.setCallActiveHandler(() => {
       stopRingtone();
     });
 
-    socketService.setForceDisconnectHandler((data) => {
+    socketService.setForceDisconnectHandler(() => {
       stopRingtone();
       showAlert('Call Terminated', 'Call ended due to low balance.', 'notice');
       handleCallEnd();
@@ -81,52 +84,72 @@ const VideoCallScreen = ({ route }) => {
       try {
         const res = await api.get(`user/users/${userId}`);
         const coins = res.data.coins;
-        setUserCoins(coins);
-        
-        if (coins < callRatePerMinute && coins > 0) {
-           showAlert('Low Balance', 'You have less than 1 minute remaining. Recharge now!', 'notice', 'RECHARGE');
+        if (isMounted) {
+          setUserCoins(coins);
+          if (coins < callRatePerMinute && coins > 0) {
+             showAlert('Low Balance', 'You have less than 1 minute remaining. Recharge now!', 'notice', 'RECHARGE');
+          }
         }
       } catch (e) {
         console.error('Balance check failed:', e);
       }
     };
 
-    if (!isIncoming) {
-      api.post(`user/calls/start`, { hostId, callId })
-        .then(res => {
-          if (res.data.success) {
+    const requestPermissions = async () => {
+      const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
+      const { status: audioStatus } = await Audio.requestPermissionsAsync();
+      if (cameraStatus !== 'granted' || audioStatus !== 'granted') {
+        showAlert('Permissions Required', 'Camera and Microphone access are needed for video calls.', 'error');
+        navigation.goBack();
+        return false;
+      }
+      return true;
+    };
+
+    const startCall = async () => {
+      const hasPermissions = await requestPermissions();
+      if (!hasPermissions) return;
+
+      if (!isIncoming) {
+        try {
+          const res = await api.post(`user/calls/start`, { hostId, callId });
+          if (res.data.success && isMounted) {
             setIsAllowed(true);
             setUserCoins(res.data.user.coins);
             socketService.notifyCallStarted({ callId, userId, hostId, userName });
             
-            // Start outgoing ringtone
             playRingtone();
             
-            const balanceInterval = setInterval(checkBalance, 30000);
-            return () => clearInterval(balanceInterval);
-          } else {
+            balanceInterval = setInterval(checkBalance, 30000);
+          } else if (isMounted) {
             showAlert('Error', res.data.message || 'Call not allowed', 'error');
             navigation.goBack();
           }
-        })
-        .catch(err => {
-          const msg = err.response?.data?.message || 'Minimum coins required to start a call';
-          showAlert('Insufficient Balance', msg, 'error', 'GET COINS');
-          navigation.goBack();
-        })
-        .finally(() => setLoading(false));
-    } else {
-      // Host side: just start the balance interval if needed (optional)
-      setLoading(false);
-    }
+        } catch (err) {
+          if (isMounted) {
+            const msg = err.response?.data?.message || 'Minimum coins required to start a call';
+            showAlert('Insufficient Balance', msg, 'error', 'GET COINS');
+            navigation.goBack();
+          }
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      } else {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    startCall();
 
     return () => {
+      isMounted = false;
       stopRingtone();
+      if (balanceInterval) clearInterval(balanceInterval);
       socketService.notifyCallEnded(callId);
-      socketService.setCallEndedHandler(null);
-      socketService.setForceDisconnectHandler(null);
-      socketService.setGiftReceivedHandler(null);
-      socketService.setCallActiveHandler(null);
+      socketService.setCallEndedHandler(() => {});
+      socketService.setForceDisconnectHandler(() => {});
+      socketService.setGiftReceivedHandler(() => {});
+      socketService.setCallActiveHandler(() => {});
     };
   }, []);
 

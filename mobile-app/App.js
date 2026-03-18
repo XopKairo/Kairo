@@ -107,13 +107,14 @@ function NavigationStack() {
 
   React.useEffect(() => {
     if (user) {
-      socketService.connect(user._id || user.id);
+      const uid = user._id || user.id;
+      socketService.connect(uid);
       
       socketService.setIncomingCallHandler((data) => {
         const currentRoute = navigationRef.current?.getCurrentRoute();
+        // Avoid nested calls or showing modal if already in VideoCall
         if (currentRoute && currentRoute.name === 'VideoCall') {
-          // Reject automatically if already in a call
-          if (socketService.socket) {
+          if (socketService.socket?.connected) {
             socketService.socket.emit('callEnded', data.callId);
           }
           return;
@@ -125,9 +126,14 @@ function NavigationStack() {
         setIncomingCall(null);
       });
 
+      socketService.setForceDisconnectHandler(() => {
+        setIncomingCall(null);
+      });
+
       return () => {
-        socketService.setIncomingCallHandler(null);
-        socketService.setCallTimeoutHandler(null);
+        socketService.setIncomingCallHandler(() => {});
+        socketService.setCallTimeoutHandler(() => {});
+        socketService.setForceDisconnectHandler(() => {});
       };
     }
   }, [user]);
@@ -136,13 +142,13 @@ function NavigationStack() {
     if (incomingCall) {
       const data = incomingCall;
       setIncomingCall(null);
-      if (socketService.socket) {
+      if (socketService.socket?.connected) {
         socketService.socket.emit('callAccepted', data.callId);
       }
       navigationRef.current?.navigate('VideoCall', {
         userId: user._id || user.id,
         userName: user.name,
-        hostId: user._id || user.id, // Current user is the host
+        hostId: data.hostId || data.callerId || data.userId, // The person who started the call
         callId: data.callId,
         isIncoming: true,
         callRatePerMinute: data.callRatePerMinute || 30
@@ -151,6 +157,9 @@ function NavigationStack() {
   };
 
   const handleReject = () => {
+    if (incomingCall && socketService.socket?.connected) {
+      socketService.socket.emit('callEnded', incomingCall.callId);
+    }
     setIncomingCall(null);
   };
 
