@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { BASE_URL } from './api';
 
 const SOCKET_URL = BASE_URL;
@@ -22,7 +23,7 @@ class SocketService {
   async connect(userId = null) {
     if (this.socket?.connected) return;
 
-    const token = await AsyncStorage.getItem('userToken');
+    const token = await SecureStore.getItemAsync('userToken');
     if (!token) return;
 
     if (!this.socket) {

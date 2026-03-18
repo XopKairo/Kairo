@@ -80,11 +80,18 @@ export const AuthProvider = ({ children }) => {
 
   async function loadStorageData() {
     try {
-      const authDataSerialized = await AsyncStorage.getItem('userData');
-      if (authDataSerialized) {
+      const [authDataSerialized, userToken] = await Promise.all([
+        AsyncStorage.getItem('userData'),
+        SecureStore.getItemAsync('userToken')
+      ]);
+
+      if (authDataSerialized && userToken) {
         const _user = JSON.parse(authDataSerialized);
         setUser(_user);
         socketService.connect(_user._id || _user.id);
+      } else {
+        // If either is missing, clear both to be safe
+        await signOut();
       }
     } catch (error) {
     } finally {

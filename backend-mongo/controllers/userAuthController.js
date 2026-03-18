@@ -115,6 +115,28 @@ class UserAuthController {
     }
   }
 
+  async sendOtp(req, res) {
+    try {
+      const { contact } = req.body;
+      if (!contact) return res.status(400).json({ success: false, message: "Contact is required" });
+      const result = await authService.sendOtp(contact);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async verifyOtp(req, res) {
+    try {
+      const { contact, otp } = req.body;
+      if (!contact || !otp) return res.status(400).json({ success: false, message: "Contact and OTP are required" });
+      const result = await authService.verifyOtp(contact, otp);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
   async deleteAccount(req, res) {
     try {
       const userId = req.user?._id || req.user?.id;

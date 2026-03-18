@@ -31,6 +31,12 @@ router.post("/google-login", userAuthController.googleLogin);
 // Fast Login
 router.post("/fast-login", userAuthController.fastLogin);
 
+// Send OTP
+router.post("/send-otp", userAuthController.sendOtp);
+
+// Verify OTP
+router.post("/verify-otp", userAuthController.verifyOtp);
+
 // Get Profile
 router.get("/me", protectUser, userAuthController.getProfile);
 
