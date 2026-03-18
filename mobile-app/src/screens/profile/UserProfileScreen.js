@@ -5,6 +5,7 @@ import { Settings, Wallet, ShieldCheck, Heart, LogOut, ChevronRight, User as Use
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
+import socketService from '../../services/socketService';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
 import { useAuth } from '../../context/AuthContext';
@@ -180,6 +181,9 @@ const UserProfileScreen = ({ navigation }) => {
           style={styles.logoutBtn} 
           loading={false}
           onPress={async () => {
+            if (socketService.socket) {
+              socketService.socket.disconnect();
+            }
             await AsyncStorage.clear();
             navigation.replace('Login');
           }}

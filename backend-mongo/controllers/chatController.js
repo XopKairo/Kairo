@@ -61,9 +61,20 @@ export const sendMessage = async (req, res) => {
             requiresRecharge: true
           });
         }
-        senderUser.coins -= 3;
-        await senderUser.save();
-        // The 3 coins are effectively given to admin by deducting from user without adding to host
+        
+        // ATOMIC DEDUCTION: No race conditions
+        const updatedSender = await User.findOneAndUpdate(
+          { _id: req.user._id, coins: { $gte: 3 } },
+          { $inc: { coins: -3 } },
+          { new: true }
+        );
+
+        if (!updatedSender) {
+          return res.status(400).json({ 
+            message: "Transaction failed. Please try again.",
+            requiresRecharge: true
+          });
+        }
       }
     }
 
