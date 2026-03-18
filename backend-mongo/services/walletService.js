@@ -114,9 +114,8 @@ class WalletService {
 
       // ATOMIC DEDUCTION from Host Earnings and User cashBalance
       const balanceBefore = host.earnings;
-      host.earnings -= amountNum;
-      await host.save({ session });
       
+      await Host.findByIdAndUpdate(host._id, { $inc: { earnings: -amountNum } }).session(session);
       await User.findByIdAndUpdate(userId, { $inc: { cashBalance: -amountNum } }).session(session);
 
       // LEDGER LOGGING
@@ -126,7 +125,7 @@ class WalletService {
           type: "DEBIT",
           amount: amountNum,
           balanceBefore,
-          balanceAfter: host.earnings,
+          balanceAfter: balanceBefore - amountNum,
           transactionType: "WITHDRAWAL",
           description: `Withdrawal request for ₹${amountINR}`,
           clientRequestId,

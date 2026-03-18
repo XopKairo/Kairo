@@ -137,10 +137,14 @@ class CallService {
             hostShare = hostTotalShare;
          }
 
-         host.earnings += hostShare;
-         host.totalCalls += 1;
-         host.totalMinutes += durationInMinutes;
-         await host.save({ session });
+         // ATOMIC UPDATE: Prevent coin leakage during concurrency
+         await Host.findByIdAndUpdate(host._id, {
+           $inc: {
+             earnings: hostShare,
+             totalCalls: 1,
+             totalMinutes: durationInMinutes
+           }
+         }).session(session);
 
          // SYNC with User's cashBalance for Admin Panel and Profile consistency
          await User.findByIdAndUpdate(host.userId, { $inc: { cashBalance: hostShare } }).session(session);

@@ -78,7 +78,8 @@ const setupSockets = (io) => {
     });
 
     socket.on("callStarted", async (data) => {
-      const { callId, userId, hostId, receiverId } = data;
+      const { callId, hostId, receiverId } = data;
+      const userId = socket.userId; // SECURE: Use authenticated token ID
       let targetRoomId = receiverId || hostId;
 
       try {
@@ -161,7 +162,7 @@ const setupSockets = (io) => {
         }
 
         // Supreme Sync: Mark Host as Busy
-        await Host.findOneAndUpdate({ userId: call.hostId }, { status: "Busy" });
+        await Host.findByIdAndUpdate(call.hostId, { status: "Busy" });
         io.emit("statusUpdate", { hostId: call.hostId, status: "Busy" });
 
         const maxMinutes = caller.freeCallsRemaining > 0 ? 10 : Math.floor(caller.coins / ratePerMinute);
@@ -189,7 +190,7 @@ const setupSockets = (io) => {
         }
 
         // Mark Host as Busy
-        const h = await Host.findOneAndUpdate({ userId: call.hostId }, { status: "Busy" }, { new: true });
+        const h = await Host.findByIdAndUpdate(call.hostId, { status: "Busy" }, { new: true });
         if (h) io.emit("statusUpdate", { hostId: h._id, status: "Busy" });
 
         io.to(call.userId)
@@ -309,7 +310,7 @@ const setupSockets = (io) => {
       if (h) { io.emit("statusUpdate", { hostId: h._id, status: "Online" }); }
       else {
          // fallback
-         const h2 = await Host.findOneAndUpdate({ userId: callData.hostId }, { status: "Online" }, { new: true });
+         const h2 = await Host.findByIdAndUpdate(callData.hostId, { status: "Online" }, { new: true });
          if(h2) io.emit("statusUpdate", { hostId: h2._id, status: "Online" });
       }
 
