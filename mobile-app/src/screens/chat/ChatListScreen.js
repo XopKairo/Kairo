@@ -48,7 +48,7 @@ const ChatListScreen = () => {
   const renderItem = ({ item }) => {
     const otherParticipant = item.participants.find(p => p._id !== socketService.socket?.userId) || item.participants[0];
     const avatar = otherParticipant?.profilePicture || otherParticipant?.profileImage || 'https://via.placeholder.com/150';
-    const lastMsg = item.lastMessage?.text || (item.lastMessage?.image ? '📸 Image' : (item.lastMessage?.type === 'video' ? '🎥 Video' : 'Start a conversation'));
+    const lastMsg = item.lastMessage?.text || (item.lastMessage?.image ? '📸 Image' : (item.lastMessage?.type === 'video' ? '🎥 Video' : (item.lastMessage?.type === 'gift' ? '🎁 Gift' : 'Start a conversation')));
 
     return (
       <TouchableOpacity 

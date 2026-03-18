@@ -219,7 +219,7 @@ const ChatScreen = ({ route, navigation }) => {
 
   if (!recipient) return null;
 
-  const recipientAvatar = recipient.profileImage || recipient.avatar || 'https://via.placeholder.com/150';
+  const recipientAvatar = recipient.profilePicture || recipient.profileImage || recipient.avatar || 'https://ui-avatars.com/api/?name=' + (recipient.name || 'User') + '&background=random';
 
   return (
     <View style={styles.container}>
@@ -257,7 +257,7 @@ const ChatScreen = ({ route, navigation }) => {
             numColumns={4}
             renderItem={({item}) => (
               <TouchableOpacity style={{flex: 1, alignItems: 'center', marginBottom: 20}} onPress={() => sendGift(item)}>
-                <Image source={{uri: `${BASE_URL}/${item.iconUrl}`}} style={{width: 50, height: 50, marginBottom: 5}} />
+                <Image source={{uri: item.iconUrl ? `${BASE_URL}/${item.iconUrl}` : 'https://via.placeholder.com/50'}} style={{width: 50, height: 50, marginBottom: 5}} />
                 <Text style={{color: '#FFF', fontSize: 10}}>{item.name}</Text>
                 <Text style={{color: COLORS.primary, fontSize: 10, fontWeight: 'bold'}}>{item.coinCost} 🪙</Text>
               </TouchableOpacity>

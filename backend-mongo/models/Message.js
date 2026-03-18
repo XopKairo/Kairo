@@ -20,7 +20,7 @@ const messageSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["text", "image", "video", "system"],
+      enum: ["text", "image", "video", "system", "gift"],
       default: "text",
     },
   },
