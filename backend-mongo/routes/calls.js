@@ -11,7 +11,7 @@ router.post("/generate-token", protectUser, callController.generateToken);
 router.post("/start", protectUser, callController.startCall);
 
 // 3. End Call & Transaction Logic
-router.post("/end", callController.endCall);
+router.post("/end", protectUser, callController.endCall);
 
 // 4. Get Active Calls for Admin
 router.get("/active", protectAdmin, callController.getActiveCalls);

@@ -11,7 +11,7 @@ const hostSchema = new Schema(
       enum: ["Online", "Busy", "Offline"],
       default: "Offline",
     },
-    earnings: { type: Number, default: 0 },
+    earnings: { type: Number, default: 0, min: 0 },
     totalCalls: { type: Number, default: 0 },
     totalMinutes: { type: Number, default: 0 },
     gender: {

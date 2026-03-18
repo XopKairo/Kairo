@@ -28,7 +28,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-router.get("/", async (req, res) => {
+router.get("/", protectAdmin, async (req, res) => {
   try {
     const { search, gender, minCoins, maxCoins, isHost, isVerified, sortBy } = req.query;
     let query = { isDeleted: { $ne: true } };
@@ -159,7 +159,7 @@ router.put("/me/profile", protectUser, profileUpload, async (req, res) => {
   }
 });
 
-router.post("/upload-media", async (req, res) => {
+router.post("/upload-media", protectUser, async (req, res) => {
   try {
     const { file, type } = req.body;
     if (!file) {
@@ -185,7 +185,7 @@ const mediaUpload = multer({
   storage: getStorage("chat_media"),
 }).single("media");
 
-router.post("/upload-media-multipart", mediaUpload, async (req, res) => {
+router.post("/upload-media-multipart", protectUser, mediaUpload, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "File data is required" });
@@ -206,9 +206,9 @@ router.post("/block/:targetId", protectUser, async (req, res) => {
   }
 });
 
-router.put("/push-token", async (req, res) => {
+router.put("/push-token", protectUser, async (req, res) => {
   try {
-    const userId = req.user?._id || req.user?.id || req.admin?._id;
+    const userId = req.user?._id || req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const { pushToken } = req.body;

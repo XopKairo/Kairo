@@ -3,7 +3,7 @@ const { Schema, model } = mongoose;
 
 const transactionSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     amount: { type: Number, required: true },
     currency: { type: String, default: "INR" },
     orderId: { type: String, required: true, unique: true },
@@ -12,6 +12,7 @@ const transactionSchema = new Schema(
       type: String,
       enum: ["pending", "completed", "failed"],
       default: "pending",
+      index: true,
     },
     coinPackageId: { type: Schema.Types.ObjectId, ref: "CoinPackage" },
     coinsCredited: { type: Number, default: 0 },
