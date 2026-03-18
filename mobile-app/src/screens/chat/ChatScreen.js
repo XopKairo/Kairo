@@ -9,15 +9,16 @@ import {
   TextInput, 
   TouchableOpacity,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal
 } from 'react-native';
-import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon } from 'lucide-react-native';
+import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift } from 'lucide-react-native';
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import api, { BASE_URL } from '../../services/api';
 import { uploadMedia } from '../../services/mediaService';
 
 const ChatScreen = ({ route, navigation }) => {
