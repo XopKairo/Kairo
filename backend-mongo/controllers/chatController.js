@@ -19,13 +19,76 @@ export const getConversations = async (req, res) => {
 
 export const getMessages = async (req, res) => {
   try {
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findById(conversationId);
+    
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // Auto-delete 24h logic if setting is 24H
+    if (conversation.deleteSetting === "24H") {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      await Message.deleteMany({
+        conversationId,
+        createdAt: { $lt: twentyFourHoursAgo }
+      });
+    }
+
     const messages = await Message.find({
-      conversationId: req.params.conversationId,
+      conversationId,
     })
       .sort({ createdAt: 1 })
-      .limit(50);
+      .limit(100);
 
     res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateChatSettings = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { deleteSetting } = req.body;
+
+    if (!["NEVER", "IMMEDIATE", "24H"].includes(deleteSetting)) {
+      return res.status(400).json({ message: "Invalid delete setting" });
+    }
+
+    const conversation = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { deleteSetting },
+      { new: true }
+    );
+
+    res.json(conversation);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const clearChatHistory = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // Only participants can clear history
+    if (!conversation.participants.includes(req.user._id)) {
+      return res.status(403).json({ message: "Unauthorized to clear this chat" });
+    }
+
+    await Message.deleteMany({ conversationId });
+    
+    // Update last message to null
+    conversation.lastMessage = null;
+    await conversation.save();
+
+    res.json({ success: true, message: "Chat history cleared permanently" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

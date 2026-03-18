@@ -10,6 +10,11 @@ const conversationSchema = new Schema(
       of: Number,
       default: {},
     },
+    deleteSetting: {
+      type: String,
+      enum: ["NEVER", "IMMEDIATE", "24H"],
+      default: "NEVER",
+    },
   },
   { timestamps: true },
 );

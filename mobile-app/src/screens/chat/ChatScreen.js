@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Modal
 } from 'react-native';
-import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift } from 'lucide-react-native';
+import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift, Settings, Trash2 } from 'lucide-react-native';
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
@@ -30,12 +30,17 @@ const ChatScreen = ({ route, navigation }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [showGifts, setShowGifts] = useState(false);
   const [availableGifts, setAvailableGifts] = useState([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [deleteSetting, setDeleteSetting] = useState('NEVER');
+  const [conversationId, setConversationId] = useState(initialConvId);
   const flatListRef = useRef();
+  const currentDeleteSetting = useRef('NEVER');
 
   useEffect(() => {
     if (!recipient) return;
     fetchMessages();
     fetchGifts();
+    fetchConversationDetails();
 
     if (socketService.socket) {
       socketService.socket.on('newMessage', (message) => {
@@ -60,8 +65,50 @@ const ChatScreen = ({ route, navigation }) => {
         socketService.socket.off('userTyping');
         socketService.socket.off('userStoppedTyping');
       }
+
+      // SNAPCHAT STYLE: Clear if immediate
+      if (currentDeleteSetting.current === 'IMMEDIATE' && conversationId) {
+        api.delete(`user/chat/history/${conversationId}`).catch(e => console.log("Auto-clear failed", e));
+      }
     };
   }, [recipient]);
+
+  const fetchConversationDetails = async () => {
+    if (!initialConvId) return;
+    try {
+      const res = await api.get('user/chat/conversations');
+      const conv = res.data.find(c => c._id === initialConvId);
+      if (conv && conv.deleteSetting) {
+        setDeleteSetting(conv.deleteSetting);
+        currentDeleteSetting.current = conv.deleteSetting;
+      }
+    } catch (e) {}
+  };
+
+  const updateDeleteSetting = async (setting) => {
+    if (!conversationId) return;
+    try {
+      await api.put(`user/chat/settings/${conversationId}`, { deleteSetting: setting });
+      setDeleteSetting(setting);
+      currentDeleteSetting.current = setting;
+      setShowSettings(false);
+      showAlert('Settings Updated', `Chat history will be handled as: ${setting}`, 'success');
+    } catch (e) {
+      showAlert('Error', 'Failed to update settings', 'error');
+    }
+  };
+
+  const clearChat = async () => {
+    if (!conversationId) return;
+    try {
+      await api.delete(`user/chat/history/${conversationId}`);
+      setMessages([]);
+      setShowSettings(false);
+      showAlert('Cleared', 'Chat history cleared permanently', 'success');
+    } catch (e) {
+      showAlert('Error', 'Failed to clear chat', 'error');
+    }
+  };
 
   const fetchGifts = async () => {
     try {
@@ -240,6 +287,10 @@ const ChatScreen = ({ route, navigation }) => {
           <Text style={styles.headerName}>{recipient.name}</Text>
           <Text style={styles.headerStatus}>{isTyping ? 'typing...' : 'Online'}</Text>
         </View>
+
+        <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.settingsBtn}>
+          <Settings color={COLORS.textWhite} size={22} />
+        </TouchableOpacity>
       </View>
 
       <Image 
@@ -276,9 +327,60 @@ const ChatScreen = ({ route, navigation }) => {
         </View>
       </Modal>
 
+      <Modal visible={showSettings} transparent animationType="fade">
+        <TouchableOpacity style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.7)'}} onPress={() => setShowSettings(false)} />
+        <View style={{position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: COLORS.backgroundDark, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 30, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)'}}>
+          <Text style={{color: '#FFF', fontSize: 20, fontWeight: 'bold', marginBottom: 25, textAlign: 'center'}}>Chat Settings</Text>
+          
+          <Text style={{color: COLORS.textGray, fontSize: 12, fontWeight: 'bold', marginBottom: 15, textTransform: 'uppercase'}}>Auto-Delete Messages</Text>
+          
+          <TouchableOpacity 
+            style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)'}}
+            onPress={() => updateDeleteSetting('IMMEDIATE')}
+          >
+            <Text style={{color: deleteSetting === 'IMMEDIATE' ? COLORS.primary : '#FFF', fontSize: 16, fontWeight: '600'}}>Immediate (When chat closed)</Text>
+            {deleteSetting === 'IMMEDIATE' && <Check color={COLORS.primary} size={20} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)'}}
+            onPress={() => updateDeleteSetting('24H')}
+          >
+            <Text style={{color: deleteSetting === '24H' ? COLORS.primary : '#FFF', fontSize: 16, fontWeight: '600'}}>After 24 Hours</Text>
+            {deleteSetting === '24H' && <Check color={COLORS.primary} size={20} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)'}}
+            onPress={() => updateDeleteSetting('NEVER')}
+          >
+            <Text style={{color: deleteSetting === 'NEVER' ? COLORS.primary : '#FFF', fontSize: 16, fontWeight: '600'}}>Never (Keep History)</Text>
+            {deleteSetting === 'NEVER' && <Check color={COLORS.primary} size={20} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={{flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 30, paddingVertical: 15, backgroundColor: 'rgba(255, 75, 75, 0.1)', borderRadius: 15, justifyContent: 'center'}}
+            onPress={() => {
+              showAlert('Clear History', 'Are you sure you want to clear all messages permanently?', 'error', 'CANCEL', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'CLEAR', onPress: clearChat }
+              ]);
+            }}
+          >
+            <Trash2 color="#FF4B4B" size={20} />
+            <Text style={{color: '#FF4B4B', fontSize: 16, fontWeight: 'bold'}}>Clear Chat History</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{marginTop: 20, paddingVertical: 10}} onPress={() => setShowSettings(false)}>
+            <Text style={{color: COLORS.textGray, textAlign: 'center', fontWeight: 'bold'}}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={{ width: '100%' }}
       >
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.attachButton} onPress={() => setShowGifts(true)}>
@@ -299,6 +401,7 @@ const ChatScreen = ({ route, navigation }) => {
             value={inputText}
             onChangeText={setInputText}
             multiline
+            onFocus={() => setTimeout(() => flatListRef.current?.scrollToEnd(), 200)}
           />
           
           <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
@@ -361,6 +464,9 @@ const styles = StyleSheet.create({
   headerStatus: {
     color: COLORS.accentGlow,
     fontSize: 12,
+  },
+  settingsBtn: {
+    padding: 8,
   },
   listContent: {
     padding: SPACING.md,
