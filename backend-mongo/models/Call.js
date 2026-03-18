@@ -11,6 +11,7 @@ const callSchema = new Schema(
     coinsDeducted: { type: Number, default: 0 },
     hostEarning: { type: Number, default: 0 },
     adminEarning: { type: Number, default: 0 },
+    hasLiked: { type: Boolean, default: false },
     startTime: { type: Date, default: Date.now },
     endTime: { type: Date },
   },

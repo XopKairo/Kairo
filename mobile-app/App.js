@@ -7,6 +7,7 @@ import { Home, Bell as BellIcon, User as UserIcon, MessageCircle } from 'lucide-
 import { View, ActivityIndicator, Platform, Image, Text } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SystemUI from 'expo-system-ui';
+import * as Notifications from 'expo-notifications';
 import { Camera } from 'expo-camera';
 import * as Location from 'expo-location';
 import { Audio } from 'expo-av';
@@ -91,8 +92,8 @@ function MainTabs() {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="ChatMain" component={ChatListScreen} />
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="ChatMain" component={ChatListScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
       <Tab.Screen name="Profile" component={UserProfileScreen} />
     </Tab.Navigator>
@@ -212,9 +213,27 @@ function NavigationStack() {
   );
 }
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
 export default function App() {
   useEffect(() => {
     async function initApp() {
+      try {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+      } catch (e) {
+        console.log('Notification permission error:', e);
+      }
       if (Platform.OS === 'android') {
         try {
           await NavigationBar.setVisibilityAsync('hidden');

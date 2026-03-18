@@ -154,38 +154,20 @@ const HomeScreen = ({ navigation }) => {
            ))}
         </View>
 
-        {activeTab === 'For You' && hosts.length > 0 ? (
-          <View style={styles.swiperContainer}>
-            <Swiper
-              key={`swiper-${hosts.length}-${activeTab}`}
-              cards={hosts}
-              renderCard={(card) => <SwipeCard item={card} onCall={() => handleCall(card)} onChat={() => handleChat(card)} />}
-              onSwipedLeft={(idx) => handleInteraction(hosts[idx]._id, 'pass')}
-              onSwipedRight={(idx) => handleInteraction(hosts[idx]._id, 'like')}
-              cardIndex={0}
-              keyExtractor={(card) => card._id || card.id || Math.random().toString()}
-              backgroundColor={'transparent'}
-              stackSize={Math.min(hosts.length, 3)}
-              infinite
-              verticalSwipe={false}
-            />
-          </View>
-        ) : (
-          <View style={{ minHeight: 400, marginTop: 10 }}>
-            {loading ? (
-               <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 50 }} />
-            ) : hosts.length > 0 ? (
-              <FlashList data={hosts} renderItem={({ item }) => <HostCard item={item} currentUser={currentUser} navigation={navigation} />} keyExtractor={item => item._id} numColumns={2} estimatedItemSize={200} scrollEnabled={false} />
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No users found in your area.</Text>
-                <TouchableOpacity onPress={() => fetchData()} style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.primary, borderRadius: 8 }}>
-                   <Text style={{ color: '#FFF' }}>Refresh</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={{ minHeight: 400, marginTop: 10 }}>
+          {loading ? (
+             <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 50 }} />
+          ) : hosts.length > 0 ? (
+            <FlashList data={hosts} renderItem={({ item }) => <HostCard item={item} currentUser={currentUser} navigation={navigation} />} keyExtractor={item => item._id} numColumns={2} estimatedItemSize={200} scrollEnabled={false} />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No users found in your area.</Text>
+              <TouchableOpacity onPress={() => fetchData()} style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.primary, borderRadius: 8 }}>
+                 <Text style={{ color: '#FFF' }}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

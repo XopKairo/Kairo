@@ -7,6 +7,7 @@ import Agency from "../models/Agency.js";
 import Settings from "../models/Settings.js";
 import WalletLedger from "../models/WalletLedger.js";
 import Admin from "../models/Admin.js";
+import Call from "../models/Call.js";
 import mongoose from "mongoose";
 
 class InteractionController {
@@ -99,16 +100,15 @@ class InteractionController {
       }
 
       await Follow.create({ followerId, followeeId });
-      
+
       const host = await Host.findOne({ userId: followeeId });
-      
+
       // Update Current User (denormalized data for performance)
-      await User.findByIdAndUpdate(followerId, { 
-        $addToSet: { 
-          following: followeeId,
-          favoriteHosts: host ? host._id : null 
-        } 
-      });
+      const userUpdate = { $addToSet: { following: followeeId } };
+      if (host) {
+        userUpdate.$addToSet.favoriteHosts = host._id;
+      }
+      await User.findByIdAndUpdate(followerId, userUpdate);
 
       // Update Followed User and Host
       await User.findByIdAndUpdate(followeeId, { $addToSet: { followers: followerId } });
@@ -129,17 +129,15 @@ class InteractionController {
     const followerId = req.user._id;
     try {
       await Follow.findOneAndDelete({ followerId, followeeId });
-      
+
       const host = await Host.findOne({ userId: followeeId });
 
       // Update Current User
-      await User.findByIdAndUpdate(followerId, { 
-        $pull: { 
-          following: followeeId,
-          favoriteHosts: host ? host._id : null 
-        } 
-      });
-
+      const userUpdate = { $pull: { following: followeeId } };
+      if (host) {
+        userUpdate.$pull.favoriteHosts = host._id;
+      }
+      await User.findByIdAndUpdate(followerId, userUpdate);
       // Update Followed User and Host
       await User.findByIdAndUpdate(followeeId, { $pull: { followers: followerId } });
       if (host) {
@@ -161,6 +159,57 @@ class InteractionController {
         followeeId: userId,
       });
       res.json({ isFollowing: !!isFollowing });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  // --- Liking ---
+  async getLikeStatus(req, res) {
+    const { hostId } = req.params;
+    const userId = req.user._id;
+    try {
+      // Find latest completed call that hasn't been liked
+      const unlikedCall = await Call.findOne({
+        userId,
+        hostId,
+        status: "Completed",
+        hasLiked: false,
+      }).sort({ createdAt: -1 });
+
+      res.json({ canLike: !!unlikedCall });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async likeHost(req, res) {
+    const { hostId } = req.body;
+    const userId = req.user._id;
+    try {
+      const unlikedCall = await Call.findOne({
+        userId,
+        hostId,
+        status: "Completed",
+        hasLiked: false,
+      }).sort({ createdAt: -1 });
+
+      if (!unlikedCall) {
+        return res.status(400).json({ 
+          message: "You must call this host before liking them again!" 
+        });
+      }
+
+      // Mark call as liked
+      unlikedCall.hasLiked = true;
+      await unlikedCall.save();
+
+      // Update Host Ranking and Like count
+      await Host.findByIdAndUpdate(hostId, {
+        $inc: { rankingScore: 10, likes: 1 }
+      });
+
+      res.json({ success: true, message: "Host liked!" });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }

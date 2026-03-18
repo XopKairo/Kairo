@@ -11,7 +11,8 @@ import {
   Image,
   ActivityIndicator
 } from 'react-native';
-import { Send, ChevronLeft, ImagePlus, Check, CheckCheck } from 'lucide-react-native';
+import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon } from 'lucide-react-native';
+import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import socketService from '../../services/socketService';
@@ -21,7 +22,7 @@ import { uploadMedia } from '../../services/mediaService';
 
 const ChatScreen = ({ route, navigation }) => {
   const { recipient, conversationId: initialConvId } = route.params || {};
-  const { user } = useAuth();
+  const { user, showAlert } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -71,8 +72,10 @@ const ChatScreen = ({ route, navigation }) => {
   const handleSend = async () => {
     if (!inputText.trim() || !recipient) return;
 
+    const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
+
     const messageData = {
-      recipientId: recipient.id || recipient._id,
+      recipientId: actualRecipientId,
       text: inputText,
       conversationId: initialConvId,
       type: 'text'
@@ -87,13 +90,21 @@ const ChatScreen = ({ route, navigation }) => {
       setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user.id, createdAt: new Date(), status: 'sent' }]);
       setInputText('');
     } catch (error) {
-      console.log('Failed to send message', error);
+      if (error.response && error.response.status === 400 && error.response.data?.requiresRecharge) {
+        if(showAlert) showAlert('Insufficient Coins', error.response.data.message, 'error', 'RECHARGE', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Recharge', onPress: () => navigation.navigate('Wallet') }
+        ]);
+      } else {
+        console.log('Failed to send message', error);
+      }
     }
   };
 
   const handlePickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ['images', 'videos'],
+      videoMaxDuration: 30,
       allowsEditing: true,
       quality: 0.7,
       base64: true
@@ -105,16 +116,22 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const sendMediaMessage = async (asset) => {
+    const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
+    const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
     setIsUploading(true);
     try {
       const base64Str = `data:image/jpeg;base64,${asset.base64}`;
-      const imageUrl = await uploadMedia(base64Str, 'image');
+      const isVideo = asset.type === 'video';
+      // Note: base64 for video might be heavy or not supported easily. For now assume uploadMedia handles it or it's an image. If video, we might need a different upload logic, but we'll try to use uploadMedia with base64 or local uri.
+      let mediaUrl = '';
+      if(isVideo) { mediaUrl = await uploadMedia(asset.uri, 'video'); }
+      else { mediaUrl = await uploadMedia(base64Str, 'image'); }
       
       const messageData = {
-        recipientId: recipient.id || recipient._id,
+        recipientId: actualRecipientId,
         text: '',
-        image: imageUrl,
-        type: 'image',
+        image: mediaUrl,
+        type: isVideo ? 'video' : 'image',
         conversationId: initialConvId,
       };
 
@@ -136,8 +153,10 @@ const ChatScreen = ({ route, navigation }) => {
     return (
       <View style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}>
         <View style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}>
-          {(item.type === 'image' || item.image) ? (
+          {(item.type === 'image' || (item.image && item.type !== 'video')) ? (
             <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
+          ) : item.type === 'video' ? (
+             <Video source={{ uri: item.image }} style={styles.messageImage} useNativeControls resizeMode="cover" isLooping />
           ) : null}
           
           {item.text ? <Text style={styles.messageText}>{item.text}</Text> : null}

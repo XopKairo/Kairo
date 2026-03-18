@@ -7,7 +7,7 @@ import { Audio } from 'expo-av';
 const { width, height } = Dimensions.get('window');
 
 const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
-  const [sound, setSound] = useState(null);
+  const soundRef = React.useRef(null);
 
   async function playRingtone() {
     try {
@@ -22,7 +22,7 @@ const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
         require('../../assets/sounds/incoming.mp3'),
         { shouldPlay: true, isLooping: true }
       );
-      setSound(sound);
+      soundRef.current = sound;
     } catch (e) {
       console.log('Error playing ringtone:', e);
     }
@@ -30,10 +30,10 @@ const IncomingCallModal = ({ visible, callerName, onAccept, onReject }) => {
 
   async function stopRingtone() {
     try {
-      if (sound) {
-        await sound.stopAsync();
-        await sound.unloadAsync();
-        setSound(null);
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
       }
     } catch (e) {
       console.log('Error stopping ringtone:', e);

@@ -137,13 +137,18 @@ const VideoCallScreen = ({ route }) => {
       
       // Force navigation after a short delay to ensure Zego cleanup doesn't block UI
       setTimeout(() => {
-        if (navigation.canGoBack()) {
-          navigation.goBack();
+        if (!isIncoming) {
+          // Caller side: Go to Host Profile with "justFinishedCall" trigger for the Pro Popup
+          navigation.navigate('HostProfile', { hostId, justFinishedCall: true });
         } else {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Main' }],
-          });
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Main' }],
+            });
+          }
         }
       }, 500);
     } catch (e) {

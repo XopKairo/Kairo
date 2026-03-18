@@ -31,6 +31,7 @@ const hostSchema = new Schema(
     avgRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     rankingScore: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
     isBoosted: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false, index: true },

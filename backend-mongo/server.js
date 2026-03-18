@@ -108,6 +108,7 @@ app.use("/api/user/vip", protectUser, vipRoutes);
 app.use("/api/user/reviews", protectUser, reviewRoutes);
 app.use("/api/user/users", protectUser, adminUsersRoutes);
 app.use("/api/user/reports", protectUser, reportRoutes);
+app.use("/api/user/interactions", protectUser, interactionRoutes);
 
 // ADMIN ROUTES
 app.use("/api/admin/auth", authLimiter, authRoutes);

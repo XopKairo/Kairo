@@ -16,6 +16,10 @@ router.post("/follow", interactionController.followUser);
 router.delete("/follow/:followeeId", interactionController.unfollowUser);
 router.get("/follow/status/:userId", interactionController.getFollowStatus);
 
+// Liking
+router.post("/like", interactionController.likeHost);
+router.get("/like/status/:hostId", interactionController.getLikeStatus);
+
 // Rating
 router.post("/rate", interactionController.submitRating);
 

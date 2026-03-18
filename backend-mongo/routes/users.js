@@ -181,6 +181,22 @@ router.post("/upload-media", async (req, res) => {
   }
 });
 
+const mediaUpload = multer({ 
+  storage: getStorage("chat_media"),
+}).single("media");
+
+router.post("/upload-media-multipart", mediaUpload, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "File data is required" });
+    }
+    res.json({ success: true, url: req.file.path });
+  } catch (error) {
+    console.error("Media upload error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 router.post("/block/:targetId", protectUser, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user._id, { $addToSet: { blockedUsers: req.params.targetId } });

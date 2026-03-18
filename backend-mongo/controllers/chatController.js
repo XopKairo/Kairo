@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
+import User from "../models/User.js";
 
 export const getConversations = async (req, res) => {
   try {
@@ -31,7 +32,7 @@ export const getMessages = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-  const { recipientId, text, type = "text" } = req.body;
+  const { recipientId, text, type = "text", image } = req.body;
 
   try {
     let conversation = await Conversation.findOne({
@@ -44,11 +45,34 @@ export const sendMessage = async (req, res) => {
       });
     }
 
+    const senderUser = await User.findById(req.user._id);
+    
+    // Check if sender is NOT a host. Hosts reply for free.
+    if (!senderUser.isHost) {
+      const messageCount = await Message.countDocuments({
+        conversationId: conversation._id,
+        sender: req.user._id
+      });
+      
+      if (messageCount >= 10) {
+        if (senderUser.coins < 3) {
+          return res.status(400).json({ 
+            message: "Insufficient coins. After 10 free messages, each message costs 3 coins. Please recharge.",
+            requiresRecharge: true
+          });
+        }
+        senderUser.coins -= 3;
+        await senderUser.save();
+        // The 3 coins are effectively given to admin by deducting from user without adding to host
+      }
+    }
+
     const message = await Message.create({
       conversationId: conversation._id,
       sender: req.user._id,
       recipient: recipientId,
       text,
+      image,
       type,
     });
 

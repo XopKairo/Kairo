@@ -16,12 +16,17 @@ const HostProfileScreen = ({ route, navigation }) => {
   const [host, setHost] = useState(initialData || null);
   const [loading, setLoading] = useState(!initialData);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [canLike, setCanLike] = useState(false);
+  const [showPostCallModal, setShowPostCallModal] = useState(false);
   const [fetchError, setFetchError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     fetchHostDetails();
-  }, [routeHostId]);
+    if (route.params?.justFinishedCall) {
+      setShowPostCallModal(true);
+    }
+  }, [routeHostId, route.params?.justFinishedCall]);
 
   const fetchHostDetails = async () => {
     const targetId = routeHostId || initialData?._id;
@@ -37,20 +42,45 @@ const HostProfileScreen = ({ route, navigation }) => {
       const res = await api.get(`public/hosts/${targetId}`);
       if (res.data && res.data._id) {
         setHost(res.data);
-        if (currentUser && res.data.userId) {
-           const followRes = await api.get(`user/interactions/follow/status/${res.data.userId?._id || res.data.userId}`);
+        if (currentUser) {
+           // Parallel status checks
+           const [followRes, likeRes] = await Promise.all([
+             api.get(`user/interactions/follow/status/${res.data.userId?._id || res.data.userId}`),
+             api.get(`user/interactions/like/status/${res.data._id}`)
+           ]);
            setIsFollowing(followRes.data.isFollowing);
+           setCanLike(likeRes.data.canLike);
         }
       } else {
         setFetchError(true);
-        setErrorMessage('Host data is empty or invalid.');
+        setErrorMessage('Host not found on server.');
       }
     } catch (error) {
       console.error('Fetch Host Error:', error);
       setFetchError(true);
-      setErrorMessage(error.message || 'Failed to connect to server.');
+      
+      // Better 404 Handling
+      if (error.response && error.response.status === 404) {
+        setErrorMessage("Host profile not found (404). It might have been deleted.");
+      } else {
+        setErrorMessage(error.message || 'Failed to connect to server.');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!currentUser) return navigation.navigate('Login');
+    if (!canLike) return showAlert('Call Required', 'You can only like after calling this host!', 'notice');
+    
+    try {
+      await api.post('user/interactions/like', { hostId: host._id });
+      setCanLike(false);
+      setHost(prev => ({ ...prev, likes: (prev.likes || 0) + 1 }));
+      showAlert('Liked!', 'Your like has been registered.', 'success');
+    } catch (e) {
+      showAlert('Error', e.response?.data?.message || 'Failed to like');
     }
   };
 
@@ -216,12 +246,46 @@ const HostProfileScreen = ({ route, navigation }) => {
 
            <View style={styles.actionsRow}>
               <TouchableOpacity style={[styles.circleBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]} onPress={handleBlock}><Ban color="#FF4B4B" size={22} /></TouchableOpacity>
+              <TouchableOpacity style={[styles.circleBtn, canLike && { backgroundColor: 'rgba(255, 75, 75, 0.15)', borderColor: '#FF4B4B' }]} onPress={handleLike}>
+                 <Heart color={canLike ? "#FF4B4B" : "#FFF"} size={22} fill={canLike ? "#FF4B4B" : "transparent"} />
+              </TouchableOpacity>
               <TouchableOpacity style={styles.circleBtn} onPress={() => showAlert('Shared', 'Profile link copied to clipboard!', 'success')}><Share2 color="#FFF" size={22} /></TouchableOpacity>
               <TouchableOpacity style={styles.chatBtn} onPress={() => navigation.navigate('Chat', { recipient: host })}><MessageCircle color="#FFF" size={24} /><Text style={styles.chatText}>Message</Text></TouchableOpacity>
            </View>
         </View>
         <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* Post Call Pro-Look Popup */}
+      <Modal visible={showPostCallModal} transparent animationType="fade">
+         <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+               <TouchableOpacity style={styles.modalClose} onPress={() => setShowPostCallModal(false)}><ChevronLeft color="#FFF" size={24} /></TouchableOpacity>
+               
+               <Image source={{ uri: host.profilePicture }} style={styles.modalImg} />
+               <LinearGradient colors={['transparent', 'rgba(15,10,25,1)']} style={styles.modalGradient} />
+
+               <View style={styles.modalTextContainer}>
+                  <Text style={styles.modalTitle}>Call Completed!</Text>
+                  <Text style={styles.modalSubtitle}>How was your experience with {host.name}?</Text>
+                  
+                  <View style={styles.modalStats}>
+                     <View style={styles.mStatItem}><Text style={styles.mStatValue}>{host.likes || 0}</Text><Text style={styles.mStatLabel}>Likes</Text></View>
+                     <View style={styles.mStatItem}><Text style={styles.mStatValue}>{host.totalCalls || 0}</Text><Text style={styles.mStatLabel}>Calls</Text></View>
+                  </View>
+
+                  <TouchableOpacity style={styles.modalLikeBtn} onPress={async () => { await handleLike(); setShowPostCallModal(false); }}>
+                     <Heart color="#FFF" size={24} fill="#FFF" />
+                     <Text style={styles.modalLikeText}>Send a Like</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowPostCallModal(false)}>
+                     <Text style={styles.modalCloseText}>Maybe Later</Text>
+                  </TouchableOpacity>
+               </View>
+            </View>
+         </View>
+      </Modal>
 
       {/* Floating Call Button */}
       <View style={styles.floatingCallContainer}>
@@ -271,7 +335,23 @@ const styles = StyleSheet.create({
   floatingCallContainer: { position: 'absolute', bottom: 30, left: 20, right: 20 },
   callMainBtn: { width: '100%', height: 64, borderRadius: 24, overflow: 'hidden', shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 10 },
   callGradient: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  callBtnText: { color: '#FFF', fontSize: 18, fontWeight: '900', letterSpacing: 1 }
+  callBtnText: { color: '#FFF', fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { width: '100%', maxWidth: 400, backgroundColor: '#1F1B2E', borderRadius: 32, overflow: 'hidden', elevation: 20 },
+  modalClose: { position: 'absolute', top: 20, left: 20, zIndex: 10, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalImg: { width: '100%', height: 350, resizeMode: 'cover' },
+  modalGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 200 },
+  modalTextContainer: { padding: 30, marginTop: -100, alignItems: 'center' },
+  modalTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', textAlign: 'center' },
+  modalSubtitle: { color: COLORS.textGray, fontSize: 14, textAlign: 'center', marginTop: 8, marginBottom: 20 },
+  modalStats: { flexDirection: 'row', gap: 30, marginBottom: 30 },
+  mStatItem: { alignItems: 'center' },
+  mStatValue: { color: '#FFF', fontSize: 20, fontWeight: '900' },
+  mStatLabel: { color: COLORS.textGray, fontSize: 10, fontWeight: 'bold' },
+  modalLikeBtn: { width: '100%', height: 60, borderRadius: 20, backgroundColor: '#FF4B4B', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#FF4B4B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+  modalLikeText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  modalCloseBtn: { marginTop: 20 },
+  modalCloseText: { color: COLORS.textGray, fontSize: 14, fontWeight: 'bold' }
 });
 
 export default HostProfileScreen;
