@@ -27,11 +27,14 @@ const ChatScreen = ({ route, navigation }) => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showGifts, setShowGifts] = useState(false);
+  const [availableGifts, setAvailableGifts] = useState([]);
   const flatListRef = useRef();
 
   useEffect(() => {
     if (!recipient) return;
     fetchMessages();
+    fetchGifts();
 
     if (socketService.socket) {
       socketService.socket.on('newMessage', (message) => {
@@ -58,6 +61,38 @@ const ChatScreen = ({ route, navigation }) => {
       }
     };
   }, [recipient]);
+
+  const fetchGifts = async () => {
+    try {
+      const res = await api.get('user/interactions/gifts');
+      setAvailableGifts(res.data || []);
+    } catch (e) { console.log("Failed to fetch gifts", e); }
+  };
+
+  const sendGift = async (gift) => {
+    try {
+      const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
+      await api.post('user/interactions/send-gift', { giftId: gift._id, receiverId: actualRecipientId });
+      
+      const messageData = {
+        recipientId: actualRecipientId,
+        text: `🎁 Sent you a ${gift.name}`,
+        type: 'gift',
+        conversationId: initialConvId,
+      };
+
+      if (socketService.socket) {
+        socketService.socket.emit('privateMessage', messageData);
+      }
+
+      await api.post(`user/chat/send`, messageData);
+      setMessages(prev => [...prev, { ...messageData, _id: Date.now().toString(), sender: user.id, createdAt: new Date(), status: 'sent' }]);
+      setShowGifts(false);
+      if(showAlert) showAlert('Success', `Gift ${gift.name} sent!`, 'success');
+    } catch (e) {
+      if(showAlert) showAlert('Error', e.response?.data?.message || 'Failed to send gift', 'error');
+    }
+  };
 
   const fetchMessages = async () => {
     if (!initialConvId) return;
@@ -152,9 +187,9 @@ const ChatScreen = ({ route, navigation }) => {
     return (
       <View style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}>
         <View style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}>
-          {(item.type === 'image' || (item.image && item.type !== 'video')) ? (
+          {((item.type === 'image' || item.image) && item.image !== null && item.image !== 'null' && item.type !== 'video') ? (
             <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
-          ) : item.type === 'video' ? (
+          ) : (item.type === 'video' && item.image !== null && item.image !== 'null') ? (
              <Video source={{ uri: item.image }} style={styles.messageImage} useNativeControls resizeMode="cover" isLooping />
           ) : null}
           
@@ -169,9 +204,9 @@ const ChatScreen = ({ route, navigation }) => {
                 {item.status === 'read' ? (
                    <CheckCheck size={14} color="#3B82F6" />
                 ) : item.status === 'delivered' ? (
-                   <CheckCheck size={14} color={COLORS.textGray} />
+                   <CheckCheck size={14} color="rgba(255,255,255,0.5)" />
                 ) : (
-                   <Check size={14} color={COLORS.textGray} />
+                   <Check size={14} color="rgba(255,255,255,0.5)" />
                 )}
               </View>
             )}
@@ -212,11 +247,33 @@ const ChatScreen = ({ route, navigation }) => {
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
       />
 
+      <Modal visible={showGifts} transparent animationType="slide">
+        <TouchableOpacity style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'}} onPress={() => setShowGifts(false)} />
+        <View style={{backgroundColor: COLORS.backgroundDark, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 20, maxHeight: '50%', borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)'}}>
+          <Text style={{color: '#FFF', fontSize: 18, fontWeight: 'bold', marginBottom: 20, textAlign: 'center'}}>Send a Gift</Text>
+          <FlatList 
+            data={availableGifts}
+            numColumns={4}
+            renderItem={({item}) => (
+              <TouchableOpacity style={{flex: 1, alignItems: 'center', marginBottom: 20}} onPress={() => sendGift(item)}>
+                <Image source={{uri: `${BASE_URL}/${item.iconUrl}`}} style={{width: 50, height: 50, marginBottom: 5}} />
+                <Text style={{color: '#FFF', fontSize: 10}}>{item.name}</Text>
+                <Text style={{color: COLORS.primary, fontSize: 10, fontWeight: 'bold'}}>{item.coinCost} 🪙</Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={item => item._id}
+          />
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.attachButton} onPress={() => setShowGifts(true)}>
+            <Gift color={COLORS.primary} size={24} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.attachButton} onPress={handlePickImage} disabled={isUploading}>
             {isUploading ? (
                <ActivityIndicator color={COLORS.primary} size="small" />
@@ -315,14 +372,20 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   myBubble: {
-    backgroundColor: COLORS.primary,
-    borderBottomRightRadius: 4,
+    backgroundColor: '#056162',
+    borderBottomRightRadius: 2,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    borderBottomLeftRadius: 15,
   },
   theirBubble: {
-    backgroundColor: COLORS.cardBackground,
-    borderBottomLeftRadius: 4,
+    backgroundColor: '#262d31',
+    borderBottomLeftRadius: 2,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    borderBottomRightRadius: 15,
     borderWidth: 1,
-    borderColor: 'rgba(159, 103, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   messageImage: {
     width: 200,

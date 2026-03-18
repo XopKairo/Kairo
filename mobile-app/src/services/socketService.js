@@ -28,10 +28,13 @@ class SocketService {
 
     if (!this.socket) {
       this.socket = io(SOCKET_URL, {
-        transports: ['polling', 'websocket'], // Start with polling, upgrade to websocket
+        transports: ['websocket', 'polling'], // Prioritize websocket
         auth: { token },
-        timeout: 20000, // Increase timeout to 20 seconds
-        reconnectionAttempts: 5,
+        timeout: 30000, // Increase timeout to 30 seconds
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        randomizationFactor: 0.5,
       });
 
       this.socket.on('connect', () => {
