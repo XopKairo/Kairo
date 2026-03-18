@@ -87,7 +87,7 @@ const ChatScreen = ({ route, navigation }) => {
       }
 
       await api.post(`user/chat/send`, messageData);
-      setMessages(prev => [...prev, { ...messageData, _id: Date.now().toString(), sender: user.id, createdAt: new Date(), status: 'sent' }]);
+      setMessages(prev => [...prev, { ...messageData, _id: Date.now().toString(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
       setShowGifts(false);
       if(showAlert) showAlert('Success', `Gift ${gift.name} sent!`, 'success');
     } catch (e) {
@@ -123,7 +123,7 @@ const ChatScreen = ({ route, navigation }) => {
 
     try {
       const res = await api.post(`user/chat/send`, messageData);
-      setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user.id, createdAt: new Date(), status: 'sent' }]);
+      setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
       setInputText('');
     } catch (error) {
       if (error.response && error.response.status === 400 && error.response.data?.requiresRecharge) {
@@ -175,7 +175,7 @@ const ChatScreen = ({ route, navigation }) => {
       }
 
       const res = await api.post(`user/chat/send`, messageData);
-      setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user.id, createdAt: new Date(), status: 'sent' }]);
+      setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
     } catch (error) {
        console.log("Upload failed", error);
     } finally {
@@ -184,7 +184,10 @@ const ChatScreen = ({ route, navigation }) => {
   };
 
   const renderMessage = ({ item }) => {
-    const isMe = item.sender === user.id || item.sender?._id === user.id || item.sender === user._id;
+    const currentUserId = user?._id || user?.id;
+    const messageSenderId = item.sender?._id || item.sender;
+    const isMe = messageSenderId === currentUserId;
+
     return (
       <View style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}>
         <View style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}>
@@ -238,6 +241,12 @@ const ChatScreen = ({ route, navigation }) => {
           <Text style={styles.headerStatus}>{isTyping ? 'typing...' : 'Online'}</Text>
         </View>
       </View>
+
+      <Image 
+        source={{ uri: 'https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png' }} 
+        style={[StyleSheet.absoluteFill, { opacity: 0.05, tintColor: COLORS.primary }]} 
+        resizeMode="repeat"
+      />
 
       <FlatList
         ref={flatListRef}
@@ -358,33 +367,36 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   messageWrapper: {
-    marginBottom: SPACING.md,
-    maxWidth: '80%',
+    marginBottom: SPACING.sm,
+    maxWidth: '85%',
+    flexDirection: 'row', // Helps with alignSelf
   },
   myMessage: {
     alignSelf: 'flex-end',
+    marginLeft: 'auto', // Push to right
   },
   theirMessage: {
     alignSelf: 'flex-start',
+    marginRight: 'auto', // Push to left
   },
   bubble: {
-    padding: 12,
-    borderRadius: 20,
-    minWidth: 80,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 15,
+    minWidth: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   myBubble: {
     backgroundColor: '#056162',
-    borderBottomRightRadius: 2,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    borderBottomLeftRadius: 15,
+    borderTopRightRadius: 2,
   },
   theirBubble: {
     backgroundColor: '#262d31',
-    borderBottomLeftRadius: 2,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    borderBottomRightRadius: 15,
+    borderTopLeftRadius: 2,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
   },
