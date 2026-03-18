@@ -42,7 +42,7 @@ export default function Users() {
   const [banForm, setBanForm] = useState({ reason: '', duration: '1', customDate: '' });
 
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [walletForm, setWalletForm] = useState({ amount: '', type: 'ADD', reason: '' });
+  const [walletForm, setWalletForm] = useState({ amount: '', type: 'ADD', balanceType: 'COINS', reason: '' });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -76,12 +76,13 @@ export default function Users() {
         userId: editingUser._id,
         amount: walletForm.amount,
         type: walletForm.type,
+        balanceType: walletForm.balanceType,
         reason: walletForm.reason
       });
       alert('Wallet adjusted successfully');
       fetchUsers();
       setIsWalletModalOpen(false);
-      setWalletForm({ amount: '', type: 'ADD', reason: '' });
+      setWalletForm({ amount: '', type: 'ADD', balanceType: 'COINS', reason: '' });
     } catch (error) {
       alert('Adjustment failed: ' + ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Unknown error'));
     }
@@ -397,14 +398,26 @@ export default function Users() {
                 <button 
                   onClick={() => setWalletForm({...walletForm, type: 'ADD'})}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${walletForm.type === 'ADD' ? 'bg-white dark:bg-surface-700 text-brand-600 shadow-sm' : 'text-gray-500'}`}
-                >Add Coins</button>
+                >Add</button>
                 <button 
                   onClick={() => setWalletForm({...walletForm, type: 'REMOVE'})}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${walletForm.type === 'REMOVE' ? 'bg-white dark:bg-surface-700 text-red-600 shadow-sm' : 'text-gray-500'}`}
-                >Remove Coins</button>
+                >Remove</button>
               </div>
+
+              <div className="flex gap-4 p-1 bg-gray-100 dark:bg-surface-800 rounded-2xl">
+                <button 
+                  onClick={() => setWalletForm({...walletForm, balanceType: 'COINS'})}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${walletForm.balanceType === 'COINS' ? 'bg-brand-500 text-white shadow-sm' : 'text-gray-500'}`}
+                >Coins</button>
+                <button 
+                  onClick={() => setWalletForm({...walletForm, balanceType: 'CASH'})}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${walletForm.balanceType === 'CASH' ? 'bg-brand-500 text-white shadow-sm' : 'text-gray-500'}`}
+                >Cash (INR)</button>
+              </div>
+
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Amount (Coins)</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Amount</label>
                 <input type="number" value={walletForm.amount} onChange={e => setWalletForm({...walletForm, amount: e.target.value})} placeholder="e.g. 500" className="w-full p-4 bg-gray-50 dark:bg-surface-800 rounded-2xl border-none text-sm font-bold" />
               </div>
               <div>

@@ -18,9 +18,9 @@ import redisClient from "../config/redis.js";
 
 class AdminController {
 
-  // 1. Adjust User Wallet (Add/Remove Coins)
+  // 1. Adjust User Wallet (Add/Remove Coins/Cash)
   async adjustWallet(req, res) {
-    const { userId, amount, type, reason } = req.body; // type: 'ADD' or 'REMOVE'
+    const { userId, amount, type, balanceType = "COINS", reason } = req.body; // type: 'ADD' or 'REMOVE', balanceType: 'COINS' or 'CASH'
     try {
       const user = await User.findById(userId);
       if (!user)
@@ -28,16 +28,33 @@ class AdminController {
           .status(404)
           .json({ success: false, message: "User not found" });
 
-      const balanceBefore = user.coins;
+      const amountNum = parseInt(amount);
+      let balanceBefore;
       let newBalance;
 
-      if (type === "ADD") {
-        newBalance = balanceBefore + parseInt(amount);
+      if (balanceType === "CASH") {
+        balanceBefore = user.cashBalance || 0;
+        if (type === "ADD") {
+          newBalance = balanceBefore + amountNum;
+        } else {
+          newBalance = Math.max(0, balanceBefore - amountNum);
+        }
+        user.cashBalance = newBalance;
+        
+        // SYNC with Host Earnings if host
+        if (user.isHost) {
+          await Host.findOneAndUpdate({ userId: user._id }, { earnings: newBalance });
+        }
       } else {
-        newBalance = Math.max(0, balanceBefore - parseInt(amount));
+        balanceBefore = user.coins;
+        if (type === "ADD") {
+          newBalance = balanceBefore + amountNum;
+        } else {
+          newBalance = Math.max(0, balanceBefore - amountNum);
+        }
+        user.coins = newBalance;
       }
 
-      user.coins = newBalance;
       await user.save();
 
       // Log Admin Action
@@ -46,7 +63,7 @@ class AdminController {
           adminId: req.admin?._id,
           action: "PAYMENT_OVERRIDE",
           targetId: userId,
-          details: `${type} ${amount} coins. Reason: ${reason || "Manual adjust"}`,
+          details: `${type} ${amount} ${balanceType}. Reason: ${reason || "Manual adjust"}`,
         });
       } catch (logErr) {
         console.error("Logging failed:", logErr.message);
@@ -54,24 +71,27 @@ class AdminController {
 
       // Emit balance update
       if (req.io) {
-        req.io.to(`user-${userId}`).emit("balanceUpdated", { newBalance });
+        req.io.to(`user-${userId}`).emit("balanceUpdated", { 
+          coins: user.coins, 
+          cashBalance: user.cashBalance 
+        });
       }
 
       // Log to Ledger
       await walletRepository.logLedgerEntry({
         userId,
         type: type === "ADD" ? "CREDIT" : "DEBIT",
-        amount: parseInt(amount),
+        amount: amountNum,
         balanceBefore,
         balanceAfter: newBalance,
         transactionType: "ADMIN_ADJUSTMENT",
-        description: reason || `Admin ${type.toLowerCase()}ed coins`,
+        description: reason || `Admin ${type.toLowerCase()}ed ${balanceType.toLowerCase()}`,
       });
 
       res.json({
         success: true,
         newBalance,
-        message: `Successfully ${type.toLowerCase()}ed ${amount} coins`,
+        message: `Successfully ${type.toLowerCase()}ed ${amount} ${balanceType.toLowerCase()}`,
       });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });

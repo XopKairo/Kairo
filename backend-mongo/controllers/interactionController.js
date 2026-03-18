@@ -65,6 +65,9 @@ class InteractionController {
       receiverHost.earnings += hostFinalShare;
       await receiverHost.save({ session });
 
+      // SYNC with User's cashBalance for Admin Panel and Profile consistency
+      await User.findByIdAndUpdate(receiverHost.userId, { $inc: { cashBalance: hostFinalShare } }).session(session);
+
       // Update Admin Revenue
       const adminShareINR = Number((adminShare * 0.1).toFixed(2));
       await Admin.findOneAndUpdate({}, { $inc: { totalRevenue: adminShareINR } }).session(session);
