@@ -22,7 +22,7 @@ export default function FinanceLogs() {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get('/admin/economy/transactions'); // This endpoint should exist in economy routes
+      const res = await apiClient.get('/admin/monitoring/transactions'); 
       setTransactions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to fetch transactions:', err);

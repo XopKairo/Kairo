@@ -127,4 +127,15 @@ router.put("/:id/feature", async (req, res) => {
   }
 });
 
+// DELETE a post (Admin)
+router.delete("/:id", async (req, res) => {
+  try {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+    res.json({ success: true, message: "Post deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

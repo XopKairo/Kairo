@@ -19,7 +19,7 @@ export default function Calls() {
 
   const fetchActiveCalls = async () => {
     try {
-      const res = await apiClient.get('/calls/active');
+      const res = await apiClient.get('/admin/monitoring/active');
       setActiveCalls(res.data);
     } catch (e) {
       console.error('Failed to fetch active calls:', e);
@@ -29,15 +29,26 @@ export default function Calls() {
   };
 
   useEffect(() => {
-    fetchActiveCalls();
-    const interval = setInterval(fetchActiveCalls, 10000); // Refresh every 10s
-    return () => clearInterval(interval);
+    let isMounted = true;
+    const fetchData = async () => {
+      if (isMounted) await fetchActiveCalls();
+    };
+    
+    fetchData();
+    const interval = setInterval(() => {
+      if (isMounted) fetchActiveCalls();
+    }, 10000); 
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleForceEnd = async (callId: string) => {
     if (!window.confirm('Are you sure you want to FORCE END this call?')) return;
     try {
-      await apiClient.post('/admin/calls/force-end', { callId });
+      await apiClient.post(`/admin/monitoring/force-end/${callId}`);
       alert('Call termination command sent');
       fetchActiveCalls();
     } catch {

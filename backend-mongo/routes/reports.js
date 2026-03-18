@@ -14,6 +14,32 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Admin Report Action (BAN/DISMISS)
+router.post("/action", async (req, res) => {
+  try {
+    const { reportId, action, reason } = req.body;
+    const report = await Report.findById(reportId);
+    if (!report) return res.status(404).json({ message: "Report not found" });
+
+    if (action === "BAN") {
+      const User = mongoose.model("User");
+      await User.findByIdAndUpdate(report.reportedId, { 
+        isBanned: true, 
+        banReason: reason || "Reported by multiple users",
+        banUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days default
+      });
+      report.status = "Action Taken";
+    } else {
+      report.status = "Resolved";
+    }
+
+    await report.save();
+    res.json({ success: true, report });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // CREATE a new report (User only)
 router.post("/", protectUser, async (req, res) => {
   try {

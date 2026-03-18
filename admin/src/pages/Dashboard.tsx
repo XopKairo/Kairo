@@ -77,16 +77,27 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(fetchLiveCalls, 10000); 
-    return () => clearInterval(interval);
+    let isMounted = true;
+    const loadData = async () => {
+      if (isMounted) await fetchDashboardData();
+    };
+    
+    loadData();
+    const interval = setInterval(() => {
+      if (isMounted) fetchLiveCalls();
+    }, 10000); 
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleForceEnd = async (callId: string) => {
     if (!window.confirm('Are you sure you want to force terminate this call?')) return;
     try {
-      await apiClient.post('/admin/calls/force-end', { callId });
+      await apiClient.post(`/admin/monitoring/force-end/${callId}`);
       fetchLiveCalls();
     } catch {
       alert('Failed to end call');

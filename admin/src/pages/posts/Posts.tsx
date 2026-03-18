@@ -26,7 +26,14 @@ export default function Posts() {
     }
   };
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(() => { 
+    let isMounted = true;
+    const load = async () => {
+      if (isMounted) await fetchPosts();
+    };
+    load();
+    return () => { isMounted = false; };
+  }, []);
 
   const toggleFeature = async (id: string, current: boolean) => {
     try {
