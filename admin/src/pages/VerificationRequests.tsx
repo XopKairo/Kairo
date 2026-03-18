@@ -29,7 +29,7 @@ export default function Verification() {
       setRequests(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error("Failed to fetch verification requests:", e);
-      setError((e as any).response?.data?.message || "Failed to load requests. Check console for details.");
+      setError(((e as { response?: { data?: { message?: string } } }).response)?.data?.message || "Failed to load requests. Check console for details.");
     } finally {
       setLoading(false);
     }

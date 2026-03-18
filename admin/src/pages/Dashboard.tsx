@@ -80,6 +80,7 @@ export default function Dashboard() {
     fetchDashboardData();
     const interval = setInterval(fetchLiveCalls, 10000); 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleForceEnd = async (callId: string) => {

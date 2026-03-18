@@ -28,7 +28,7 @@ export default function Interests() {
       setInterests(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error("Failed to fetch interests:", e);
-      setError((e as any).response?.data?.message || "Failed to load interest tags.");
+      setError(((e as { response?: { data?: { message?: string } } }).response)?.data?.message || "Failed to load interest tags.");
     } finally {
       setLoading(false);
     }
@@ -59,8 +59,8 @@ export default function Interests() {
       }
       setIsModalOpen(false);
       fetchInterests();
-    } catch (e: any) {
-      alert(e.response?.data?.message || "Failed to save interest tag");
+    } catch (e: Error | unknown) {
+      alert(((e as { response?: { data?: { message?: string } } }).response)?.data?.message || "Failed to save interest tag");
     } finally {
       setSaving(false);
     }
@@ -71,8 +71,8 @@ export default function Interests() {
     try {
       await apiClient.delete(`/admin/interests/${id}`);
       fetchInterests();
-    } catch (e: any) {
-      alert(e.response?.data?.message || "Failed to delete tag");
+    } catch (e: Error | unknown) {
+      alert(((e as { response?: { data?: { message?: string } } }).response)?.data?.message || "Failed to delete tag");
     }
   };
 

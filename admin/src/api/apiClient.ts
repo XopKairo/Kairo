@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://kairo-b1i9.onrender.com/api";
+let API_URL = import.meta.env.VITE_API_URL || "https://kairo-b1i9.onrender.com/api";
+
+if (API_URL.endsWith('/')) {
+  API_URL = API_URL.slice(0, -1);
+}
+if (!API_URL.endsWith('/api')) {
+  API_URL = `${API_URL}/api`;
+}
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -11,6 +18,10 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
+    // FIX: Remove leading slash so baseURL is appended correctly
+    if (config.url && config.url.startsWith('/')) {
+      config.url = config.url.substring(1);
+    }
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
