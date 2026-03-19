@@ -36,6 +36,40 @@ const ChatScreen = ({ route, navigation }) => {
   const flatListRef = useRef();
   const currentDeleteSetting = useRef('NEVER');
 
+  const handleLongPress = (message) => {
+    const isMe = (message.sender?._id || message.sender) === (user?._id || user?.id);
+    const options = [
+      { text: 'Copy Text', onPress: () => { /* Add clipboard logic if needed */ } },
+      { text: 'Delete for Me', onPress: () => deleteMessage(message._id, false) },
+    ];
+
+    if (isMe) {
+      options.push({ text: 'Delete for Everyone', style: 'destructive', onPress: () => deleteMessage(message._id, true) });
+    }
+
+    options.push({ text: 'Cancel', style: 'cancel' });
+
+    showAlert('Message Options', 'What would you like to do?', 'notice', 'CANCEL', options);
+  };
+
+  const deleteMessage = async (messageId, forEveryone) => {
+    try {
+      await api.delete(`user/chat/messages/${messageId}`, { params: { forEveryone } });
+      setMessages(prev => prev.filter(m => m._id !== messageId));
+      
+      if (forEveryone && socketService.socket?.connected) {
+        socketService.socket.emit('deleteMessage', { 
+          messageId, 
+          recipientId: recipient.userId?._id || recipient.userId || recipient.id || recipient._id,
+          conversationId: conversationId || initialConvId,
+          deleteForEveryone: true 
+        });
+      }
+    } catch (e) {
+      showAlert('Error', 'Failed to delete message', 'error');
+    }
+  };
+
   useEffect(() => {
     if (!recipient) return;
     let isMounted = true;
@@ -44,14 +78,27 @@ const ChatScreen = ({ route, navigation }) => {
     fetchConversationDetails();
 
     const onNewMessage = (message) => {
-      // If message is for this conversation
       const currentConvId = initialConvId || conversationId;
       if (message.conversationId === currentConvId && isMounted) {
         setMessages(prev => {
-          // Prevent duplicates if already added by handleSend
           if (prev.find(m => m._id === message._id)) return prev;
           return [...prev, message];
         });
+        
+        // Auto-read message if screen is active
+        if (socketService.socket?.connected) {
+          socketService.socket.emit('messageRead', {
+            messageId: message._id,
+            senderId: message.sender?._id || message.sender,
+            conversationId: currentConvId
+          });
+        }
+      }
+    };
+
+    const onMessageDeleted = ({ messageId }) => {
+      if (isMounted) {
+        setMessages(prev => prev.filter(m => m._id !== messageId));
       }
     };
 
@@ -76,6 +123,7 @@ const ChatScreen = ({ route, navigation }) => {
     if (socketService.socket) {
       socketService.socket.on('newMessage', onNewMessage);
       socketService.socket.on('messageStatusUpdate', onStatusUpdate);
+      socketService.socket.on('messageDeleted', onMessageDeleted);
       socketService.socket.on('userTyping', onTyping);
       socketService.socket.on('userStoppedTyping', onStopTyping);
     }
@@ -85,6 +133,7 @@ const ChatScreen = ({ route, navigation }) => {
       if (socketService.socket) {
         socketService.socket.off('newMessage', onNewMessage);
         socketService.socket.off('messageStatusUpdate', onStatusUpdate);
+        socketService.socket.off('messageDeleted', onMessageDeleted);
         socketService.socket.off('userTyping', onTyping);
         socketService.socket.off('userStoppedTyping', onStopTyping);
       }
@@ -295,7 +344,11 @@ const ChatScreen = ({ route, navigation }) => {
     const isMe = messageSenderId === currentUserId;
 
     return (
-      <View style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}>
+      <TouchableOpacity 
+        onLongPress={() => handleLongPress(item)}
+        activeOpacity={0.8}
+        style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}
+      >
         <View style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}>
           {((item.type === 'image' || item.image) && item.image !== null && item.image !== 'null' && item.type !== 'video') ? (
             <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
@@ -322,7 +375,7 @@ const ChatScreen = ({ route, navigation }) => {
             )}
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

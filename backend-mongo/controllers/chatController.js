@@ -94,8 +94,42 @@ export const clearChatHistory = async (req, res) => {
   }
 };
 
+export const deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { forEveryone } = req.query;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ message: "Message not found" });
+
+    if (forEveryone === "true") {
+      // Logic for Delete for Everyone
+      if (message.sender.toString() !== userId.toString()) {
+        return res.status(403).json({ message: "Unauthorized to delete for everyone" });
+      }
+      message.isDeletedForEveryone = true;
+      message.text = "This message was deleted";
+      message.image = null;
+      message.video = null;
+    } else {
+      // Logic for Delete for Me
+      if (message.sender.toString() === userId.toString()) {
+        message.senderDeleted = true;
+      } else if (message.recipient.toString() === userId.toString()) {
+        message.recipientDeleted = true;
+      }
+    }
+
+    await message.save();
+    res.json({ success: true, message });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const sendMessage = async (req, res) => {
-  const { recipientId, text, type = "text", image } = req.body;
+  const { recipientId, text, type = "text", image, giftId } = req.body;
 
   try {
     let conversation = await Conversation.findOne({
@@ -117,26 +151,17 @@ export const sendMessage = async (req, res) => {
         sender: req.user._id
       });
       
-      if (messageCount >= 10) {
-        if (senderUser.coins < 3) {
+      if (messageCount >= 10 || type === 'gift') {
+        const cost = type === 'gift' ? 0 : 3; // Gift cost is handled in its own service
+        if (senderUser.coins < cost) {
           return res.status(400).json({ 
-            message: "Insufficient coins. After 10 free messages, each message costs 3 coins. Please recharge.",
+            message: "Insufficient coins. Recharge now.",
             requiresRecharge: true
           });
         }
         
-        // ATOMIC DEDUCTION: No race conditions
-        const updatedSender = await User.findOneAndUpdate(
-          { _id: req.user._id, coins: { $gte: 3 } },
-          { $inc: { coins: -3 } },
-          { new: true }
-        );
-
-        if (!updatedSender) {
-          return res.status(400).json({ 
-            message: "Transaction failed. Please try again.",
-            requiresRecharge: true
-          });
+        if (cost > 0) {
+          await User.findByIdAndUpdate(req.user._id, { $inc: { coins: -cost } });
         }
       }
     }
@@ -148,12 +173,13 @@ export const sendMessage = async (req, res) => {
       text,
       image,
       type,
+      giftId
     });
 
     conversation.lastMessage = message._id;
     await conversation.save();
 
-    res.status(201).json(message);
+    res.status(201).json({ success: true, message });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

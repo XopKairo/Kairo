@@ -251,13 +251,26 @@ const HostProfileScreen = ({ route, navigation }) => {
 
            <View style={styles.section}>
               <Text style={styles.sectionTitle}>About Me</Text>
-              <Text style={styles.bioText}>{host.bio || `Hi, I am ${host.name}. Let's connect and have a good time!`}</Text>
+              <Text style={styles.bioText}>{host.about || host.bio || `Hi, I am ${host.name}. Let's connect and have a good time!`}</Text>
               
               <View style={styles.infoGrid}>
                  <View style={styles.infoItem}><MapPin color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{host.location || 'India'}</Text></View>
                  <View style={styles.infoItem}><Globe2 color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{Array.isArray(host.languages) ? host.languages.join(', ') : host.languages || 'English'}</Text></View>
               </View>
            </View>
+
+           {host.interests && host.interests.length > 0 && (
+             <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Interests</Text>
+                <View style={styles.interestsContainer}>
+                   {host.interests.map((interest, index) => (
+                      <View key={index} style={styles.interestBadge}>
+                         <Text style={styles.interestText}>#{typeof interest === 'object' ? interest.name : interest}</Text>
+                      </View>
+                   ))}
+                </View>
+             </View>
+           )}
 
            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Gallery</Text>
@@ -347,6 +360,9 @@ const styles = StyleSheet.create({
   section: { marginBottom: 30 },
   sectionTitle: { color: '#FFF', fontSize: 16, fontWeight: '900', marginBottom: 15, textTransform: 'uppercase', letterSpacing: 1 },
   bioText: { color: COLORS.textGray, fontSize: 14, lineHeight: 22, fontWeight: '500' },
+  interestsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  interestBadge: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 12, backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 1, borderColor: 'rgba(168, 85, 247, 0.2)' },
+  interestText: { color: COLORS.accentGlow, fontSize: 12, fontWeight: 'bold' },
   infoGrid: { marginTop: 15, gap: 8 },
   infoItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   infoValue: { color: COLORS.textGray, fontSize: 13, fontWeight: '600' },

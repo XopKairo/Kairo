@@ -18,11 +18,15 @@ const messageSchema = new Schema(
       enum: ["sent", "delivered", "read"],
       default: "sent",
     },
+    isDeletedForEveryone: { type: Boolean, default: false },
+    senderDeleted: { type: Boolean, default: false },
+    recipientDeleted: { type: Boolean, default: false },
     type: {
       type: String,
       enum: ["text", "image", "video", "system", "gift"],
       default: "text",
     },
+    giftId: { type: Schema.Types.ObjectId, ref: "Gift" },
   },
   { timestamps: true },
 );

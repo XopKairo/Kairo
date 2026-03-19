@@ -218,22 +218,48 @@ const setupSockets = (io) => {
       await endCallAndDeductBalance(callId);
     });
 
-    socket.on("privateMessage", (data) => {
-      const { recipientId, text, image, type, conversationId, _id } = data;
+    socket.on("privateMessage", async (data) => {
+      const { recipientId, text, image, type, conversationId, _id, giftId } = data;
+      const messageId = _id || new mongoose.Types.ObjectId().toString();
+      
       // Emit the message to the recipient's personal room
       io.to(recipientId).emit("newMessage", {
-        _id: _id || Date.now().toString(),
+        _id: messageId,
         conversationId,
         sender: socket.userId,
         recipient: recipientId,
         text,
         image,
-        type,
+        type: type || "text",
+        giftId,
         status: "delivered",
         createdAt: new Date(),
       });
-      // Optionally notify sender that message is delivered
-      socket.emit("messageStatusUpdate", { messageId: _id, status: "delivered" });
+
+      // Notify sender that message is delivered (Double Tick)
+      socket.emit("messageStatusUpdate", { messageId, status: "delivered", conversationId });
+    });
+
+    socket.on("messageRead", (data) => {
+      const { messageId, senderId, conversationId } = data;
+      // Notify the original sender that their message was read (Blue Tick)
+      io.to(senderId).emit("messageStatusUpdate", { 
+        messageId, 
+        status: "read", 
+        conversationId 
+      });
+    });
+
+    socket.on("deleteMessage", async (data) => {
+      const { messageId, recipientId, conversationId, deleteForEveryone } = data;
+      if (deleteForEveryone) {
+        io.to(recipientId).emit("messageDeleted", { messageId, conversationId });
+      }
+    });
+
+    socket.on("typing", (data) => {
+      const { recipientId, conversationId, isTyping } = data;
+      io.to(recipientId).emit("userTyping", { conversationId, senderId: socket.userId, isTyping });
     });
 socket.on("disconnect", async () => {
   socketRateLimit.delete(socket.id);

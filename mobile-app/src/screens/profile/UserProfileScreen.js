@@ -86,6 +86,11 @@ const UserProfileScreen = ({ navigation }) => {
           </View>
           <Text style={styles.name}>{user?.name || 'Loading...'}</Text>
           <Text style={styles.id}>ID: {user?._id?.substring(0, 8).toUpperCase()}</Text>
+          {user?.about && (
+            <View style={styles.bioContainer}>
+               <Text style={styles.bioText}>{user.about}</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.statsRow}>
@@ -165,6 +170,7 @@ const UserProfileScreen = ({ navigation }) => {
           <ProfileItem 
             icon={Heart} 
             title="My Interests" 
+            value={user?.interests?.length > 0 ? `${user.interests.length} tags selected` : 'None selected'}
             onPress={() => navigation.navigate('SelectInterests')} 
           />
           <ProfileItem 
@@ -238,6 +244,8 @@ const styles = StyleSheet.create({
   editBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: COLORS.primary, width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: COLORS.backgroundDark },
   name: { color: COLORS.textWhite, fontSize: 24, fontWeight: '900', marginTop: 15 },
   id: { color: COLORS.textGray, fontSize: 12, marginTop: 4, letterSpacing: 1 },
+  bioContainer: { marginTop: 15, paddingHorizontal: 40, alignItems: 'center' },
+  bioText: { color: COLORS.textGray, fontSize: 14, textAlign: 'center', lineHeight: 20 },
   statsRow: { flexDirection: 'row', backgroundColor: COLORS.cardBackground, marginHorizontal: SPACING.lg, borderRadius: 20, paddingVertical: 20, borderWidth: 1, borderColor: 'rgba(159, 103, 255, 0.05)' },
   statBox: { flex: 1, alignItems: 'center' },
   statValue: { color: COLORS.textWhite, fontSize: 18, fontWeight: '800' },
