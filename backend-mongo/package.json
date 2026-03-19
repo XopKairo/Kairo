@@ -29,7 +29,6 @@
     "google-auth-library": "^10.6.1",
     "helmet": "^8.0.0",
     "hpp": "^0.2.3",
-    "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.3",
     "morgan": "^1.10.0",
@@ -42,7 +41,8 @@
     "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "winston": "^3.19.0",
-    "xss-clean": "^0.1.4"
+    "xss-clean": "^0.1.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "eslint": "^9.17.0",
