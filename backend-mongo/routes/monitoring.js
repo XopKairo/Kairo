@@ -52,7 +52,13 @@ router.get("/flagged-screenshots", protectAdmin, async (req, res) => {
 // GET all active calls (Admin Monitoring)
 router.get("/active", async (req, res) => {
   try {
-    const activeCalls = await LiveCall.find({ status: "Active" });
+    const activeCalls = await LiveCall.find({ 
+      status: { $in: ["Active", "ACTIVE", "RINGING", "Ringing"] } 
+    })
+    .populate("userId", "name phone profilePicture")
+    .populate("hostId", "name profilePicture")
+    .sort("-createdAt");
+    
     res.json(activeCalls);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

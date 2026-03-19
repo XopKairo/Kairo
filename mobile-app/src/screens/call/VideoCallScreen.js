@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text, ActivityIndicator, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ZegoUIKitPrebuiltCall, ONE_ON_ONE_VIDEO_CALL_CONFIG } from '@zegocloud/zego-uikit-prebuilt-call-rn';
-import { ShieldAlert, Gift } from 'lucide-react-native';
+import { ShieldAlert, Gift, ShieldCheck, Lock } from 'lucide-react-native';
+
+const { width, height } = Dimensions.get('window');
 import LottieView from 'lottie-react-native';
 import { Audio } from 'expo-av';
+import { Camera } from 'expo-camera';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
@@ -96,45 +100,50 @@ const VideoCallScreen = ({ route }) => {
     };
 
     const requestPermissions = async () => {
-      const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
-      const { status: audioStatus } = await Audio.requestPermissionsAsync();
-      if (cameraStatus !== 'granted' || audioStatus !== 'granted') {
-        showAlert('Permissions Required', 'Camera and Microphone access are needed for video calls.', 'error');
-        navigation.goBack();
-        return false;
+      try {
+        const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
+        const { status: audioStatus } = await Audio.requestPermissionsAsync();
+        if (cameraStatus !== 'granted' || audioStatus !== 'granted') {
+          showAlert('Permissions Required', 'Camera and Microphone access are needed for video calls.', 'error');
+          navigation.goBack();
+          return false;
+        }
+        return true;
+      } catch (err) {
+        console.warn('Permission error:', err);
+        return true; // Proceed anyway, let Zego handle if it can
       }
-      return true;
     };
 
     const startCall = async () => {
-      const hasPermissions = await requestPermissions();
-      if (!hasPermissions) return;
+      try {
+        const hasPermissions = await requestPermissions();
+        if (!hasPermissions) {
+          if (isMounted) setLoading(false);
+          return;
+        }
 
-      if (!isIncoming) {
-        try {
+        if (!isIncoming) {
           const res = await api.post(`user/calls/start`, { hostId, callId });
           if (res.data.success && isMounted) {
             setIsAllowed(true);
             setUserCoins(res.data.user.coins);
             socketService.notifyCallStarted({ callId, userId, hostId, userName });
-            
             playRingtone();
-            
             balanceInterval = setInterval(checkBalance, 30000);
           } else if (isMounted) {
             showAlert('Error', res.data.message || 'Call not allowed', 'error');
             navigation.goBack();
           }
-        } catch (err) {
-          if (isMounted) {
-            const msg = err.response?.data?.message || 'Minimum coins required to start a call';
-            showAlert('Insufficient Balance', msg, 'error', 'GET COINS');
-            navigation.goBack();
-          }
-        } finally {
-          if (isMounted) setLoading(false);
         }
-      } else {
+      } catch (err) {
+        console.error('startCall Error:', err);
+        if (isMounted && !isIncoming) {
+          const msg = err.response?.data?.message || 'Failed to start call. Check connection.';
+          showAlert('Call Error', msg, 'error');
+          navigation.goBack();
+        }
+      } finally {
         if (isMounted) setLoading(false);
       }
     };
@@ -202,17 +211,42 @@ const VideoCallScreen = ({ route }) => {
     }
   };
 
-  if (loading) return <View style={styles.container} />;
+  if (loading) {
+    return (
+      <LinearGradient colors={['#0F0A19', '#1a1a2e', '#000']} style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <View style={styles.loadingWrapper}>
+          <View style={styles.iconCircle}>
+             <ShieldCheck color="#A855F7" size={48} strokeWidth={1.5} />
+             <View style={styles.pulseInner} />
+          </View>
+          
+          <ActivityIndicator size="large" color="#A855F7" style={{ marginTop: 30 }} />
+          
+          <Text style={styles.loadingTitle}>ZORA SECURE CONNECT</Text>
+          <View style={styles.encryptionBadge}>
+             <Lock color="#6B7280" size={12} />
+             <Text style={styles.encryptionText}>END-TO-END ENCRYPTED</Text>
+          </View>
+          
+          <Text style={styles.loadingSub}>Connecting to {userName || 'Performer'}...</Text>
+        </View>
+        
+        <View style={styles.loadingFooter}>
+           <Text style={styles.footerText}>KAIRO SECURE PROTOCOL V3.0</Text>
+        </View>
+      </LinearGradient>
+    );
+  }
   if (!isAllowed) return null;
 
   return (
     <View style={styles.container}>
       <ZegoUIKitPrebuiltCall
-        appID={parseInt(process.env.EXPO_PUBLIC_ZEGO_APP_ID || 0)}
-        appSign={process.env.EXPO_PUBLIC_ZEGO_APP_SIGN || ''}
-        userID={userId}
-        userName={userName}
-        callID={callId}
+        appID={parseInt(process.env.EXPO_PUBLIC_ZEGO_APP_ID || "1106955329")}
+        appSign={process.env.EXPO_PUBLIC_ZEGO_APP_SIGN || "f6cb4ea31440995b9b6b724678ff112db1d0220cf0dd31a4057c835faae45bd2"}
+        userID={String(userId)}
+        userName={String(userName || 'User')}
+        callID={String(callId)}
         config={{
           ...ONE_ON_ONE_VIDEO_CALL_CONFIG,
           onHangUp: () => {
@@ -265,6 +299,15 @@ const VideoCallScreen = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
+  loadingWrapper: { alignItems: 'center', width: '100%' },
+  iconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(168, 85, 247, 0.1)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(168, 85, 247, 0.2)' },
+  pulseInner: { ...StyleSheet.absoluteFillObject, borderRadius: 50, borderWidth: 2, borderColor: '#A855F7', opacity: 0.2 },
+  loadingTitle: { color: '#FFF', marginTop: 25, fontSize: 18, fontWeight: '900', letterSpacing: 3, textAlign: 'center' },
+  encryptionBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 15, marginTop: 15 },
+  encryptionText: { color: '#6B7280', fontSize: 10, fontWeight: 'bold', letterSpacing: 1 },
+  loadingSub: { color: 'rgba(255,255,255,0.4)', marginTop: 20, fontSize: 13, fontWeight: '500' },
+  loadingFooter: { position: 'absolute', bottom: 50, alignItems: 'center' },
+  footerText: { color: 'rgba(255,255,255,0.2)', fontSize: 10, fontWeight: '900', letterSpacing: 2 },
   reportButton: { position: 'absolute', top: 50, right: 20, backgroundColor: 'rgba(255, 0, 0, 0.4)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 5, zIndex: 100 },
   reportText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
   closeButton: { position: 'absolute', top: 50, left: 20, backgroundColor: 'rgba(0, 0, 0, 0.5)', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, zIndex: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },

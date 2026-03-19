@@ -13,15 +13,20 @@ const SplashScreen = ({ navigation }) => {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
+    let mounted = true;
     async function setupUI() {
       if (Platform.OS === 'android') {
-        try {
-          await NavigationBar.setVisibilityAsync('hidden');
-          await NavigationBar.setBehaviorAsync('inset-touch');
-          await SystemUI.setBackgroundColorAsync('transparent');
-        } catch (e) {
-          console.warn('Splash UI setup failed:', e);
-        }
+        setTimeout(async () => {
+          if (mounted) {
+            try {
+              await NavigationBar.setVisibilityAsync('hidden');
+              await NavigationBar.setBehaviorAsync('inset-touch');
+              await SystemUI.setBackgroundColorAsync('transparent');
+            } catch (e) {
+              console.warn('Splash UI setup failed:', e);
+            }
+          }
+        }, 100);
       }
     }
     setupUI();
@@ -63,6 +68,10 @@ const SplashScreen = ({ navigation }) => {
     };
     
     checkTokenAndNavigate();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (

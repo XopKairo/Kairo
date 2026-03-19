@@ -5,12 +5,12 @@ import apiClient from '../../api/apiClient';
 interface ActiveCall {
   _id: string;
   callId: string;
-  userId: string;
-  hostId: string;
+  userId: any;
+  hostId: any;
   status: string;
   startTime: string;
-  user?: { name: string };
-  host?: { name: string };
+  startedAt?: string;
+  createdAt?: string;
 }
 
 export default function Calls() {
@@ -98,20 +98,26 @@ export default function Calls() {
                   <User size={16} className="text-blue-500" />
                   <span className="text-sm font-bold dark:text-white">User</span>
                 </div>
-                <span className="text-sm text-gray-500 truncate max-w-[120px]">{call.userId}</span>
+                <span className="text-sm text-gray-500 truncate max-w-[120px]">
+                  {typeof call.userId === 'object' ? call.userId?.name : 'Loading...'}
+                </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-surface-800 rounded-2xl">
                 <div className="flex items-center gap-2">
                   <User size={16} className="text-pink-500" />
                   <span className="text-sm font-bold dark:text-white">Host</span>
                 </div>
-                <span className="text-sm text-gray-500 truncate max-w-[120px]">{call.hostId}</span>
+                <span className="text-sm text-gray-500 truncate max-w-[120px]">
+                  {typeof call.hostId === 'object' ? call.hostId?.name : 'Loading...'}
+                </span>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-xs text-gray-400 mb-6">
-              <span>Started: {new Date(call.startTime).toLocaleTimeString()}</span>
-              <span className="font-bold text-brand-600">LIVE SESSION</span>
+              <span>Started: {new Date(call.startedAt || call.startTime || call.createdAt || Date.now()).toLocaleTimeString()}</span>
+              <span className={`font-bold ${call.status?.toUpperCase() === 'ACTIVE' ? 'text-green-500' : 'text-brand-600'}`}>
+                {call.status?.toUpperCase() || 'LIVE SESSION'}
+              </span>
             </div>
 
             <button 

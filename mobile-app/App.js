@@ -244,6 +244,7 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   useEffect(() => {
+    let mounted = true;
     async function initApp() {
       try {
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -256,11 +257,17 @@ export default function App() {
         console.log('Notification permission error:', e);
       }
       if (Platform.OS === 'android') {
-        try {
-          await NavigationBar.setVisibilityAsync('hidden');
-          await NavigationBar.setBehaviorAsync('inset-touch');
-          await SystemUI.setBackgroundColorAsync('transparent');
-        } catch (e) {}
+        setTimeout(async () => {
+          if (mounted) {
+            try {
+              await NavigationBar.setVisibilityAsync('hidden');
+              await NavigationBar.setBehaviorAsync('inset-touch');
+              await SystemUI.setBackgroundColorAsync('transparent');
+            } catch (e) {
+              console.warn('App NavigationBar error:', e);
+            }
+          }
+        }, 100);
       }
 
       try {
@@ -268,6 +275,9 @@ export default function App() {
       } catch (err) {}
     }
     initApp();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
