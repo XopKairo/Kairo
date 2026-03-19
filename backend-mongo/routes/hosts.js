@@ -33,8 +33,6 @@ router.get("/", async (req, res) => {
       const user = await User.findById(userId);
       if (user && user.district) {
         query.district = user.district; 
-      } else {
-        // Fallback: Show all if user has no district set
       }
     }
 
@@ -42,7 +40,10 @@ router.get("/", async (req, res) => {
     let sort = { isBoosted: -1, rankingScore: -1, createdAt: -1 };
     if (tabFilter === "New") sort = { createdAt: -1 };
 
-    const hosts = await Host.find(query).sort(sort).limit(50).populate("userId", "phone name profilePicture");
+    const hosts = await Host.find(query)
+      .sort(sort)
+      .limit(50)
+      .populate("userId", "phone name profilePicture bio location languages interests");
     res.json(hosts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -66,19 +67,22 @@ router.post("/interaction", protectUser, async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     // Attempt to find by Host ID first
-    let host = await Host.findById(req.params.id).populate("userId", "phone name profilePicture");
+    let host = await Host.findById(req.params.id)
+      .populate("userId", "phone name profilePicture bio location languages interests");
     
-    // If not found, attempt to find by User ID (in case frontend passed userId by mistake)
+    // If not found, attempt to find by User ID
     if (!host) {
-      host = await Host.findOne({ userId: req.params.id }).populate("userId", "phone name profilePicture");
+      host = await Host.findOne({ userId: req.params.id })
+        .populate("userId", "phone name profilePicture bio location languages interests");
     }
 
     if (!host) return res.status(404).json({ message: "Host not found" });
     res.json(host);
   } catch (error) {
-    // If the ID is completely invalid format, catch it here and try fallback or return 404
+    // Fallback if ID is invalid
     try {
-      const hostByUser = await Host.findOne({ userId: req.params.id }).populate("userId", "phone name profilePicture");
+      const hostByUser = await Host.findOne({ userId: req.params.id })
+        .populate("userId", "phone name profilePicture bio location languages interests");
       if (hostByUser) return res.json(hostByUser);
     } catch(e) {}
     res.status(404).json({ message: "Host not found" });

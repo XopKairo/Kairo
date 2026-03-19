@@ -343,6 +343,19 @@ const ChatScreen = ({ route, navigation }) => {
     const messageSenderId = item.sender?._id || item.sender;
     const isMe = messageSenderId === currentUserId;
 
+    if (item.isDeletedForEveryone) {
+      return (
+        <View style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}>
+          <View style={[styles.bubble, styles.deletedBubble]}>
+            <Text style={styles.deletedText}>🚫 This message was deleted</Text>
+          </View>
+        </View>
+      );
+    }
+
+    if (item.senderDeleted && isMe) return null;
+    if (item.recipientDeleted && !isMe) return null;
+
     return (
       <TouchableOpacity 
         onLongPress={() => handleLongPress(item)}
@@ -350,13 +363,22 @@ const ChatScreen = ({ route, navigation }) => {
         style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}
       >
         <View style={[styles.bubble, isMe ? styles.myBubble : styles.theirBubble]}>
-          {((item.type === 'image' || item.image) && item.image !== null && item.image !== 'null' && item.type !== 'video') ? (
-            <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
-          ) : (item.type === 'video' && item.image !== null && item.image !== 'null') ? (
-             <Video source={{ uri: item.image }} style={styles.messageImage} useNativeControls resizeMode="cover" isLooping />
-          ) : null}
-          
-          {item.text ? <Text style={styles.messageText}>{item.text}</Text> : null}
+          {item.type === 'gift' ? (
+             <View style={styles.giftMessageContainer}>
+                <Gift color="#FFD700" size={32} strokeWidth={2.5} />
+                <Text style={styles.giftMessageText}>{item.text}</Text>
+             </View>
+          ) : (
+            <>
+              {((item.type === 'image' || item.image) && item.image !== null && item.image !== 'null' && item.type !== 'video') ? (
+                <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
+              ) : (item.type === 'video' && item.image !== null && item.image !== 'null') ? (
+                 <Video source={{ uri: item.image }} style={styles.messageImage} useNativeControls resizeMode="cover" isLooping />
+              ) : null}
+              
+              {item.text ? <Text style={styles.messageText}>{item.text}</Text> : null}
+            </>
+          )}
           
           <View style={styles.messageFooter}>
             <Text style={styles.timeText}>
@@ -365,7 +387,7 @@ const ChatScreen = ({ route, navigation }) => {
             {isMe && (
               <View style={styles.statusIcon}>
                 {item.status === 'read' ? (
-                   <CheckCheck size={14} color="#3B82F6" />
+                   <CheckCheck size={14} color="#A855F7" />
                 ) : item.status === 'delivered' ? (
                    <CheckCheck size={14} color="rgba(255,255,255,0.5)" />
                 ) : (
@@ -444,7 +466,18 @@ const ChatScreen = ({ route, navigation }) => {
         <View style={{position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: COLORS.backgroundDark, borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 30, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)'}}>
           <Text style={{color: '#FFF', fontSize: 20, fontWeight: 'bold', marginBottom: 25, textAlign: 'center'}}>Chat Settings</Text>
           
-          <Text style={{color: COLORS.textGray, fontSize: 12, fontWeight: 'bold', marginBottom: 15, textTransform: 'uppercase'}}>Auto-Delete Messages</Text>
+          <TouchableOpacity 
+            style={{flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)'}}
+            onPress={() => {
+              setShowSettings(false);
+              navigation.navigate('HostProfile', { hostId: recipient.hostId || recipient._id });
+            }}
+          >
+            <User color={COLORS.primary} size={20} />
+            <Text style={{color: '#FFF', fontSize: 16, fontWeight: '600'}}>View Profile</Text>
+          </TouchableOpacity>
+
+          <Text style={{color: COLORS.textGray, fontSize: 12, fontWeight: '900', marginTop: 20, marginBottom: 15, textTransform: 'uppercase', letterSpacing: 1}}>History Management</Text>
           
           <TouchableOpacity 
             style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 15, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.05)'}}
@@ -613,14 +646,42 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   myBubble: {
-    backgroundColor: '#056162',
+    backgroundColor: COLORS.primary,
     borderTopRightRadius: 2,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   theirBubble: {
-    backgroundColor: '#262d31',
+    backgroundColor: '#1E1B2E',
     borderTopLeftRadius: 2,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  deletedBubble: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderStyle: 'dashed',
+    paddingHorizontal: 15,
+  },
+  deletedText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
+  giftMessageContainer: {
+    alignItems: 'center',
+    padding: 10,
+    gap: 8,
+  },
+  giftMessageText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   messageImage: {
     width: 200,

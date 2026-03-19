@@ -251,19 +251,19 @@ const HostProfileScreen = ({ route, navigation }) => {
 
            <View style={styles.section}>
               <Text style={styles.sectionTitle}>About Me</Text>
-              <Text style={styles.bioText}>{host.about || host.bio || `Hi, I am ${host.name}. Let's connect and have a good time!`}</Text>
+              <Text style={styles.bioText}>{host.userId?.bio || `Hi, I am ${host.name}. Let's connect and have a good time!`}</Text>
               
               <View style={styles.infoGrid}>
-                 <View style={styles.infoItem}><MapPin color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{host.location || 'India'}</Text></View>
-                 <View style={styles.infoItem}><Globe2 color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{Array.isArray(host.languages) ? host.languages.join(', ') : host.languages || 'English'}</Text></View>
+                 <View style={styles.infoItem}><MapPin color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{host.userId?.location || 'India'}</Text></View>
+                 <View style={styles.infoItem}><Globe2 color={COLORS.textGray} size={14} /><Text style={styles.infoValue}>{Array.isArray(host.userId?.languages) ? host.userId.languages.join(', ') : host.userId?.languages || 'English'}</Text></View>
               </View>
            </View>
 
-           {host.interests && host.interests.length > 0 && (
+           {host.userId?.interests && host.userId.interests.length > 0 && (
              <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Interests</Text>
                 <View style={styles.interestsContainer}>
-                   {host.interests.map((interest, index) => (
+                   {host.userId.interests.map((interest, index) => (
                       <View key={index} style={styles.interestBadge}>
                          <Text style={styles.interestText}>#{typeof interest === 'object' ? interest.name : interest}</Text>
                       </View>

@@ -4,8 +4,8 @@ const { Schema, model } = mongoose;
 const liveCallSchema = new Schema(
   {
     callId: { type: String, required: true, unique: true },
-    userId: { type: String, required: true },
-    hostId: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    hostId: { type: Schema.Types.ObjectId, ref: "Host", required: true },
     status: {
       type: String,
       enum: ["RINGING", "ACTIVE", "MISSED", "ENDED"],

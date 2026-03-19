@@ -16,15 +16,22 @@ const StoryBar = ({ navigation, currentUser }) => {
   const [stories, setStories] = useState([]);
 
   useEffect(() => {
-    fetchStories();
-  }, []);
+    if (currentUser) {
+      fetchStories();
+    }
+  }, [currentUser]);
 
   const fetchStories = async () => {
     try {
-      const res = await api.get('user/stories/feed');
-      setStories(res.data);
+      const res = await api.get('user/stories/feed').catch(err => {
+        console.warn('Silent story fetch error:', err.message);
+        return { data: [] };
+      });
+      if (res && res.data) {
+        setStories(res.data);
+      }
     } catch (error) {
-      console.error('Failed to fetch stories:', error);
+      // Catch any unexpected runtime errors
     }
   };
 
