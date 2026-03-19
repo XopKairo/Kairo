@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../services/api';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import ZoraButton from '../../components/ZoraButton';
+import MomentGallery from '../../components/MomentGallery';
 import { useAuth } from '../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -20,13 +21,22 @@ const HostProfileScreen = ({ route, navigation }) => {
   const [showPostCallModal, setShowPostCallModal] = useState(false);
   const [fetchError, setFetchError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [moments, setMoments] = useState([]);
 
   useEffect(() => {
     fetchHostDetails();
+    fetchMoments();
     if (route.params?.justFinishedCall) {
       setShowPostCallModal(true);
     }
   }, [routeHostId, route.params?.justFinishedCall]);
+
+  const fetchMoments = async () => {
+    try {
+      const res = await api.get(`user/moments/host/${routeHostId}`);
+      setMoments(res.data || []);
+    } catch (e) {}
+  };
 
   const fetchHostDetails = async () => {
     const targetId = routeHostId || initialData?._id;
@@ -207,9 +217,18 @@ const HostProfileScreen = ({ route, navigation }) => {
         <View style={styles.content}>
            <View style={styles.nameRow}>
               <View>
-                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <Text style={styles.nameText}>{host.name}</Text>
                     {host.isVerified && <ShieldCheck color="#10B981" size={20} fill="#10B981" />}
+                    {host.badge && (
+                      <LinearGradient 
+                        colors={[host.badge.color || COLORS.primary, '#FFF']} 
+                        start={{x:0, y:0}} end={{x:1, y:1}}
+                        style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginLeft: 4 }}
+                      >
+                        <Text style={{ color: '#000', fontSize: 10, fontWeight: '900' }}>{host.badge.name.toUpperCase()}</Text>
+                      </LinearGradient>
+                    )}
                  </View>
                  <Text style={styles.idText}>ID: #{host.hostId || 'PENDING'}</Text>
               </View>
@@ -223,6 +242,11 @@ const HostProfileScreen = ({ route, navigation }) => {
               <View style={styles.statItem}><Text style={styles.statValue}>{host.totalCalls || 0}</Text><Text style={styles.statLabel}>Calls</Text></View>
               <View style={styles.statItem}><Text style={styles.statValue}>{host.avgRating?.toFixed(1) || '0.0'}</Text><Text style={styles.statLabel}>Rating</Text></View>
               <View style={styles.statItem}><Text style={styles.statValue}>{host.callRatePerMinute || 30}</Text><Text style={styles.statLabel}>Coins/m</Text></View>
+           </View>
+
+           <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Featured Moments</Text>
+              <MomentGallery moments={moments} onMomentPress={(moment) => navigation.navigate('Chat', { recipient: host })} />
            </View>
 
            <View style={styles.section}>

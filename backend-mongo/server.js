@@ -43,6 +43,8 @@ import growthRoutes from "./routes/growth.js";
 import vipRoutes from "./routes/vip.js";
 import reviewRoutes from "./routes/reviews.js";
 import interactionRoutes from "./routes/interactions.js";
+import storyRoutes from "./routes/stories.js"; // New Supreme Feature
+import momentRoutes from "./routes/moments.js"; // Instagram Style Highlights
 
 import { protectAdmin, protectUser } from "./middleware/authMiddleware.js";
 import errorHandler from "./middleware/errorMiddleware.js";
@@ -109,6 +111,8 @@ app.use("/api/user/reviews", protectUser, reviewRoutes);
 app.use("/api/user/users", protectUser, adminUsersRoutes);
 app.use("/api/user/reports", protectUser, reportRoutes);
 app.use("/api/user/interactions", protectUser, interactionRoutes);
+app.use("/api/user/stories", protectUser, storyRoutes);
+app.use("/api/user/moments", protectUser, momentRoutes); // Instagram Style Highlights
 
 // ADMIN ROUTES
 app.use("/api/admin/auth", authLimiter, authRoutes);

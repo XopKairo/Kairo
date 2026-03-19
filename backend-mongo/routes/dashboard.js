@@ -8,6 +8,7 @@ import Call from "../models/Call.js";
 import Transaction from "../models/Transaction.js";
 import Report from "../models/Report.js";
 import CallScreenshot from "../models/CallScreenshot.js";
+import Story from "../models/Story.js";
 import redisClient from "../config/redis.js";
 
 const router = express.Router();
@@ -27,6 +28,7 @@ router.get("/stats", async (req, res) => {
     const totalTransactions = await Transaction.countDocuments({
       status: "completed",
     });
+    const totalStories = await Story.countDocuments({ expiresAt: { $gt: new Date() } });
 
     // Active Users (Logged in today)
     const startOfToday = new Date();
@@ -102,6 +104,7 @@ router.get("/stats", async (req, res) => {
       verifiedHosts,
       pendingPayouts,
       totalReports,
+      totalStories,
       dailyRevenue: `₹${dailyRevenue.toLocaleString("en-IN")}`,
       totalRevenue: `₹${totalRevenue.toLocaleString("en-IN")}`,
       adminTotalEarnings: `₹${totalAdminEarning.toLocaleString("en-IN")}`,

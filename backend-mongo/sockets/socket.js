@@ -249,7 +249,7 @@ socket.on("disconnect", async () => {
     }, 60000); // 60 seconds grace period
 
     // Find if user was in an active call
-...
+    try {
         const activeCalls = await LiveCall.find({
           $or: [{ userId: socket.userId }, { hostId: socket.userId }],
           status: "ACTIVE",
@@ -272,9 +272,12 @@ socket.on("disconnect", async () => {
           call.status = "MISSED";
           await call.save();
         }
+      } catch (err) {
+        console.error("Disconnect cleanup error:", err);
       }
-    });
+    }
   });
+});
 
   async function endCallAndDeductBalance(callId) {
     try {

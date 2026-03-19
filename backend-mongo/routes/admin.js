@@ -35,4 +35,8 @@ router.post("/restore-user/:id", adminController.restoreUser);
 // 7. Permanent Delete Host/User
 router.delete("/delete-permanent/:id", adminController.deleteHostPermanently);
 
+// 8. Story Moderation
+router.get("/stories", adminController.getAllStories);
+router.delete("/stories/:id", adminController.deleteStory);
+
 export default router;

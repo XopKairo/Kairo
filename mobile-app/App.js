@@ -44,6 +44,8 @@ import NotificationsScreen from './src/screens/notifications/NotificationsScreen
 import SettingsScreen from './src/screens/settings/SettingsScreen';
 import GamesScreen from './src/screens/home/GamesScreen';
 import MaintenanceScreen from './src/screens/system/MaintenanceScreen';
+import StoryViewScreen from './src/screens/home/StoryViewScreen';
+import StoryUploadScreen from './src/screens/home/StoryUploadScreen';
 
 import ChatListScreen from './src/screens/chat/ChatListScreen';
 
@@ -204,6 +206,8 @@ function NavigationStack() {
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="SelectInterests" component={SelectInterestsScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="StoryView" component={StoryViewScreen} options={{ headerShown: false, animation: 'fade' }} />
+          <Stack.Screen name="StoryUpload" component={StoryUploadScreen} options={{ headerShown: false }} />
           <Stack.Screen name="HostRegistration" component={HostRegistrationScreen} options={{ headerShown: false }} />
           <Stack.Screen name="HostOTP" component={HostOTPScreen} options={{ headerShown: false }} />
         </Stack.Navigator>

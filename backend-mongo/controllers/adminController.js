@@ -10,6 +10,7 @@ import Message from "../models/Message.js";
 import Conversation from "../models/Conversation.js";
 import Notification from "../models/Notification.js";
 import Post from "../models/Post.js";
+import Story from "../models/Story.js";
 import Review from "../models/Review.js";
 import WalletLedger from "../models/WalletLedger.js";
 import callService from "../services/callService.js";
@@ -17,6 +18,42 @@ import walletRepository from "../repositories/walletRepository.js";
 import redisClient from "../config/redis.js";
 
 class AdminController {
+
+  // Story Moderation
+  async getAllStories(req, res) {
+    try {
+      const stories = await Story.find({})
+        .populate("userId", "name nickname profilePicture")
+        .sort("-createdAt");
+      res.json(stories);
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async deleteStory(req, res) {
+    try {
+      const { id } = req.params;
+      const story = await Story.findByIdAndDelete(id);
+      if (!story) return res.status(404).json({ success: false, message: "Story not found" });
+
+      // Log action
+      try {
+        await AdminActionLog.create({
+          adminId: req.admin?._id,
+          action: "DELETE_POST", // Reusing POST action for stories
+          targetId: story.userId,
+          details: `Deleted story with ID: ${id}`,
+        });
+      } catch (logErr) {
+        console.error("Logging failed:", logErr.message);
+      }
+
+      res.json({ success: true, message: "Story deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 
   // 1. Adjust User Wallet (Add/Remove Coins/Cash)
   async adjustWallet(req, res) {

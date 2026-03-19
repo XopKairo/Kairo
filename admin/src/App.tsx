@@ -26,6 +26,7 @@ import FinanceLogs from './pages/FinanceLogs';
 import VerificationRequests from "./pages/VerificationRequests";
 import Interests from "./pages/Interests";
 import DeletionRequests from "./pages/users/DeletionRequests";
+import StoryModeration from './pages/monitoring/StoryModeration';
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const authContext = useContext(AuthContext);
@@ -55,6 +56,7 @@ function App() {
             <Route path="/vip-coupons" element={<ProtectedRoute><Layout><VIPCoupons /></Layout></ProtectedRoute>} />
             <Route path="/calls" element={<ProtectedRoute><Layout><Calls /></Layout></ProtectedRoute>} />
             <Route path="/monitoring" element={<ProtectedRoute><Layout><CallMonitoring /></Layout></ProtectedRoute>} />
+            <Route path="/stories" element={<ProtectedRoute><Layout><StoryModeration /></Layout></ProtectedRoute>} />
             <Route path="/payouts" element={<ProtectedRoute><Layout><Payouts /></Layout></ProtectedRoute>} />
             <Route path="/finance-logs" element={<ProtectedRoute><Layout><FinanceLogs /></Layout></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />

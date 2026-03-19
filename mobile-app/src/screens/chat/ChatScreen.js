@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Modal
 } from 'react-native';
-import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift, Settings, Trash2 } from 'lucide-react-native';
+import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift, Settings, Trash2, Mic } from 'lucide-react-native';
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
@@ -235,11 +235,28 @@ const ChatScreen = ({ route, navigation }) => {
   const sendMediaMessage = async (asset) => {
     const actualRecipientId = recipient.userId?._id || recipient.userId || recipient.id || recipient._id;
     const activeConvId = conversationId || initialConvId;
+    
+    const isVideo = asset.type === 'video';
+    const tempId = Date.now().toString();
+    
+    // Instant Preview
+    const tempMessage = {
+      _id: tempId,
+      sender: user._id || user.id,
+      text: '',
+      image: asset.uri,
+      type: isVideo ? 'video' : 'image',
+      conversationId: activeConvId,
+      createdAt: new Date(),
+      status: 'sending',
+      isTemp: true
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
     setIsUploading(true);
+
     try {
-      const isVideo = asset.type === 'video';
       let mediaUrl = '';
-      
       if(isVideo) { 
         mediaUrl = await uploadMedia(asset.uri, 'video'); 
       } else { 
@@ -261,9 +278,11 @@ const ChatScreen = ({ route, navigation }) => {
         socketService.socket.emit('privateMessage', { ...messageData, _id: res.data?.message?._id });
       }
 
-      setMessages(prev => [...prev, { ...messageData, _id: res.data?.message?._id || Date.now(), sender: user._id || user.id, createdAt: new Date(), status: 'sent' }]);
+      // Replace temp message with real one
+      setMessages(prev => prev.map(m => m._id === tempId ? { ...res.data?.message, status: 'sent' } : m));
     } catch (error) {
        console.log("Upload failed", error);
+       setMessages(prev => prev.filter(m => m._id !== tempId));
        if(showAlert) showAlert('Upload Failed', 'Failed to send media', 'error');
     } finally {
       setIsUploading(false);
@@ -445,7 +464,11 @@ const ChatScreen = ({ route, navigation }) => {
           />
           
           <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Send color={COLORS.textWhite} size={20} />
+            {inputText.trim() ? (
+              <Send color={COLORS.textWhite} size={20} />
+            ) : (
+              <Mic color={COLORS.textWhite} size={20} />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

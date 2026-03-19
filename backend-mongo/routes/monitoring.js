@@ -2,6 +2,7 @@ import express from "express";
 import LiveCall from "../models/LiveCall.js";
 import CallScreenshot from "../models/CallScreenshot.js";
 import Transaction from "../models/Transaction.js";
+import Story from "../models/Story.js";
 import { protectAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -77,6 +78,29 @@ router.post("/force-end/:callId", async (req, res) => {
     res.json({ message: "Call ended by admin", call });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @desc    Get all active stories for moderation
+router.get("/stories", protectAdmin, async (req, res) => {
+  try {
+    const stories = await Story.find({})
+      .populate("userId", "name profilePicture")
+      .sort("-createdAt");
+    res.json(stories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Delete a story (Admin)
+router.delete("/stories/:id", protectAdmin, async (req, res) => {
+  try {
+    const story = await Story.findByIdAndDelete(req.params.id);
+    if (!story) return res.status(404).json({ message: "Story not found" });
+    res.json({ success: true, message: "Story deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

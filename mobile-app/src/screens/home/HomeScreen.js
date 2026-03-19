@@ -22,6 +22,7 @@ import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
 import HostCard from '../../components/HostCard';
 import Swiper from 'react-native-deck-swiper';
 import SwipeCard from '../../components/SwipeCard';
+import StoryBar from '../../components/StoryBar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -132,6 +133,8 @@ const HomeScreen = ({ navigation }) => {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
         
+        <StoryBar navigation={navigation} currentUser={currentUser} />
+
         {activeTab !== 'For You' && banners.length > 0 && (
           <FlatList
             data={banners}

@@ -1,3 +1,4 @@
+import calculateBadge from "../utils/badgeSystem.js";
 import authService from "../services/authService.js";
 import User from "../models/User.js";
 
@@ -209,8 +210,7 @@ class UserAuthController {
         return res.status(404).json({ success: false, message: "User not found" });
       }
 
-import calculateBadge from "../utils/badgeSystem.js";
-...
+
       if (user.isHost) {
         const host = await Host.findOne({ userId: user._id }).lean();
         if (host) {

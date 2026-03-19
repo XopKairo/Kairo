@@ -20,6 +20,7 @@ const navItems = [
   { icon: Crown, label: "VIP & Coupons", path: "/vip-coupons", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
   { icon: Video, label: "Active Calls", path: "/calls", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
   { icon: ShieldAlert, label: "Call Monitoring", path: "/monitoring", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
+  { icon: Image, label: "Story Moderation", path: "/stories", roles: ["Super Admin", "Moderator", "admin", "ADMIN"] },
   { icon: CreditCard, label: "Payout Requests", path: "/payouts", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
   { icon: History, label: "Finance Logs", path: "/finance-logs", roles: ["Super Admin", "Finance Manager", "admin", "ADMIN"] },
   { icon: Bell, label: "Marketing Push", path: "/notifications", roles: ["Super Admin", "admin", "ADMIN"] },
