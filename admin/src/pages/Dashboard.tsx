@@ -147,7 +147,7 @@ export default function Dashboard() {
           { title: 'Total Users', value: stats.totalUsers, icon: Users, trend: 'Online: ' + stats.activeUsersToday, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
           { title: 'Gross Revenue', value: stats.totalRevenue, icon: Receipt, trend: 'Today: ' + stats.dailyRevenue, color: 'text-brand-500', bg: 'bg-brand-50 dark:bg-brand-500/10' },
           { title: 'Verified Hosts', value: stats.verifiedHosts, icon: Award, trend: 'Active Hosts', color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
-          { title: 'Active Stories', value: stats.totalStories || 0, icon: ImageIcon, trend: 'Last 24h', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10' },
+          { title: 'Active Stories', value: (stats as any).totalStories || 0, icon: ImageIcon, trend: 'Last 24h', color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10' },
           { title: 'Active Reports', value: stats.totalReports, icon: ShieldAlert, trend: 'Needs Review', color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
         ].map((stat, i) => (
           <div key={i} className="bg-white dark:bg-surface-900 rounded-[32px] p-6 shadow-sm border border-gray-100 dark:border-gray-800">

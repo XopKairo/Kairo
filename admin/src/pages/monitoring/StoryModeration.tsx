@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Image as ImageIcon, Video, User, Clock, ShieldAlert } from 'lucide-react';
+import { Trash2, Image as ImageIcon, Video, Clock, ShieldAlert } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import { Badge } from '../../components/common/Badge';
 
@@ -103,7 +103,7 @@ export default function StoryModeration() {
                     <Clock size={14} />
                     <span>Expires: {new Date(story.expiresAt).toLocaleTimeString()}</span>
                   </div>
-                  <Badge variant={story.mediaType === 'video' ? 'brand' : 'gray'}>
+                  <Badge variant={story.mediaType === 'video' ? 'info' : 'warning'}>
                     {story.mediaType === 'video' ? <Video size={12} className="mr-1 inline" /> : <ImageIcon size={12} className="mr-1 inline" />}
                     {story.mediaType}
                   </Badge>
