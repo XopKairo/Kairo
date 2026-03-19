@@ -250,7 +250,7 @@ export default function Hosts() {
               <div className="flex items-center justify-between p-4 bg-brand-50/50 dark:bg-brand-500/5 rounded-2xl border border-brand-100/50">
                  <div className="flex items-center gap-3">
                     <input type="checkbox" checked={editForm.isBoosted} onChange={e => setEditForm({...editForm, isBoosted: e.target.checked})} className="w-5 h-5 accent-brand-600" id="boost-check" />
-                    <label htmlFor="boost-check" className="text-sm font-black text-brand-600">🚀 FEATURE ON TOP</label>
+                    <label htmlFor="boost-check" className="text-sm font-black text-brand-600">FEATURE ON TOP</label>
                  </div>
               </div>
 

@@ -22,7 +22,7 @@ const seedData = async () => {
       role: "admin",
     });
     await admin.save();
-    console.log("✅ Admin user created");
+    console.log("Admin user created");
 
     // Create Sample User
     const user = new User({
@@ -34,7 +34,7 @@ const seedData = async () => {
       zoraPoints: 50,
     });
     await user.save();
-    console.log("✅ Sample user created");
+    console.log("Sample user created");
 
     // Create Sample Host
     const host = new Host({
@@ -45,7 +45,7 @@ const seedData = async () => {
       isVerified: true,
     });
     await host.save();
-    console.log("✅ Sample host created");
+    console.log("Sample host created");
 
     console.log("🚀 Seeding completed successfully!");
     process.exit(0);

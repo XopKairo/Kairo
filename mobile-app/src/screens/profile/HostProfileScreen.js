@@ -233,7 +233,7 @@ const HostProfileScreen = ({ route, navigation }) => {
                  <Text style={styles.idText}>ID: #{host.hostId || 'PENDING'}</Text>
               </View>
               <TouchableOpacity style={[styles.followBtn, isFollowing && styles.followingBtn]} onPress={handleFollow}>
-                 <Text style={styles.followText}>{isFollowing ? 'Fan ✅' : '+ Fan'}</Text>
+                 <Text style={styles.followText}>{isFollowing ? 'Following' : 'Follow'}</Text>
               </TouchableOpacity>
            </View>
 

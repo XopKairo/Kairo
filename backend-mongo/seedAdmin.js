@@ -27,7 +27,7 @@ const seedAdmin = async () => {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
     });
-    console.log("✅ Connected to MongoDB successfully.");
+    console.log("Connected to MongoDB successfully.");
 
     // Check if any admin exists
     const existingAdmin = await Admin.findOne({ role: "admin" });
@@ -51,7 +51,7 @@ const seedAdmin = async () => {
 
       await newAdmin.save();
       console.log(
-        "✅ SUCCESS: Initial admin account created and saved to MongoDB!",
+        "Initial admin account created and saved to MongoDB!",
       );
     }
 

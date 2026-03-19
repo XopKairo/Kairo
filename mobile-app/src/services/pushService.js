@@ -31,9 +31,9 @@ export const registerForPushNotificationsAsync = async (userId) => {
     if (userId && token) {
       try {
         await api.put('user/users/push-token', { pushToken: token });
-        console.log('✅ Push token synced successfully');
+        console.log('Push token synced successfully');
       } catch (error) {
-        console.error('❌ Failed to sync push token:', error.message || error);
+        console.error('Failed to sync push token:', error.message || error);
       }
     }
 

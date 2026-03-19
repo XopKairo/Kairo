@@ -86,7 +86,7 @@ export const authAdmin = async (req, res) => {
     });
   } catch (error) {
     logger.error(
-      `❌ Admin Auth 500 Crash: ${error.message}\nStack: ${error.stack}`,
+      `Admin Auth 500 Crash: ${error.message}\nStack: ${error.stack}`,
     );
     return res.status(500).json({
       success: false,

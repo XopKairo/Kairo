@@ -138,9 +138,9 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI, { maxPoolSize: 10, serverSelectionTimeoutMS: 5000 })
   .then(async () => {
-    console.log("✅ God-Mode Database Synced");
+    console.log("God-Mode Database Synced");
     await seedAdmin();
     await seedInterests();
     await seedPackages();
-    server.listen(PORT, () => console.log(`🚀 Kairo Engine Active on ${PORT}`));
+    server.listen(PORT, () => console.log(`Kairo Engine Active on ${PORT}`));
   });

@@ -20,7 +20,7 @@ if (!admin.apps.length && serviceAccount) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log("✅ Firebase Admin Initialized");
+    console.log("Firebase Admin Initialized");
   } catch (err) {
     console.error("❌ Firebase Initialization Error:", err.message);
   }

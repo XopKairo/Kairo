@@ -138,7 +138,7 @@ router.post("/:id/status", protectAdmin, async (req, res) => {
       // Send Push Notification
       try {
         await pushService.sendNotification(user._id, {
-          title: "✅ Verification Approved",
+          title: "Verification Approved",
           body: "Congratulations! Your Host Verification is approved. You can now start earning.",
           data: { type: "VERIFICATION_SUCCESS" }
         });

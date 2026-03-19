@@ -51,7 +51,7 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('✅ Socket Connected Successfully');
+      console.log('Socket Connected Successfully');
       if (this.userId) {
         this.socket.emit('registerUser', this.userId);
       }
@@ -66,7 +66,7 @@ class SocketService {
     });
 
     this.socket.on('connect_error', (err) => {
-      console.error('❌ Socket Connection Error:', err.message);
+      console.error('Socket Connection Error:', err.message);
       // If unauthorized, we might need a token refresh logic here
     });
 

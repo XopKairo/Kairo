@@ -201,7 +201,7 @@ const ChatScreen = ({ route, navigation }) => {
       
       const messageData = {
         recipientId: actualRecipientId,
-        text: `🎁 Sent you a ${gift.name}`,
+        text: `Sent you a ${gift.name}`,
         type: 'gift',
         conversationId: activeConvId,
       };
@@ -347,7 +347,7 @@ const ChatScreen = ({ route, navigation }) => {
       return (
         <View style={[styles.messageWrapper, isMe ? styles.myMessage : styles.theirMessage]}>
           <View style={[styles.bubble, styles.deletedBubble]}>
-            <Text style={styles.deletedText}>🚫 This message was deleted</Text>
+            <Text style={styles.deletedText}>This message was deleted</Text>
           </View>
         </View>
       );
@@ -453,7 +453,7 @@ const ChatScreen = ({ route, navigation }) => {
               <TouchableOpacity style={{flex: 1, alignItems: 'center', marginBottom: 20}} onPress={() => sendGift(item)}>
                 <Image source={{uri: item.iconUrl ? `${BASE_URL}/${item.iconUrl}` : 'https://via.placeholder.com/50'}} style={{width: 50, height: 50, marginBottom: 5}} />
                 <Text style={{color: '#FFF', fontSize: 10}}>{item.name}</Text>
-                <Text style={{color: COLORS.primary, fontSize: 10, fontWeight: 'bold'}}>{item.coinCost} 🪙</Text>
+                <Text style={{color: COLORS.primary, fontSize: 10, fontWeight: 'bold'}}>{item.coinCost} Coins</Text>
               </TouchableOpacity>
             )}
             keyExtractor={item => item._id}
