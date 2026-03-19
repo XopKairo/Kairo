@@ -16,6 +16,7 @@ import WalletLedger from "../models/WalletLedger.js";
 import callService from "../services/callService.js";
 import walletRepository from "../repositories/walletRepository.js";
 import redisClient from "../config/redis.js";
+import logger from "../utils/logger.js";
 
 class AdminController {
 
@@ -259,7 +260,12 @@ class AdminController {
 
   // 4. Get System Overview
   async getOverview(req, res) {
-    res.json({ success: true, message: "Admin Overview Path Ready" });
+    try {
+      res.json({ success: true, message: "Admin Overview Path Ready" });
+    } catch (error) {
+      logger.error("Error in AdminController - getOverview:", error);
+      res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    }
   }
 
   // 5. Get Audit Logs
