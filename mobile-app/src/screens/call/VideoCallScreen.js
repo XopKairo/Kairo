@@ -208,8 +208,8 @@ const VideoCallScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <ZegoUIKitPrebuiltCall
-        appID={Number(process.env.EXPO_PUBLIC_ZEGO_APP_ID)}
-        appSign={process.env.EXPO_PUBLIC_ZEGO_APP_SIGN}
+        appID={parseInt(process.env.EXPO_PUBLIC_ZEGO_APP_ID || 0)}
+        appSign={process.env.EXPO_PUBLIC_ZEGO_APP_SIGN || ''}
         userID={userId}
         userName={userName}
         callID={callId}
