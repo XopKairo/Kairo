@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Modal
 } from 'react-native';
-import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift, Settings, Trash2, Mic } from 'lucide-react-native';
+import { Send, ChevronLeft, ImagePlus, Check, CheckCheck, Video as VideoIcon, Gift, Settings, Trash2, Mic, User } from 'lucide-react-native';
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, BORDER_RADIUS } from '../../theme/theme';
