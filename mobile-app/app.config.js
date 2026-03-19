@@ -89,6 +89,21 @@ export default {
           "androidAppId": "ca-app-pub-2842532668081504~8477148280",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
+      ],
+      [
+        "@zegocloud/zego-uikit-prebuilt-call-rn",
+        {
+          "android": {
+            "permissions": ["CAMERA", "RECORD_AUDIO"]
+          },
+          "ios": {
+            "permissions": ["CAMERA", "RECORD_AUDIO"]
+          }
+        }
+      ],
+      [
+        "@zegocloud/zego-uikit-rn",
+        {}
       ]
     ],
     "web": {
