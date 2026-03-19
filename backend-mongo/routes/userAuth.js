@@ -22,6 +22,7 @@ router.post("/firebase-login", userAuthController.firebaseLogin);
 router.post(
   "/register",
   upload.single("profilePicture"),
+  validateRequest(registerSchema),
   userAuthController.register,
 );
 
@@ -29,13 +30,13 @@ router.post(
 router.post("/google-login", userAuthController.googleLogin);
 
 // Fast Login
-router.post("/fast-login", userAuthController.fastLogin);
+router.post("/fast-login", validateRequest(loginSchema), userAuthController.fastLogin);
 
 // Send OTP
 router.post("/send-otp", userAuthController.sendOtp);
 
 // Verify OTP
-router.post("/verify-otp", userAuthController.verifyOtp);
+router.post("/verify-otp", validateRequest(verifyOTPSchema), userAuthController.verifyOtp);
 
 // Get Profile
 router.get("/me", protectUser, userAuthController.getProfile);

@@ -1,17 +1,20 @@
 import { createClient } from "redis";
 import { URL } from "url";
 
-const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-const isTls = redisUrl.startsWith("rediss://");
+const redisUrl = process.env.REDIS_URL;
 
-const urlObj = new URL(redisUrl);
+if (!redisUrl) {
+  console.error("REDIS_URL is missing in environment variables. Caching disabled.");
+}
+
+const isTls = redisUrl?.startsWith("rediss://") || false;
+const urlObj = redisUrl ? new URL(redisUrl) : { hostname: "localhost" };
 
 const redisClient = createClient({
-  url: redisUrl,
+  url: redisUrl || "redis://localhost:6379", // Fallback only for internal client initialization
   socket: {
     family: 4,
     reconnectStrategy: (retries) => Math.min(retries * 500, 5000),
-    // Explicitly set TLS options for Upstash/SNI
     tls: isTls ? {
       servername: urlObj.hostname,
       rejectUnauthorized: false
@@ -25,14 +28,14 @@ let logSpamBlocked = false;
 redisClient.on("error", (err) => {
   if (err.message && err.message.includes("ECONNREFUSED")) {
     if (!logSpamBlocked) {
-      console.log("⚠️ Redis Connection Refused.");
+      console.log("Redis Connection Refused.");
       logSpamBlocked = true;
     }
     return;
   }
   if (!err.message) return;
   if (!logSpamBlocked) {
-    console.log("❌ Redis Client Error:", err.message);
+    console.log("Redis Client Error:", err.message);
   }
 });
 
@@ -42,7 +45,7 @@ redisClient.on("connect", () => {
 
 redisClient.on("ready", () => {
   logSpamBlocked = false;
-  console.log("🚀 Redis Ready (Authenticated)");
+  console.log("Redis Ready (Authenticated)");
 });
 
 const connectRedis = async () => {

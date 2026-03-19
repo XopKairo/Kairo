@@ -1,6 +1,7 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
+import logger from "../utils/logger.js";
 
 export const getConversations = async (req, res) => {
   try {
@@ -13,6 +14,7 @@ export const getConversations = async (req, res) => {
 
     res.json(conversations);
   } catch (error) {
+    logger.error(`Get Conversations Error: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 };
@@ -43,6 +45,7 @@ export const getMessages = async (req, res) => {
 
     res.json(messages);
   } catch (error) {
+    logger.error(`Get Messages Error: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 };
