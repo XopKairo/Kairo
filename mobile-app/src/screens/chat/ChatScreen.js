@@ -159,7 +159,7 @@ const ChatScreen = ({ route, navigation }) => {
 
       // API First to get real ID and check balance
       const res = await api.post(`user/chat/send`, messageData);
-      await api.post('user/interactions/send-gift', { giftId: gift._id, receiverId: actualRecipientId });
+      await api.post('user/interactions/gifts/send', { giftId: gift._id, receiverId: actualRecipientId });
 
       if (socketService.socket?.connected) {
         socketService.socket.emit('privateMessage', { ...messageData, _id: res.data?.message?._id });

@@ -14,8 +14,7 @@ router.post("/users/toggle-shadow-ban", adminController.toggleShadowBan);
 // 2. Call Control (Force End)
 router.post("/calls/force-end", adminController.forceEndCall);
 
-// 3. Report Action (Ban/Warn/Dismiss)
-router.post("/reports/action", adminController.handleReportAction);
+// 3. Report Action (Ban/Warn/Dismiss) handled in reports.js
 
 // 4. System Overview
 router.get("/overview", adminController.getOverview);
